@@ -17,12 +17,22 @@
 <body>
     <!-- Top Header Navigation -->
     <header class="assignments-header">
-        <div class="container header-flex">
-            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Subjects</a>
+        <div class="container header-grid">
+            <div class="header-left">
+                <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Subjects</a>
+            </div>
             <div class="header-titles">
                 <h1 id="subjectTitle">Data Structure and Algorithm (C++)</h1>
                 <p id="subjectSubtitle">Semester 2 • Course Assignments & Answer Keys</p>
             </div>
+            <div class="header-right">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+                    <i class="fa-solid fa-moon"></i>
+                    <span class="theme-btn-text">Dark Mode</span>
+                </button>
+            </div>
+        </div>
+        <div class="container header-search-row">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="assignmentSearch" placeholder="Search assignments...">

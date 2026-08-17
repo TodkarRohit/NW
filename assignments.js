@@ -1,4 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Theme Management
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i> <span class="theme-btn-text">Light Mode</span>';
+            }
+        } else {
+            document.body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i> <span class="theme-btn-text">Dark Mode</span>';
+            }
+        }
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+        });
+    }
+
+    initTheme();
+
     // Subject Data Definition
     const subjectsData = {
         'dsa': {
@@ -260,7 +294,7 @@ Complex operator+(const Complex& c) {<br>
     // Get current subject from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     let subjectKey = urlParams.get('subject') || 'dsa';
-    
+
     // Default fallback if unknown subject key
     if (!subjectsData[subjectKey]) {
         subjectKey = 'dsa';
@@ -307,7 +341,7 @@ Complex operator+(const Complex& c) {<br>
         assignmentsContainer.innerHTML = '';
 
         const term = filterTerm.toLowerCase().trim();
-        const filteredList = currentSubject.assignments.filter(item => 
+        const filteredList = currentSubject.assignments.filter(item =>
             item.title.toLowerCase().includes(term) ||
             item.questionFile.toLowerCase().includes(term) ||
             item.answerFile.toLowerCase().includes(term)
@@ -497,7 +531,7 @@ Complex operator+(const Complex& c) {<br>
             btn.addEventListener('click', (e) => {
                 const assId = btn.getAttribute('data-id');
                 const fileName = btn.getAttribute('data-file');
-                
+
                 // Increment download counter
                 const assObj = currentSubject.assignments.find(a => a.id === assId);
                 if (assObj) {
@@ -533,7 +567,7 @@ Complex operator+(const Complex& c) {<br>
             btn.addEventListener('click', () => {
                 const assId = btn.getAttribute('data-id');
                 const shareUrl = `${window.location.origin}${window.location.pathname}?subject=${subjectKey}#${assId}`;
-                
+
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(shareUrl).then(() => {
                         showToast('Assignment share link copied to clipboard!');
@@ -575,7 +609,7 @@ Complex operator+(const Complex& c) {<br>
     function openCommentDrawer(assId, title) {
         if (!backdrop) return;
         if (commentTitle) commentTitle.textContent = `Discussion: ${title}`;
-        
+
         renderDrawerComments(assId);
         backdrop.classList.add('active');
     }

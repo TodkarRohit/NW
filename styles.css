@@ -1,17 +1,38 @@
-/* Base Styles & Variables */
+/* Base Styles & Theme Variables */
 :root {
     --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
     --bg-color: #f8fafc;
     --card-bg: #ffffff;
-    --text-dark: #1e293b;
+    --card-border: #cbd5e1;
+    --text-dark: #0f172a;
     --text-light: #64748b;
+    --header-bg: #1e293b;
+    --input-bg: #ffffff;
+    --input-border: #cbd5e1;
+    --shadow-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] {
+    --primary-color: #38bdf8;
+    --primary-hover: #0284c7;
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --card-border: #334155;
+    --text-dark: #f8fafc;
+    --text-light: #94a3b8;
+    --header-bg: #0b1329;
+    --input-bg: #1e293b;
+    --input-border: #475569;
+    --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
 body {
@@ -26,18 +47,58 @@ body {
     padding: 0 20px;
 }
 
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
 /* Header */
 header {
-    background-color: var(--primary-color);
+    background-color: var(--header-bg);
     color: white;
-    padding: 2rem 0;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.75rem 0;
+    box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    margin-bottom: 0.25rem;
+}
+
+header p {
+    color: #94a3b8;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+}
+
+.theme-toggle-btn i {
+    font-size: 1rem;
+    color: #38bdf8;
 }
 
 /* Search Bar */
@@ -55,14 +116,16 @@ main {
     max-width: 500px;
     padding: 14px 20px;
     font-size: 1rem;
-    border: 1px solid #cbd5e1;
+    background-color: var(--input-bg);
+    color: var(--text-dark);
+    border: 2px solid var(--input-border);
     border-radius: 30px;
     outline: none;
-    transition: box-shadow 0.3s;
+    transition: box-shadow 0.3s, border-color 0.3s;
 }
 
 #searchInput:focus {
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
     border-color: var(--primary-color);
 }
 
@@ -76,20 +139,24 @@ main {
 /* Subject Cards */
 .subject-card {
     background-color: var(--card-bg);
+    border: 2px solid var(--card-border);
     padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .subject-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 24px var(--shadow-color);
+    border-color: var(--primary-color);
 }
 
 .subject-card h2 {
+    font-family: 'Outfit', sans-serif;
     font-size: 1.25rem;
     margin-bottom: 0.5rem;
+    color: var(--text-dark);
 }
 
 .semester-tag {
@@ -99,8 +166,14 @@ main {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 1.5rem;
+}
+
+[data-theme="dark"] .semester-tag {
+    background-color: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 /* Buttons */
@@ -117,15 +190,19 @@ main {
     color: var(--primary-color);
     text-decoration: none;
     padding: 10px;
-    border: 1px solid var(--primary-color);
-    border-radius: 6px;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
     transition: all 0.2s;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .btn:hover {
     background-color: var(--primary-color);
     color: white;
+}
+
+[data-theme="dark"] .btn:hover {
+    color: #0f172a;
 }
 
 /* Footer */
