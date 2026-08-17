@@ -481,17 +481,43 @@ footer {
    Responsive Breakpoints
    ========================================================================== */
 @media (max-width: 820px) {
+    .header-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .header-left-actions {
+        position: relative;
+        top: auto;
+        left: auto;
+        margin-bottom: 0.75rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-right-actions {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 1rem;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
     .subjects-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
 
     .hub-header {
-        padding: 2.75rem 0 2.25rem 0;
+        padding: 2.25rem 0 2rem 0;
     }
 
     .hub-header h1 {
-        font-size: 2.1rem;
+        font-size: 2rem;
     }
 
     .subject-card {
@@ -499,27 +525,60 @@ footer {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 520px) {
+    .container {
+        padding: 0 16px;
+    }
+
     .hub-header h1 {
-        font-size: 1.75rem;
+        font-size: 1.6rem;
     }
 
     .hub-header p {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
 
     .search-box-wrapper {
         max-width: 100%;
     }
 
+    .search-kbd-badge {
+        display: none;
+    }
+
     #searchInput {
-        padding: 14px 18px 14px 46px;
-        font-size: 0.95rem;
+        padding: 13px 44px 13px 42px;
+        font-size: 0.92rem;
+    }
+
+    .search-clear-btn {
+        right: 14px;
     }
 
     .search-icon {
-        left: 16px;
+        left: 14px;
         font-size: 0.95rem;
+    }
+
+    .header-right-actions,
+    .header-left-actions {
+        gap: 8px;
+    }
+
+    .admin-toggle-btn,
+    .theme-toggle-btn,
+    .online-users-badge {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+    }
+
+    .subject-card h2 {
+        font-size: 1.2rem;
+    }
+
+    .resource-links .btn {
+        padding: 11px 16px;
+        font-size: 0.9rem;
     }
 }
 

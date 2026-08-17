@@ -782,14 +782,46 @@ body {
 
 /* Responsive */
 @media (max-width: 900px) {
+    .viewer-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        height: auto;
+        padding: 0.85rem 1rem;
+    }
+
+    .header-left {
+        flex-wrap: wrap;
+        gap: 0.65rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .resource-switcher-nav {
+        overflow-x: auto;
+        padding-bottom: 4px;
+        max-width: 100%;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .res-tab-pill {
+        flex-shrink: 0;
+    }
+
     .sidebar-panel {
-        position: absolute;
+        position: fixed;
         left: -100%;
         top: 0;
         bottom: 0;
-        width: 290px;
-        transition: left 0.3s ease;
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+        width: 85%;
+        max-width: 320px;
+        z-index: 999;
+        transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 6px 0 24px rgba(0, 0, 0, 0.25);
     }
 
     .sidebar-panel.open {
@@ -798,10 +830,11 @@ body {
 
     .sidebar-backdrop {
         display: none;
-        position: absolute;
+        position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.4);
-        z-index: 15;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+        backdrop-filter: blur(4px);
     }
 
     .sidebar-backdrop.active {
@@ -813,11 +846,26 @@ body {
     }
 
     .preview-panel {
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 0.85rem;
     }
 
     .notes-document {
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 0.85rem;
+    }
+
+    .qb-tab-bar {
+        width: 100%;
+        flex-direction: row;
+        gap: 4px;
+    }
+
+    .qb-tab-btn {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .qb-paper-view {
+        padding: 1.25rem 1rem;
     }
 }
 

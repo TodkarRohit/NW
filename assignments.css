@@ -1395,6 +1395,100 @@ body {
     gap: 1.25rem;
 }
 
+@media (max-width: 900px) {
+    .header-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .header-left,
+    .header-right {
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .header-titles h1 {
+        font-size: 1.45rem;
+    }
+
+    .header-titles p {
+        font-size: 0.85rem;
+    }
+
+    .resource-switcher-nav {
+        overflow-x: auto;
+        padding-bottom: 6px;
+        max-width: 100%;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .res-tab-pill {
+        flex-shrink: 0;
+    }
+
+    .qa-split-container {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem;
+    }
+
+    .split-tab-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tab-item {
+        flex: 1 1 auto;
+        justify-content: center;
+        font-size: 0.82rem;
+        padding: 8px 12px;
+    }
+
+    .header-search-row .search-box {
+        max-width: 100%;
+    }
+
+    .search-box .search-kbd-badge {
+        display: none;
+    }
+
+    .search-box input {
+        padding: 11px 40px 11px 40px;
+        font-size: 0.88rem;
+    }
+
+    .search-box .search-clear-btn {
+        right: 12px;
+    }
+
+    .assignments-main {
+        padding: 1.25rem 14px 3rem;
+    }
+
+    .card-header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .card-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .card-action-btns {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .download-link-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
 @media (max-width: 640px) {
     .form-row-2 {
         grid-template-columns: 1fr;
