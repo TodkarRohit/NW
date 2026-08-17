@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignments - Engineering Notes Hub</title>
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assignments.css">
+</head>
+
+<body>
+    <!-- Top Header Navigation -->
+    <header class="assignments-header">
+        <div class="container header-flex">
+            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Subjects</a>
+            <div class="header-titles">
+                <h1 id="subjectTitle">Data Structure and Algorithm (C++)</h1>
+                <p id="subjectSubtitle">Semester 2 • Course Assignments & Answer Keys</p>
+            </div>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="assignmentSearch" placeholder="Search assignments...">
+            </div>
+        </div>
+    </header>
+
+    <main class="container assignments-main">
+        <!-- Top Split View Navigation / Tab Switcher (Matching Wireframe Header) -->
+        <section class="view-switcher-section">
+            <div class="split-tab-bar">
+                <button class="tab-btn active" data-view="both">
+                    <span class="tab-label"><i class="fa-solid fa-table-columns"></i> Both (Side-by-Side)</span>
+                </button>
+                <button class="tab-btn" data-view="questions">
+                    <span class="tab-label"><i class="fa-solid fa-file-circle-question"></i> Questions</span>
+                </button>
+                <div class="chevron-divider">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+                <button class="tab-btn" data-view="answers">
+                    <span class="tab-label"><i class="fa-solid fa-file-circle-check"></i> Answers</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Column Header Titles (Matching Wireframe Questions < Chevron > Answers) -->
+        <div class="column-header-banner" id="columnHeaderBanner">
+            <div class="col-banner question-banner">
+                <i class="fa-solid fa-file-circle-question"></i>
+                <span>Questions</span>
+            </div>
+            <div class="banner-chevron">
+                <i class="fa-solid fa-angle-right"></i>
+            </div>
+            <div class="col-banner answer-banner">
+                <i class="fa-solid fa-file-circle-check"></i>
+                <span>Answers</span>
+            </div>
+        </div>
+
+        <!-- Assignments Container -->
+        <section class="assignments-container" id="assignmentsList">
+            <!-- Dynamic Assignment Cards rendered via JS -->
+        </section>
+    </main>
+
+    <!-- Comment Drawer Sidebar / Modal -->
+    <div class="comment-modal-backdrop" id="commentModalBackdrop">
+        <div class="comment-drawer" id="commentDrawer">
+            <div class="drawer-header">
+                <div class="drawer-title-info">
+                    <i class="fa-solid fa-comments"></i>
+                    <h3 id="commentModalTitle">Discussion & Comments</h3>
+                </div>
+                <button class="close-drawer-btn" id="closeCommentDrawer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="drawer-body">
+                <div class="comments-list" id="commentsList">
+                    <!-- Comments rendered dynamically -->
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <form id="commentForm">
+                    <div class="input-group">
+                        <input type="text" id="authorNameInput" placeholder="Your Name (optional)...">
+                    </div>
+                    <div class="input-group">
+                        <textarea id="commentTextInput" rows="3" placeholder="Write a comment or ask a question about this assignment..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-comment-btn"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMessage">Action completed successfully!</span>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Engineering Notes Hub. Built for NMIET students.</p>
+        </div>
+    </footer>
+
+    <script src="assignments.js"></script>
+</body>
+
+</html>
