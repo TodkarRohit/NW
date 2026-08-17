@@ -281,8 +281,8 @@ mark.search-highlight {
     padding: 2.25rem 2rem 2.25rem 2rem;
     box-shadow: var(--shadow-card);
     transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.22s ease;
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.22s ease;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -654,6 +654,7 @@ footer {
         transform: scale(0.6);
         opacity: 0.9;
     }
+
     100% {
         transform: scale(1.8);
         opacity: 0;

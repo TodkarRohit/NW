@@ -225,6 +225,7 @@ body {
         transform: scale(0.6);
         opacity: 0.9;
     }
+
     100% {
         transform: scale(1.8);
         opacity: 0;
@@ -237,7 +238,8 @@ body {
     transform: translateY(-1px);
 }
 
-#downloadFileBtn, .action-btn.primary-btn {
+#downloadFileBtn,
+.action-btn.primary-btn {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #ffffff;
     border-color: #2563eb;
@@ -245,7 +247,8 @@ body {
     font-weight: 700;
 }
 
-#downloadFileBtn:hover, .action-btn.primary-btn:hover {
+#downloadFileBtn:hover,
+.action-btn.primary-btn:hover {
     background: linear-gradient(135deg, #1d4ed8, #1e40af);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
@@ -1081,4 +1084,4 @@ body {
 
 .answer-paper .strip-upload-btn:hover {
     background: #15803d;
-}
+}
