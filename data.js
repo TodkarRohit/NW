@@ -2,7 +2,7 @@
 const subjectsData = {
     "dsa": {
         id: "dsa",
-        title: "Data Structures",
+        title: "Data Structure and Algorithm(C++)",
         semester: "Semester 2",
         typeName: "Study Notes",
         chapters: [
@@ -20,7 +20,7 @@ const subjectsData = {
     },
     "oop": {
         id: "oop",
-        title: "Object Oriented Programming",
+        title: "Object Oriented Programming (Using C++)",
         semester: "Semester 2",
         typeName: "Study Notes",
         chapters: [
