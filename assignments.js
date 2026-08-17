@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Theme Management
     const themeToggleBtn = document.getElementById('themeToggleBtn');
-    
+
     function initTheme() {
         const savedTheme = localStorage.getItem('theme') || 'light';
         applyTheme(savedTheme);
@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+
 
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', () => {
