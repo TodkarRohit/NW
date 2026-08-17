@@ -1,17 +1,22 @@
 /* Base Styles & Variables */
 :root {
     --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #eff6ff;
     --bg-color: #f8fafc;
     --card-bg: #ffffff;
+    --card-border: #e2e8f0;
+    --border-color: #e2e8f0;
     --text-dark: #1e293b;
     --text-light: #64748b;
+    --font-base: 'Plus Jakarta Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-base);
 }
 
 body {
@@ -30,25 +35,35 @@ body {
     padding: 0 24px;
 }
 
-.header-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
 /* Header */
 header {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
     color: white;
-    padding: 2rem 0;
+    padding: 3.5rem 0 3rem 0;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
+}
+
+.badge-tag {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 header h1 {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     margin-bottom: 0.5rem;
 }
 
@@ -89,17 +104,20 @@ main {
 
 #searchInput {
     width: 100%;
-    max-width: 500px;
-    padding: 14px 20px;
-    font-size: 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 30px;
+    padding: 16px 20px 16px 50px;
+    font-size: 1.05rem;
+    font-family: inherit;
+    border: 2px solid var(--border-color);
+    border-radius: 40px;
     outline: none;
-    transition: box-shadow 0.3s;
+    background-color: var(--card-bg);
+    color: var(--text-dark);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
 }
 
 #searchInput:focus {
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
     border-color: var(--primary-color);
 }
 
@@ -113,21 +131,32 @@ main {
 /* Subject Cards */
 .subject-card {
     background-color: var(--card-bg);
-    border: 2px solid var(--card-border);
+    border: 1px solid var(--border-color);
     padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 14px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .subject-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.09), 0 6px 12px -2px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+}
+
+.card-header {
+    margin-bottom: 1.5rem;
 }
 
 .subject-card h2 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.65rem;
+    line-height: 1.35;
 }
 
 .semester-tag {
@@ -136,15 +165,9 @@ main {
     color: var(--primary-color);
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-}
-
-[data-theme="dark"] .semester-tag {
-    background-color: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid rgba(37, 99, 235, 0.15);
 }
 
 /* Resource Buttons */
@@ -163,11 +186,14 @@ main {
     background-color: #ffffff;
     color: var(--primary-color);
     text-decoration: none;
-    padding: 10px;
-    border: 1px solid var(--primary-color);
-    border-radius: 6px;
-    transition: all 0.2s;
-    font-weight: 500;
+    padding: 12px 16px;
+    border: 1.5px solid var(--primary-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 0.94rem;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .btn:hover {
@@ -179,10 +205,6 @@ main {
 
 .btn-icon {
     font-size: 1.05rem;
-}
-
-[data-theme="dark"] .btn:hover {
-    color: #0f172a;
 }
 
 /* Footer */
