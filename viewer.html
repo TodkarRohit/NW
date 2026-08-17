@@ -22,6 +22,11 @@
                 </svg>
                 <span>Back to Subjects</span>
             </a>
+            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                <span class="online-pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="onlineUsersCount">18</span> Online
+            </div>
             <div class="header-divider"></div>
             <div class="subject-meta">
                 <span class="resource-badge" id="resourceTypeBadge">Study Notes</span>
@@ -45,13 +50,13 @@
             <!-- Hidden File Input for uploading note/assignment -->
             <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
             
-            <button class="action-btn" id="uploadFileBtn" title="Upload notes or question bank file">
+            <button class="action-btn primary-btn" id="downloadFileBtn" title="Download active PDF file">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                <span>Upload File</span>
+                <span id="downloadBtnText">Download File</span>
             </button>
 
             <button class="action-btn" id="printBtn" title="Print this chapter">
@@ -94,7 +99,10 @@
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" id="chapterSearchInput" placeholder="Filter items...">
+                    <input type="text" id="chapterSearchInput" placeholder="Filter items (Ctrl+K)..." autocomplete="off">
+                    <button type="button" class="search-clear-btn" id="chapterSearchClearBtn" style="display:none;" title="Clear Search (Esc)">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
                 </div>
             </div>
 

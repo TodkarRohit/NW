@@ -20,16 +20,33 @@
         <div class="container header-grid">
             <div class="header-left">
                 <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Subjects</a>
+                <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                    <span class="online-pulse-dot"></span>
+                    <i class="fa-solid fa-users"></i>
+                    <span id="onlineUsersCount">18</span> Online
+                </div>
             </div>
             <div class="header-titles">
                 <h1 id="subjectTitle">Data Structure and Algorithm (C++)</h1>
                 <p id="subjectSubtitle">Semester 2 • Course Assignments & Answer Keys</p>
-                <div class="subject-quick-nav" id="subjectQuickNav">
-                    <a href="viewer.html?subject=dsa&type=notes" id="notesNavBtn" class="quick-nav-pill"><i class="fa-solid fa-book-open"></i> Study Notes</a>
-                    <a href="viewer.html?subject=dsa&type=qb" id="qbNavBtn" class="quick-nav-pill"><i class="fa-solid fa-circle-question"></i> Question Banks</a>
-                </div>
+                <!-- Resource Switcher Nav Pills -->
+                <nav class="resource-switcher-nav">
+                    <a href="viewer.html?subject=dsa&type=notes" class="res-tab-pill" id="notesNavBtn">
+                        <span>📖 Study Notes</span>
+                    </a>
+                    <a href="viewer.html?subject=dsa&type=qb" class="res-tab-pill" id="qbNavBtn">
+                        <span>❓ Question Banks</span>
+                    </a>
+                    <a href="assignments.html?subject=dsa" class="res-tab-pill active" id="assNavBtn">
+                        <span>📁 Assignments</span>
+                    </a>
+                </nav>
             </div>
             <div class="header-right">
+                <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span id="adminBtnText">Admin Mode</span>
+                </button>
                 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
                     <i class="fa-solid fa-moon"></i>
                     <span class="theme-btn-text">Dark Mode</span>
@@ -38,10 +55,18 @@
         </div>
         <div class="container header-search-row">
             <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="assignmentSearch" placeholder="Search assignments...">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="assignmentSearch" placeholder="Search assignments by title or topic..." autocomplete="off">
+                <button type="button" class="search-clear-btn" id="assignmentSearchClearBtn" style="display:none;" title="Clear Search (Esc)">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+                <span class="search-kbd-badge" title="Press Ctrl+K to search"><kbd>Ctrl</kbd> <kbd>K</kbd></span>
             </div>
+            <button id="openUploadModalBtn" class="upload-btn-header" style="display:none;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload PDF Assignment
+            </button>
         </div>
+        <div id="assignmentSearchCounter" class="search-counter-badge" style="display:none; text-align:center; margin-top: 8px;"></div>
     </header>
 
     <main class="container assignments-main">
@@ -63,7 +88,7 @@
             </div>
         </section>
 
-        <!-- Column Header Titles (Matching Wireframe Questions < Chevron > Answers) -->
+        <!-- Column Header Banner (Matching Wireframe Questions < Chevron > Answers) -->
         <div class="column-header-banner" id="columnHeaderBanner">
             <div class="col-banner question-banner">
                 <i class="fa-solid fa-file-circle-question"></i>
@@ -100,6 +125,108 @@
             <div class="full-view-body" id="fullViewContent">
                 <!-- Injected full content -->
             </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
+        <div class="admin-login-card">
+            <div class="login-modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <h3>Admin Authentication</h3>
+                </div>
+                <button class="close-modal-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="adminLoginForm" class="login-modal-body">
+                <p class="login-hint">Enter your admin credentials to enable PDF upload and management privileges.</p>
+                <div class="form-group">
+                    <label for="adminUsernameInput"><i class="fa-solid fa-user"></i> Username</label>
+                    <input type="text" id="adminUsernameInput" placeholder="Enter username (default: admin)" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="adminPasswordInput"><i class="fa-solid fa-key"></i> Password</label>
+                    <input type="password" id="adminPasswordInput" placeholder="Enter password (default: admin123)" required autocomplete="current-password">
+                </div>
+                <div id="loginErrorMsg" class="login-error-msg" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i> Invalid admin username or password!
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" id="cancelAdminLoginBtn">Cancel</button>
+                    <button type="submit" class="submit-login-btn"><i class="fa-solid fa-right-to-bracket"></i> Login as Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin PDF Upload Modal -->
+    <div class="admin-upload-backdrop" id="uploadModalBackdrop">
+        <div class="admin-upload-card">
+            <div class="upload-modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                    <h3>Upload New Assignment (Admin)</h3>
+                </div>
+                <button class="close-modal-btn" id="closeUploadModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="adminUploadForm" class="upload-modal-body">
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="uploadSubjectSelect"><i class="fa-solid fa-book"></i> Select Subject</label>
+                        <select id="uploadSubjectSelect" required>
+                            <option value="dsa">Data Structure and Algorithm (C++)</option>
+                            <option value="oop">Object Oriented Programming (Using C++)</option>
+                            <option value="os">Operating System</option>
+                            <option value="math">Engineering Mathematics</option>
+                            <option value="hardware">Computer hardware and its organization</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadAssNum"><i class="fa-solid fa-hashtag"></i> Assignment No.</label>
+                        <input type="number" id="uploadAssNum" min="1" max="50" placeholder="e.g. 4" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="uploadAssTitle"><i class="fa-solid fa-heading"></i> Assignment Title</label>
+                    <input type="text" id="uploadAssTitle" placeholder="e.g. ASSIGNMENT 4: Dynamic Programming & Greedy Algorithms" required>
+                </div>
+
+                <!-- PDF File Dropzone Row -->
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="uploadQuestionPdf"><i class="fa-solid fa-file-pdf" style="color:#0284c7"></i> Question PDF File</label>
+                        <div class="file-dropzone">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span class="file-name-display" id="qPdfName">Choose Question PDF...</span>
+                            <input type="file" id="uploadQuestionPdf" accept=".pdf" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadAnswerPdf"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> Answer PDF File</label>
+                        <div class="file-dropzone">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span class="file-name-display" id="aPdfName">Choose Solution PDF...</span>
+                            <input type="file" id="uploadAnswerPdf" accept=".pdf" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="uploadQuestionNotes"><i class="fa-solid fa-align-left"></i> Question Description / Highlights (Optional)</label>
+                    <textarea id="uploadQuestionNotes" rows="2" placeholder="Briefly describe Question 1, Question 2 or key topics..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="uploadAnswerNotes"><i class="fa-solid fa-square-check"></i> Answer Description / Solution Notes (Optional)</label>
+                    <textarea id="uploadAnswerNotes" rows="2" placeholder="Briefly describe solution approach or algorithm complexity..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" id="cancelUploadBtn">Cancel</button>
+                    <button type="submit" class="submit-upload-btn"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Publish Assignment</button>
+                </div>
+            </form>
         </div>
     </div>
 

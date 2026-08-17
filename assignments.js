@@ -308,17 +308,104 @@ Complex operator+(const Complex& c) {<br>
 
     const currentSubject = subjectsData[subjectKey];
 
+    // Helper to retrieve combined built-in and admin-uploaded assignments
+    function getCombinedAssignments(sKey) {
+        const builtIn = subjectsData[sKey] ? subjectsData[sKey].assignments : [];
+        const customJSON = localStorage.getItem(`custom_assignments_${sKey}`);
+        const custom = customJSON ? JSON.parse(customJSON) : [];
+        return [...custom, ...builtIn];
+    }
+
     // Update Header Elements & Quick Nav
     const subjectTitleEl = document.getElementById('subjectTitle');
     const subjectSubtitleEl = document.getElementById('subjectSubtitle');
     const notesNavBtn = document.getElementById('notesNavBtn');
     const qbNavBtn = document.getElementById('qbNavBtn');
+    const assNavBtn = document.getElementById('assNavBtn');
 
     if (subjectTitleEl) subjectTitleEl.textContent = currentSubject.title;
     if (subjectSubtitleEl) subjectSubtitleEl.textContent = currentSubject.subtitle;
     if (notesNavBtn) notesNavBtn.href = `viewer.html?subject=${subjectKey}&type=notes`;
     if (qbNavBtn) qbNavBtn.href = `viewer.html?subject=${subjectKey}&type=qb`;
+    if (assNavBtn) assNavBtn.href = `assignments.html?subject=${subjectKey}`;
     document.title = `${currentSubject.title} - Assignments | Engineering Notes Hub`;
+
+    // Admin Mode State Management & Login Authentication
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
+    const openUploadModalBtn = document.getElementById('openUploadModalBtn');
+    const adminLoginModalBackdrop = document.getElementById('adminLoginModalBackdrop');
+    const closeAdminLoginModalBtn = document.getElementById('closeAdminLoginModalBtn');
+    const cancelAdminLoginBtn = document.getElementById('cancelAdminLoginBtn');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const loginErrorMsg = document.getElementById('loginErrorMsg');
+
+    let isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+
+    function updateAdminUI() {
+        if (adminToggleBtn) {
+            if (isAdminMode) {
+                adminToggleBtn.classList.add('active');
+                adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> <span>Admin Active (Logout)</span>';
+                if (openUploadModalBtn) openUploadModalBtn.style.display = 'inline-flex';
+            } else {
+                adminToggleBtn.classList.remove('active');
+                adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-shield"></i> <span>Admin Mode</span>';
+                if (openUploadModalBtn) openUploadModalBtn.style.display = 'none';
+            }
+        }
+        renderAssignments(searchInput ? searchInput.value : '');
+    }
+
+    if (adminToggleBtn) {
+        adminToggleBtn.addEventListener('click', () => {
+            if (isAdminMode) {
+                // Logout
+                isAdminMode = false;
+                localStorage.setItem('isAdminMode', 'false');
+                updateAdminUI();
+                showToast('Logged out from Admin Mode.');
+            } else {
+                // Open Login Authentication Modal
+                if (adminLoginModalBackdrop) {
+                    adminLoginModalBackdrop.classList.add('active');
+                    if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    function closeAdminLoginModal() {
+        if (adminLoginModalBackdrop) adminLoginModalBackdrop.classList.remove('active');
+        if (adminLoginForm) adminLoginForm.reset();
+        if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+    }
+
+    if (closeAdminLoginModalBtn) closeAdminLoginModalBtn.addEventListener('click', closeAdminLoginModal);
+    if (cancelAdminLoginBtn) cancelAdminLoginBtn.addEventListener('click', closeAdminLoginModal);
+    if (adminLoginModalBackdrop) {
+        adminLoginModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === adminLoginModalBackdrop) closeAdminLoginModal();
+        });
+    }
+
+    if (adminLoginForm) {
+        adminLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const userVal = document.getElementById('adminUsernameInput').value.trim();
+            const passVal = document.getElementById('adminPasswordInput').value;
+
+            // Credentials check (Default: admin / admin123)
+            if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
+                isAdminMode = true;
+                localStorage.setItem('isAdminMode', 'true');
+                updateAdminUI();
+                closeAdminLoginModal();
+                showToast('Welcome Admin! You now have full PDF upload & management privileges.');
+            } else {
+                if (loginErrorMsg) loginErrorMsg.style.display = 'flex';
+            }
+        });
+    }
 
     // Persistent Counts & Comments Helper
     function getStoredCounts(assId, defaultViews, defaultDownloads) {
@@ -352,8 +439,9 @@ Complex operator+(const Complex& c) {<br>
         if (!assignmentsContainer) return;
         assignmentsContainer.innerHTML = '';
 
+        const allAssignments = getCombinedAssignments(subjectKey);
         const term = filterTerm.toLowerCase().trim();
-        const filteredList = currentSubject.assignments.filter(item =>
+        const filteredList = allAssignments.filter(item =>
             item.title.toLowerCase().includes(term) ||
             item.questionFile.toLowerCase().includes(term) ||
             item.answerFile.toLowerCase().includes(term)
@@ -386,13 +474,19 @@ Complex operator+(const Complex& c) {<br>
             card.className = 'assignment-card';
             card.setAttribute('data-id', ass.id);
 
+            const adminDeleteBtnHtml = (isAdminMode || ass.isCustom) ? `
+                <button class="action-btn admin-delete-btn" data-id="${ass.id}" title="Delete Assignment (Admin)">
+                    <i class="fa-solid fa-trash-can"></i> Delete
+                </button>
+            ` : '';
+
             card.innerHTML = `
                 <div class="qa-grid">
                     <!-- LEFT BOX: QUESTION BOX (Matching Wireframe Left) -->
                     <div class="qa-box question-box">
                         <!-- Top Tag Bar: [ass 1 Question | file title (like ASSINMENT 1)] -->
                         <div class="qa-top-bar">
-                            <span class="tag-badge">ass ${ass.num} Question</span>
+                            <span class="tag-badge">ASSIGNMENT ${ass.num} QUESTION</span>
                             <div class="file-title-bar">${ass.title}</div>
                         </div>
 
@@ -425,6 +519,7 @@ Complex operator+(const Complex& c) {<br>
                             <button class="action-btn share-btn" data-id="${ass.id}">
                                 <i class="fa-solid fa-share-nodes"></i> Share
                             </button>
+                            ${adminDeleteBtnHtml}
                             <div class="count-badge">
                                 <span><i class="fa-solid fa-eye" style="color:#0284c7"></i> ${counts.views} views</span>
                                 <span>•</span>
@@ -437,7 +532,7 @@ Complex operator+(const Complex& c) {<br>
                     <div class="qa-box answer-box">
                         <!-- Top Tag Bar: [ass 1 answer | file title (like ASSINMENT 1)] -->
                         <div class="qa-top-bar">
-                            <span class="tag-badge">ass ${ass.num} Answer</span>
+                            <span class="tag-badge">ASSIGNMENT ${ass.num} ANSWER</span>
                             <div class="file-title-bar">${ass.title}</div>
                         </div>
 
@@ -470,6 +565,7 @@ Complex operator+(const Complex& c) {<br>
                             <button class="action-btn share-btn" data-id="${ass.id}">
                                 <i class="fa-solid fa-share-nodes"></i> Share
                             </button>
+                            ${adminDeleteBtnHtml}
                             <div class="count-badge">
                                 <span><i class="fa-solid fa-eye" style="color:#16a34a"></i> ${counts.views} views</span>
                                 <span>•</span>
@@ -535,7 +631,7 @@ Complex operator+(const Complex& c) {<br>
         });
     }
 
-    // Action listeners (Download, Comment, Share, Full View)
+    // Action listeners (Download, Comment, Share, Delete)
     let activeCommentAssId = null;
 
     function attachActionListeners() {
@@ -544,9 +640,11 @@ Complex operator+(const Complex& c) {<br>
             btn.addEventListener('click', (e) => {
                 const assId = btn.getAttribute('data-id');
                 const fileName = btn.getAttribute('data-file');
+                const type = btn.getAttribute('data-type');
 
-                // Increment download counter
-                const assObj = currentSubject.assignments.find(a => a.id === assId);
+                const allAss = getCombinedAssignments(subjectKey);
+                const assObj = allAss.find(a => a.id === assId);
+
                 if (assObj) {
                     const counts = getStoredCounts(assId, assObj.views, assObj.downloads);
                     counts.downloads += 1;
@@ -557,11 +655,39 @@ Complex operator+(const Complex& c) {<br>
                     const aBadge = document.getElementById(`dl-count-a-${assId}`);
                     if (qBadge) qBadge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down" style="color:#2563eb"></i> ${counts.downloads} downloads`;
                     if (aBadge) aBadge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down" style="color:#16a34a"></i> ${counts.downloads} downloads`;
+
+                    // Check if it's an uploaded Data URL PDF file
+                    // Check if it's an uploaded Data URL PDF file
+                    if (type === 'question' && assObj.questionDataUrl) {
+                        const link = document.createElement('a');
+                        link.href = assObj.questionDataUrl;
+                        link.download = fileName;
+                        link.click();
+                        showToast(`Downloading uploaded ${fileName}...`);
+                        return;
+                    } else if (type === 'answer' && assObj.answerDataUrl) {
+                        const link = document.createElement('a');
+                        link.href = assObj.answerDataUrl;
+                        link.download = fileName;
+                        link.click();
+                        showToast(`Downloading uploaded ${fileName}...`);
+                        return;
+                    }
                 }
 
-                // Simulate file download blob
+                // Default simulated download fallback
                 triggerBlobDownload(fileName);
                 showToast(`Downloading ${fileName}...`);
+            });
+        });
+
+        // Admin Delete Buttons
+        document.querySelectorAll('.admin-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const assId = btn.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this assignment?')) {
+                    deleteCustomAssignment(subjectKey, assId);
+                }
             });
         });
 
@@ -760,9 +886,6 @@ Complex operator+(const Complex& c) {<br>
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // Initial render
-    renderAssignments();
-
     // Scroll to hash target if provided
     if (window.location.hash) {
         setTimeout(() => {
@@ -773,4 +896,224 @@ Complex operator+(const Complex& c) {<br>
             }
         }, 250);
     }
+
+    // Admin Delete Assignment Helper
+    function deleteCustomAssignment(sKey, assId) {
+        let customList = [];
+        const stored = localStorage.getItem(`custom_assignments_${sKey}`);
+        if (stored) {
+            customList = JSON.parse(stored);
+        }
+        customList = customList.filter(a => a.id !== assId);
+        localStorage.setItem(`custom_assignments_${sKey}`, JSON.stringify(customList));
+        showToast('Assignment deleted successfully.');
+        renderAssignments(searchInput ? searchInput.value : '');
+    }
+
+    // Admin PDF Upload Modal Logic
+    const uploadModalBackdrop = document.getElementById('uploadModalBackdrop');
+    const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
+    const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+    const adminUploadForm = document.getElementById('adminUploadForm');
+
+    const uploadQuestionPdfInput = document.getElementById('uploadQuestionPdf');
+    const uploadAnswerPdfInput = document.getElementById('uploadAnswerPdf');
+    const qPdfNameDisplay = document.getElementById('qPdfName');
+    const aPdfNameDisplay = document.getElementById('aPdfName');
+
+    if (openUploadModalBtn) {
+        openUploadModalBtn.addEventListener('click', () => {
+            if (uploadModalBackdrop) {
+                const selectSub = document.getElementById('uploadSubjectSelect');
+                if (selectSub) selectSub.value = subjectKey;
+                uploadModalBackdrop.classList.add('active');
+            }
+        });
+    }
+
+    function closeAdminModal() {
+        if (uploadModalBackdrop) uploadModalBackdrop.classList.remove('active');
+        if (adminUploadForm) adminUploadForm.reset();
+        if (qPdfNameDisplay) qPdfNameDisplay.textContent = 'Choose Question PDF...';
+        if (aPdfNameDisplay) aPdfNameDisplay.textContent = 'Choose Solution PDF...';
+    }
+
+    if (closeUploadModalBtn) closeUploadModalBtn.addEventListener('click', closeAdminModal);
+    if (cancelUploadBtn) cancelUploadBtn.addEventListener('click', closeAdminModal);
+    if (uploadModalBackdrop) {
+        uploadModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === uploadModalBackdrop) closeAdminModal();
+        });
+    }
+
+    if (uploadQuestionPdfInput) {
+        uploadQuestionPdfInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                qPdfNameDisplay.textContent = '📄 ' + e.target.files[0].name;
+            }
+        });
+    }
+
+    if (uploadAnswerPdfInput) {
+        uploadAnswerPdfInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                aPdfNameDisplay.textContent = '📄 ' + e.target.files[0].name;
+            }
+        });
+    }
+
+    // Convert PDF File to Data URL
+    function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (adminUploadForm) {
+        adminUploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const targetSubjectKey = document.getElementById('uploadSubjectSelect').value;
+            const assNum = parseInt(document.getElementById('uploadAssNum').value, 10);
+            const assTitle = document.getElementById('uploadAssTitle').value.trim();
+            const qNotes = document.getElementById('uploadQuestionNotes').value.trim();
+            const aNotes = document.getElementById('uploadAnswerNotes').value.trim();
+
+            const qFile = uploadQuestionPdfInput.files[0];
+            const aFile = uploadAnswerPdfInput.files[0];
+
+            if (!qFile || !aFile) {
+                showToast('Please select both Question PDF and Solution PDF files!');
+                return;
+            }
+
+            try {
+                showToast('Processing & Uploading PDF Files...');
+                const qDataUrl = await fileToDataUrl(qFile);
+                const aDataUrl = await fileToDataUrl(aFile);
+
+                const newAssId = `custom_ass_${Date.now()}`;
+                const newAssignment = {
+                    id: newAssId,
+                    num: assNum,
+                    title: assTitle,
+                    questionFile: qFile.name,
+                    answerFile: aFile.name,
+                    questionDataUrl: qDataUrl,
+                    answerDataUrl: aDataUrl,
+                    views: 1,
+                    downloads: 0,
+                    isCustom: true,
+                    comments: [],
+                    questionPreview: `
+                        <div class="pdf-doc-view">
+                            <div class="pdf-doc-title"><i class="fa-solid fa-file-pdf" style="color:#0284c7"></i> ${escapeHtml(qFile.name)}</div>
+                            <p>${escapeHtml(qNotes || 'Uploaded PDF Question Document. Click Download below to get full PDF file.')}</p>
+                            <div class="pdf-doc-meta" style="margin-top:8px;">File size: ${(qFile.size / 1024).toFixed(1)} KB • PDF Document</div>
+                        </div>
+                    `,
+                    answerPreview: `
+                        <div class="pdf-doc-view">
+                            <div class="pdf-doc-title"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> ${escapeHtml(aFile.name)}</div>
+                            <p>${escapeHtml(aNotes || 'Uploaded PDF Solution Document. Click Download below to get full PDF file.')}</p>
+                            <div class="pdf-doc-meta" style="margin-top:8px;">File size: ${(aFile.size / 1024).toFixed(1)} KB • PDF Document</div>
+                        </div>
+                    `
+                };
+
+                // Retrieve existing custom list for target subject
+                const existingCustomJSON = localStorage.getItem(`custom_assignments_${targetSubjectKey}`);
+                const existingCustom = existingCustomJSON ? JSON.parse(existingCustomJSON) : [];
+                existingCustom.unshift(newAssignment);
+
+                localStorage.setItem(`custom_assignments_${targetSubjectKey}`, JSON.stringify(existingCustom));
+
+                closeAdminModal();
+                showToast('Assignment & PDF Files Published Successfully!');
+
+                if (targetSubjectKey === subjectKey) {
+                    renderAssignments(searchInput ? searchInput.value : '');
+                } else {
+                    window.location.search = `?subject=${targetSubjectKey}`;
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error processing PDF file upload.');
+            }
+        });
+    }
+
+    // Assignment Search Listeners & Keyboard Shortcuts
+    const assignmentSearchInput = document.getElementById('assignmentSearch');
+    const assignmentSearchClearBtn = document.getElementById('assignmentSearchClearBtn');
+    const assignmentSearchCounter = document.getElementById('assignmentSearchCounter');
+
+    function performAssignmentSearch(rawQuery) {
+        const query = rawQuery.toLowerCase().trim();
+        if (assignmentSearchClearBtn) {
+            assignmentSearchClearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+        }
+
+        renderAssignments(query);
+
+        if (assignmentSearchCounter) {
+            const allAss = getCombinedAssignments(subjectKey);
+            if (query.length > 0) {
+                const count = assignmentsContainer ? assignmentsContainer.querySelectorAll('.assignment-card-wireframe').length : 0;
+                assignmentSearchCounter.style.display = 'inline-block';
+                assignmentSearchCounter.innerHTML = `<i class="fa-solid fa-filter"></i> Showing <strong>${count}</strong> of <strong>${allAss.length}</strong> assignment${allAss.length === 1 ? '' : 's'} for "<em>${escapeHTML(query)}</em>"`;
+            } else {
+                assignmentSearchCounter.style.display = 'none';
+            }
+        }
+    }
+
+    if (assignmentSearchInput) {
+        assignmentSearchInput.addEventListener('input', (e) => performAssignmentSearch(e.target.value));
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                assignmentSearchInput.focus();
+                assignmentSearchInput.select();
+            } else if (e.key === 'Escape' && document.activeElement === assignmentSearchInput) {
+                assignmentSearchInput.value = '';
+                performAssignmentSearch('');
+                assignmentSearchInput.blur();
+            }
+        });
+    }
+
+    if (assignmentSearchClearBtn) {
+        assignmentSearchClearBtn.addEventListener('click', () => {
+            if (assignmentSearchInput) {
+                assignmentSearchInput.value = '';
+                performAssignmentSearch('');
+                assignmentSearchInput.focus();
+            }
+        });
+    }
+
+    // Live Online Users Counter Simulation
+    const onlineUsersCountEl = document.getElementById('onlineUsersCount');
+    if (onlineUsersCountEl) {
+        let baseCount = parseInt(sessionStorage.getItem('online_users_count')) || Math.floor(Math.random() * 12) + 16;
+        sessionStorage.setItem('online_users_count', baseCount);
+        onlineUsersCountEl.textContent = baseCount;
+
+        setInterval(() => {
+            const delta = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+            baseCount = Math.max(12, Math.min(36, baseCount + delta));
+            sessionStorage.setItem('online_users_count', baseCount);
+            onlineUsersCountEl.textContent = baseCount;
+        }, 5000);
+    }
+
+    // Initial render & admin state check
+    renderAssignments();
+    updateAdminUI();
 });
+

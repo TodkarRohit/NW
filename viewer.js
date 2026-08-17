@@ -72,10 +72,21 @@ document.addEventListener('DOMContentLoaded', () => {
     chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
     let activeIndex = 0;
+    let currentQBView = 'questions'; // 'questions' or 'answers' for Question Banks
 
     // Helper: Local Storage Key for Persisted Uploads
-    function getStorageKey(itemIndex) {
+    function getStorageKey(itemIndex, viewType = null) {
         if (!items[itemIndex]) return `doc_upload_${subjectKey}_${resourceType}_default`;
+        if (isQB) {
+            const targetView = viewType || currentQBView;
+            const qbKey = `doc_upload_${subjectKey}_qb_${items[itemIndex].id}_${targetView}`;
+            if (localStorage.getItem(qbKey)) return qbKey;
+            if (targetView === 'questions') {
+                const legacyKey = `doc_upload_${subjectKey}_qb_${items[itemIndex].id}`;
+                if (localStorage.getItem(legacyKey)) return legacyKey;
+            }
+            return qbKey;
+        }
         return `doc_upload_${subjectKey}_${resourceType}_${items[itemIndex].id}`;
     }
 
@@ -89,7 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             (item.name && item.name.toLowerCase().includes(searchLower));
 
             if (matches) {
-                const storedFile = localStorage.getItem(getStorageKey(index));
+                const hasQuestionDoc = localStorage.getItem(getStorageKey(index, 'questions'));
+                const hasAnswerDoc = localStorage.getItem(getStorageKey(index, 'answers'));
+                const hasDoc = hasQuestionDoc || hasAnswerDoc;
+
                 const itemBtn = document.createElement('button');
                 itemBtn.className = `chapter-item ${index === activeIndex ? 'active' : ''}`;
                 itemBtn.setAttribute('type', 'button');
@@ -97,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemBtn.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                         <span class="chapter-item-title">${item.title}</span>
-                        ${storedFile ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
+                        ${hasDoc ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
                     </div>
                 `;
 
@@ -122,6 +136,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Sidebar Filter Search Listener & Keyboard Shortcut
+    const chapterSearchClearBtn = document.getElementById('chapterSearchClearBtn');
+
+    function performChapterSearch(query) {
+        const text = query.toLowerCase().trim();
+        if (chapterSearchClearBtn) {
+            chapterSearchClearBtn.style.display = text.length > 0 ? 'flex' : 'none';
+        }
+        renderItemList(text);
+    }
+
+    if (chapterSearchInput) {
+        chapterSearchInput.addEventListener('input', (e) => performChapterSearch(e.target.value));
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                chapterSearchInput.focus();
+                chapterSearchInput.select();
+            } else if (e.key === 'Escape' && document.activeElement === chapterSearchInput) {
+                chapterSearchInput.value = '';
+                performChapterSearch('');
+                chapterSearchInput.blur();
+            }
+        });
+    }
+
+    if (chapterSearchClearBtn) {
+        chapterSearchClearBtn.addEventListener('click', () => {
+            if (chapterSearchInput) {
+                chapterSearchInput.value = '';
+                performChapterSearch('');
+                chapterSearchInput.focus();
+            }
+        });
+    }
+
     // 6. Load Item Content / Upload Structure
     function loadItemContent(index) {
         if (!items[index]) return;
@@ -129,17 +180,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentItem = items[index];
         currentChapterName.textContent = currentItem.title;
 
-        // Check if an uploaded document exists for this item
-        const storedDocJSON = localStorage.getItem(getStorageKey(index));
+        // Question Bank Tab Bar HTML
+        let qbTabBarHTML = '';
+        if (isQB) {
+            qbTabBarHTML = `
+                <div class="qb-switcher-container">
+                    <div class="qb-tab-bar">
+                        <button type="button" class="qb-tab-btn question-tab ${currentQBView === 'questions' ? 'active' : ''}" id="qbQuestionTabBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <circle cx="12" cy="13" r="1"></circle>
+                                <path d="M12 17h.01"></path>
+                            </svg>
+                            <span>QUESTIONS</span>
+                        </button>
+                        <div class="qb-tab-chevron">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                        <button type="button" class="qb-tab-btn answer-tab ${currentQBView === 'answers' ? 'active' : ''}" id="qbAnswerTabBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span>ANSWERS</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Check if an uploaded document exists for current view
+        const storageKey = getStorageKey(index, isQB ? currentQBView : null);
+        const storedDocJSON = localStorage.getItem(storageKey);
         
         if (storedDocJSON) {
             const docData = JSON.parse(storedDocJSON);
             itemUploadStatus.className = "status-indicator uploaded";
-            statusText.textContent = "Document Attached";
+            statusText.textContent = isQB ? `${currentQBView === 'questions' ? 'Question' : 'Answer'} PDF Attached` : "Document Attached";
 
             notesDocument.innerHTML = `
+                ${qbTabBarHTML}
+
                 <div class="structure-header">
-                    <h2>${currentItem.title}</h2>
+                    <h2>${currentItem.title} ${isQB ? `(${currentQBView === 'questions' ? 'Question Paper' : 'Answer Key & Solutions'})` : ''}</h2>
                     <p>${subjectData.title} &bull; ${typeLabel}</p>
                 </div>
 
@@ -153,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <div class="doc-actions">
-                            <button class="doc-action-btn" id="reUploadBtn">Replace File</button>
+                            <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
                             <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
                         </div>
                     </div>
@@ -174,12 +259,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="document-outline-card">
-                    <h4>📋 ${isQB ? 'Question Bank' : 'Chapter'} Details</h4>
+                    <h4>📋 ${isQB ? (currentQBView === 'questions' ? 'Question Bank Paper' : 'Answer Key & Solutions') : 'Chapter'} Details</h4>
                     <div class="outline-sections-grid">
                         <div class="outline-item"><span class="outline-item-num">01</span> ${currentItem.name || currentItem.title}</div>
                         <div class="outline-item"><span class="outline-item-num">02</span> Subject: ${subjectData.title}</div>
                         <div class="outline-item"><span class="outline-item-num">03</span> Semester: ${subjectData.semester}</div>
-                        <div class="outline-item"><span class="outline-item-num">04</span> Status: Active ${typeLabel}</div>
+                        <div class="outline-item"><span class="outline-item-num">04</span> View Mode: ${isQB ? currentQBView.toUpperCase() : 'Study Notes'}</div>
                     </div>
                 </div>
             `;
@@ -187,15 +272,108 @@ document.addEventListener('DOMContentLoaded', () => {
             // Attach replace & delete events
             document.getElementById('reUploadBtn').addEventListener('click', () => fileUploadInput.click());
             document.getElementById('deleteDocBtn').addEventListener('click', () => {
-                if (confirm(`Remove uploaded file for ${currentItem.title}?`)) {
-                    localStorage.removeItem(getStorageKey(index));
+                if (confirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
+                    localStorage.removeItem(storageKey);
                     renderItemList(chapterSearchInput.value);
                     loadItemContent(index);
                 }
             });
 
+        } else if (isQB) {
+            // Built-in Question Bank Questions vs Answers Paper View
+            itemUploadStatus.className = "status-indicator";
+            statusText.textContent = currentQBView === 'questions' ? "Viewing Question Paper" : "Viewing Answer Key";
+
+            const paperViewHTML = currentQBView === 'questions' ? `
+                <div class="qb-paper-view question-paper">
+                    <div class="paper-header">
+                        <div class="paper-badge question-badge">QUESTION PAPER</div>
+                        <h3>${currentItem.title}</h3>
+                        <p class="paper-sub">${subjectData.title} &bull; ${subjectData.semester} &bull; Time: 2 Hours &bull; Max Marks: 50</p>
+                    </div>
+                    <div class="paper-section">
+                        <h4>SECTION A: Short Answer Questions (20 Marks)</h4>
+                        <div class="q-item">
+                            <span class="q-num">Q1.</span>
+                            <p>Define ${currentItem.name || 'key concepts'}. Explain memory representation and structural operations with algorithm complexity.</p>
+                        </div>
+                        <div class="q-item">
+                            <span class="q-num">Q2.</span>
+                            <p>Differentiate between linear and non-linear memory allocation with suitable C++ examples.</p>
+                        </div>
+                    </div>
+                    <div class="paper-section">
+                        <h4>SECTION B: Long Answer Questions & Applications (30 Marks)</h4>
+                        <div class="q-item">
+                            <span class="q-num">Q3.</span>
+                            <p>Write a complete C++ class implementation to solve real-world problem statement for ${currentItem.name || 'the given topic'}. Include constructors, destructors, and member functions.</p>
+                        </div>
+                        <div class="q-item">
+                            <span class="q-num">Q4.</span>
+                            <p>Analyze best-case, average-case, and worst-case time complexities with step-by-step trace diagrams.</p>
+                        </div>
+                    </div>
+                    <div class="upload-pdf-strip">
+                        <span>Have your own Question PDF for this unit?</span>
+                        <button type="button" class="strip-upload-btn" id="stripUploadQBtn">Upload Question PDF</button>
+                    </div>
+                </div>
+            ` : `
+                <div class="qb-paper-view answer-paper">
+                    <div class="paper-header">
+                        <div class="paper-badge answer-badge">MODEL SOLUTIONS & ANSWER KEY</div>
+                        <h3>${currentItem.title} - Detailed Solutions</h3>
+                        <p class="paper-sub">${subjectData.title} &bull; ${subjectData.semester} &bull; Official Answer Key</p>
+                    </div>
+                    <div class="paper-section">
+                        <h4>MODEL SOLUTIONS & CODE IMPLEMENTATION</h4>
+                        <div class="q-item solution-item">
+                            <span class="sol-tag">Solution Q1:</span>
+                            <p><strong>Explanation:</strong> ${currentItem.name || 'Concept'} allows structured memory management. Time Complexity: O(1) for direct lookup, O(N) for sequential traversal.</p>
+                            <div class="sol-code-block">
+                                // C++ Solution Code<br>
+                                #include &lt;iostream&gt;<br>
+                                using namespace std;<br><br>
+                                int main() {<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;cout &lt;&lt; "Solution for ${currentItem.name || 'Question 1'}" &lt;&lt; endl;<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;return 0;<br>
+                                }
+                            </div>
+                        </div>
+                        <div class="q-item solution-item">
+                            <span class="sol-tag">Solution Q2:</span>
+                            <p><strong>Comparison:</strong> Contiguous memory allocation vs node-based dynamic references. Dynamic allocation avoids fixed memory limits but introduces pointer overhead.</p>
+                        </div>
+                    </div>
+                    <div class="upload-pdf-strip">
+                        <span>Have your own Answer/Solution PDF for this unit?</span>
+                        <button type="button" class="strip-upload-btn" id="stripUploadABtn">Upload Answer PDF</button>
+                    </div>
+                </div>
+            `;
+
+            notesDocument.innerHTML = `
+                ${qbTabBarHTML}
+                ${paperViewHTML}
+
+                <div class="document-outline-card">
+                    <h4>📋 Question Bank Details</h4>
+                    <div class="outline-sections-grid">
+                        <div class="outline-item"><span class="outline-item-num">01</span> ${currentItem.name || currentItem.title}</div>
+                        <div class="outline-item"><span class="outline-item-num">02</span> Subject: ${subjectData.title}</div>
+                        <div class="outline-item"><span class="outline-item-num">03</span> Semester: ${subjectData.semester}</div>
+                        <div class="outline-item"><span class="outline-item-num">04</span> Active Tab: ${currentQBView.toUpperCase()}</div>
+                    </div>
+                </div>
+            `;
+
+            const stripQBtn = document.getElementById('stripUploadQBtn');
+            const stripABtn = document.getElementById('stripUploadABtn');
+            if (stripQBtn) stripQBtn.addEventListener('click', () => fileUploadInput.click());
+            if (stripABtn) stripABtn.addEventListener('click', () => fileUploadInput.click());
+
         } else {
-            // Clean Upload / Outline Blueprint Structure
+            // Clean Upload / Outline Blueprint Structure for Study Notes
             itemUploadStatus.className = "status-indicator";
             statusText.textContent = "Ready for Upload";
 
@@ -221,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <!-- Structured Outline Layout -->
                 <div class="document-outline-card">
-                    <h4>📋 ${isQB ? 'Question Bank' : 'Chapter'} Details</h4>
+                    <h4>📋 Chapter Details</h4>
                     <div class="outline-sections-grid">
                         <div class="outline-item"><span class="outline-item-num">01</span> ${currentItem.name || currentItem.title}</div>
                         <div class="outline-item"><span class="outline-item-num">02</span> Subject: ${subjectData.title}</div>
@@ -254,6 +432,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
+
+        // Attach event listeners for QB Questions vs Answers tab buttons if present
+        if (isQB) {
+            const qbQuestionTabBtn = document.getElementById('qbQuestionTabBtn');
+            const qbAnswerTabBtn = document.getElementById('qbAnswerTabBtn');
+
+            if (qbQuestionTabBtn) {
+                qbQuestionTabBtn.addEventListener('click', () => {
+                    currentQBView = 'questions';
+                    loadItemContent(index);
+                });
+            }
+            if (qbAnswerTabBtn) {
+                qbAnswerTabBtn.addEventListener('click', () => {
+                    currentQBView = 'answers';
+                    loadItemContent(index);
+                });
+            }
+        }
+
+        // Update Download Button Label
+        updateDownloadBtnUI();
 
         // Scroll to top
         const previewPanel = document.getElementById('previewPanel');
@@ -297,9 +497,122 @@ document.addEventListener('DOMContentLoaded', () => {
         fileUploadInput.value = ''; // Reset input value so same file can be selected again
     });
 
-    uploadFileBtn.addEventListener('click', () => {
-        fileUploadInput.click();
-    });
+    // Download Active File Handler
+    const downloadFileBtn = document.getElementById('downloadFileBtn');
+    const downloadBtnText = document.getElementById('downloadBtnText');
+
+    function updateDownloadBtnUI() {
+        if (!downloadBtnText) return;
+        if (isQB) {
+            if (currentQBView === 'questions') {
+                downloadBtnText.textContent = "Download Question PDF";
+            } else {
+                downloadBtnText.textContent = "Download Answer PDF";
+            }
+        } else {
+            downloadBtnText.textContent = "Download Notes PDF";
+        }
+    }
+
+    function handleDownloadActiveFile() {
+        const currentItem = items[activeIndex];
+        if (!currentItem) return;
+
+        const storageKey = getStorageKey(activeIndex, isQB ? currentQBView : null);
+        const storedDocJSON = localStorage.getItem(storageKey);
+
+        if (storedDocJSON) {
+            // Download user-uploaded custom file
+            const docData = JSON.parse(storedDocJSON);
+            const a = document.createElement('a');
+            a.href = docData.data;
+            a.download = docData.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            // Generate & download document file for built-in Question/Answer/Notes
+            let fileTitle = "";
+            let contentText = "";
+
+            if (isQB) {
+                if (currentQBView === 'questions') {
+                    fileTitle = `${currentItem.title}_Questions.txt`;
+                    contentText = `========================================================================\n` +
+                                  `${subjectData.title} - QUESTION PAPER\n` +
+                                  `${currentItem.title}\n` +
+                                  `Semester: ${subjectData.semester} | Time: 2 Hours | Max Marks: 50\n` +
+                                  `========================================================================\n\n` +
+                                  `SECTION A: Short Answer Questions (20 Marks)\n` +
+                                  `------------------------------------------------------------------------\n` +
+                                  `Q1. Define ${currentItem.name || 'key concepts'}. Explain memory representation and structural operations with algorithm complexity.\n\n` +
+                                  `Q2. Differentiate between linear and non-linear memory allocation with suitable C++ examples.\n\n\n` +
+                                  `SECTION B: Long Answer Questions & Applications (30 Marks)\n` +
+                                  `------------------------------------------------------------------------\n` +
+                                  `Q3. Write a complete C++ class implementation to solve real-world problem statement for ${currentItem.name || 'the given topic'}. Include constructors, destructors, and member functions.\n\n` +
+                                  `Q4. Analyze best-case, average-case, and worst-case time complexities with step-by-step trace diagrams.\n\n` +
+                                  `========================================================================\n` +
+                                  `Engineering Notes Hub - Built for NMIET Students\n` +
+                                  `========================================================================\n`;
+                } else {
+                    fileTitle = `${currentItem.title}_Model_Solutions.txt`;
+                    contentText = `========================================================================\n` +
+                                  `${subjectData.title} - MODEL SOLUTIONS & ANSWER KEY\n` +
+                                  `${currentItem.title}\n` +
+                                  `Semester: ${subjectData.semester} | Official Answer Key\n` +
+                                  `========================================================================\n\n` +
+                                  `SOLUTION Q1:\n` +
+                                  `------------------------------------------------------------------------\n` +
+                                  `Explanation: ${currentItem.name || 'Concept'} allows structured memory management.\n` +
+                                  `Time Complexity: O(1) for direct lookup, O(N) for sequential traversal.\n\n` +
+                                  `C++ Code Implementation:\n` +
+                                  `#include <iostream>\n` +
+                                  `using namespace std;\n\n` +
+                                  `int main() {\n` +
+                                  `    cout << "Solution for ${currentItem.name || 'Question 1'}" << endl;\n` +
+                                  `    return 0;\n` +
+                                  `}\n\n\n` +
+                                  `SOLUTION Q2:\n` +
+                                  `------------------------------------------------------------------------\n` +
+                                  `Comparison: Contiguous memory allocation vs node-based dynamic references.\n` +
+                                  `Dynamic allocation avoids fixed memory limits but introduces pointer overhead.\n\n` +
+                                  `========================================================================\n` +
+                                  `Engineering Notes Hub - Built for NMIET Students\n` +
+                                  `========================================================================\n`;
+                }
+            } else {
+                fileTitle = `${currentItem.title}_Study_Notes.txt`;
+                contentText = `========================================================================\n` +
+                              `${subjectData.title} - STUDY NOTES\n` +
+                              `${currentItem.title}\n` +
+                              `Semester: ${subjectData.semester}\n` +
+                              `========================================================================\n\n` +
+                              `MODULE OVERVIEW:\n` +
+                              `${currentItem.name || currentItem.title}\n\n` +
+                              `KEY TOPICS & STUDY GUIDELINES:\n` +
+                              `1. Fundamentals & Core Architecture\n` +
+                              `2. Standard Operating Principles & Methods\n` +
+                              `3. Code Implementation & Real-World Examples\n\n` +
+                              `========================================================================\n` +
+                              `Engineering Notes Hub - Built for NMIET Students\n` +
+                              `========================================================================\n`;
+            }
+
+            const blob = new Blob([contentText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileTitle;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    if (downloadFileBtn) {
+        downloadFileBtn.addEventListener('click', handleDownloadActiveFile);
+    }
 
     // 8. Pagination (Prev / Next Item)
     function updatePagination(index) {
@@ -359,6 +672,21 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebarPanel.classList.remove('open');
             sidebarBackdrop.classList.remove('active');
         });
+    }
+
+    // Live Online Users Counter Simulation
+    const onlineUsersCountEl = document.getElementById('onlineUsersCount');
+    if (onlineUsersCountEl) {
+        let baseCount = parseInt(sessionStorage.getItem('online_users_count')) || Math.floor(Math.random() * 12) + 16;
+        sessionStorage.setItem('online_users_count', baseCount);
+        onlineUsersCountEl.textContent = baseCount;
+
+        setInterval(() => {
+            const delta = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+            baseCount = Math.max(12, Math.min(36, baseCount + delta));
+            sessionStorage.setItem('online_users_count', baseCount);
+            onlineUsersCountEl.textContent = baseCount;
+        }, 5000);
     }
 
     // Initial Load

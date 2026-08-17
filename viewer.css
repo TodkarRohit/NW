@@ -174,22 +174,81 @@ body {
     font-family: inherit;
 }
 
+/* Online Active Users Badge */
+.online-users-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.45);
+    color: #ffffff;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.15);
+    user-select: none;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.online-users-badge i {
+    color: #4ade80;
+    font-size: 0.85rem;
+}
+
+.online-pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #22c55e;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 10px #22c55e;
+}
+
+.online-pulse-dot::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: rgba(34, 197, 94, 0.6);
+    animation: greenPulse 2s infinite ease-in-out;
+}
+
+@keyframes greenPulse {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+}
+
 .action-btn:hover {
     background: var(--bg-page);
     border-color: #cbd5e1;
     transform: translateY(-1px);
 }
 
-#uploadFileBtn {
-    background: var(--primary-color);
+#downloadFileBtn, .action-btn.primary-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #ffffff;
-    border-color: var(--primary-color);
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    border-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    font-weight: 700;
 }
 
-#uploadFileBtn:hover {
-    background: var(--primary-hover);
-    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+#downloadFileBtn:hover, .action-btn.primary-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
 }
 
 .mobile-toggle-btn {
@@ -267,26 +326,27 @@ body {
 
 .sidebar-search svg {
     position: absolute;
-    left: 10px;
+    left: 12px;
     color: var(--text-muted);
     pointer-events: none;
+    transition: color 0.2s ease;
 }
 
 .sidebar-search input {
     width: 100%;
-    padding: 8px 10px 8px 34px;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
+    padding: 9px 34px 9px 36px;
+    font-size: 0.875rem;
+    border-radius: 20px;
+    border: 1.5px solid var(--border-color);
     background: var(--bg-page);
+    color: var(--text-heading);
     font-family: inherit;
     outline: none;
-    transition: all 0.2s;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sidebar-search input:focus {
     border-color: var(--primary-color);
-    background: #ffffff;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -760,3 +820,217 @@ body {
         padding: 1.5rem 1rem;
     }
 }
+
+/* ==========================================================================
+   Question Bank Questions vs Answers Tab Switcher Styles
+   ========================================================================== */
+.qb-switcher-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.75rem;
+}
+
+.qb-tab-bar {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    padding: 6px;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    max-width: 580px;
+    width: 100%;
+}
+
+.qb-tab-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.04em;
+}
+
+.qb-tab-btn:hover {
+    color: var(--text-heading);
+    background: var(--bg-page);
+}
+
+.qb-tab-btn.question-tab.active {
+    background: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+.qb-tab-btn.answer-tab.active {
+    background: #16a34a;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+}
+
+.qb-tab-chevron {
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    padding: 0 4px;
+}
+
+/* Question Bank Paper Sheet View */
+.qb-paper-view {
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.paper-header {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.paper-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.paper-badge.question-badge {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #7dd3fc;
+}
+
+.paper-badge.answer-badge {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.paper-header h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin-bottom: 4px;
+}
+
+.paper-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.paper-section {
+    margin-bottom: 1.5rem;
+}
+
+.paper-section h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    border-left: 4px solid var(--primary-color);
+    padding-left: 10px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.q-item {
+    background: var(--bg-page);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.q-num {
+    font-weight: 800;
+    color: #0284c7;
+    font-size: 0.9rem;
+}
+
+.sol-tag {
+    font-weight: 800;
+    color: #16a34a;
+    font-size: 0.9rem;
+}
+
+.sol-code-block {
+    background: #0f172a;
+    color: #38bdf8;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.825rem;
+    margin-top: 8px;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+
+.upload-pdf-strip {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border: 1.5px dashed #0284c7;
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #0369a1;
+}
+
+.answer-paper .upload-pdf-strip {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-color: #16a34a;
+    color: #15803d;
+}
+
+.strip-upload-btn {
+    background: #0284c7;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.strip-upload-btn:hover {
+    background: #0369a1;
+}
+
+.answer-paper .strip-upload-btn {
+    background: #16a34a;
+}
+
+.answer-paper .strip-upload-btn:hover {
+    background: #15803d;
+}
