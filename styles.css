@@ -217,6 +217,37 @@ footer {
     font-size: 0.9rem;
 }
 
+/* Empty State Box */
+.no-results-box {
+    text-align: center;
+    background: var(--card-bg);
+    border: 2px dashed var(--border-color);
+    border-radius: 14px;
+    padding: 3.5rem 2rem;
+    max-width: 600px;
+    margin: 1.5rem auto;
+    color: var(--text-light);
+}
+
+.no-results-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.no-results-box h3 {
+    color: var(--text-dark);
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.no-results-box p {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    max-width: 440px;
+    margin: 0 auto;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     header h1 {

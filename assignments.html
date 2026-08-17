@@ -24,6 +24,10 @@
             <div class="header-titles">
                 <h1 id="subjectTitle">Data Structure and Algorithm (C++)</h1>
                 <p id="subjectSubtitle">Semester 2 • Course Assignments & Answer Keys</p>
+                <div class="subject-quick-nav" id="subjectQuickNav">
+                    <a href="viewer.html?subject=dsa&type=notes" id="notesNavBtn" class="quick-nav-pill"><i class="fa-solid fa-book-open"></i> Study Notes</a>
+                    <a href="viewer.html?subject=dsa&type=qb" id="qbNavBtn" class="quick-nav-pill"><i class="fa-solid fa-circle-question"></i> Question Banks</a>
+                </div>
             </div>
             <div class="header-right">
                 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
@@ -79,6 +83,25 @@
             <!-- Dynamic Assignment Cards rendered via JS -->
         </section>
     </main>
+
+    <!-- Full PDF Preview Modal -->
+    <div class="modal-backdrop" id="fullViewModal">
+        <div class="full-view-dialog">
+            <div class="full-view-header">
+                <div class="full-view-title-wrap">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <h3 id="fullViewFileName">Document Preview</h3>
+                </div>
+                <div class="full-view-actions">
+                    <button class="full-view-btn download-action" id="fullViewDownloadBtn"><i class="fa-solid fa-download"></i> Download</button>
+                    <button class="close-modal-btn" id="closeFullViewModal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="full-view-body" id="fullViewContent">
+                <!-- Injected full content -->
+            </div>
+        </div>
+    </div>
 
     <!-- Comment Drawer Sidebar / Modal -->
     <div class="comment-modal-backdrop" id="commentModalBackdrop">

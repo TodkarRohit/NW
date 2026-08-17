@@ -27,13 +27,25 @@
                 <span class="resource-badge" id="resourceTypeBadge">Study Notes</span>
                 <h1 class="header-title" id="subjectHeading">Subject Name</h1>
             </div>
+            <!-- Resource Type Quick Switcher Tabs -->
+            <nav class="resource-switcher-nav">
+                <a href="viewer.html?subject=dsa&type=notes" class="res-tab-pill" id="tabNotesLink">
+                    <span>📖 Study Notes</span>
+                </a>
+                <a href="viewer.html?subject=dsa&type=qb" class="res-tab-pill" id="tabQbLink">
+                    <span>❓ Question Banks</span>
+                </a>
+                <a href="assignments.html?subject=dsa" class="res-tab-pill" id="tabAssLink">
+                    <span>📁 Assignments</span>
+                </a>
+            </nav>
         </div>
 
         <div class="header-actions">
             <!-- Hidden File Input for uploading note/assignment -->
             <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
             
-            <button class="action-btn" id="uploadFileBtn" title="Upload notes or assignment file">
+            <button class="action-btn" id="uploadFileBtn" title="Upload notes or question bank file">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>

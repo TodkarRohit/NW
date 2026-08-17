@@ -1,12 +1,17 @@
-// Engineering Notes Hub - Study Notes Viewer & Upload Management Script
+// Engineering Notes Hub - Resource Viewer & Upload Management Script
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Parse URL Parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const subjectKey = urlParams.get('subject') || 'dsa';
+    let subjectKey = urlParams.get('subject') || 'dsa';
+    const resourceType = urlParams.get('type') === 'qb' ? 'qb' : 'notes';
+    const isQB = resourceType === 'qb';
 
-    // 2. Load Subject Data
-    const subjectData = subjectsData[subjectKey] || subjectsData['dsa'];
+    // 2. Load Subject Data with Fallback
+    if (!subjectsData[subjectKey]) {
+        subjectKey = 'dsa';
+    }
+    const subjectData = subjectsData[subjectKey];
 
     // 3. DOM Elements
     const subjectHeading = document.getElementById('subjectHeading');
@@ -33,21 +38,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebarPanel = document.getElementById('sidebarPanel');
     const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
+    // Quick Switcher Links
+    const tabNotesLink = document.getElementById('tabNotesLink');
+    const tabQbLink = document.getElementById('tabQbLink');
+    const tabAssLink = document.getElementById('tabAssLink');
+
+    if (tabNotesLink) {
+        tabNotesLink.href = `viewer.html?subject=${subjectKey}&type=notes`;
+        if (!isQB) tabNotesLink.classList.add('active');
+        else tabNotesLink.classList.remove('active');
+    }
+    if (tabQbLink) {
+        tabQbLink.href = `viewer.html?subject=${subjectKey}&type=qb`;
+        if (isQB) tabQbLink.classList.add('active');
+        else tabQbLink.classList.remove('active');
+    }
+    if (tabAssLink) {
+        tabAssLink.href = `assignments.html?subject=${subjectKey}`;
+    }
+
     // 4. Update Header Meta
+    const typeLabel = isQB ? "Question Banks" : "Study Notes";
+    const itemSingular = isQB ? "Question Bank" : "Chapter";
+    const itemPlural = isQB ? "Question Banks" : "Chapters";
+
     subjectHeading.textContent = subjectData.title;
-    resourceTypeBadge.textContent = "Study Notes";
-    sidebarSectionTitle.textContent = "Chapter List";
+    resourceTypeBadge.textContent = typeLabel;
+    sidebarSectionTitle.textContent = isQB ? "Question Banks" : "Chapter List";
 
-    document.title = `${subjectData.title} - Study Notes | Engineering Notes Hub`;
+    document.title = `${subjectData.title} - ${typeLabel} | Engineering Notes Hub`;
 
-    const items = subjectData.chapters || [];
-    chapterCount.textContent = `${items.length} ${items.length === 1 ? 'Chapter' : 'Chapters'}`;
+    const items = isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || []);
+    chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
     let activeIndex = 0;
 
     // Helper: Local Storage Key for Persisted Uploads
     function getStorageKey(itemIndex) {
-        return `doc_upload_${subjectKey}_notes_${items[itemIndex].id}`;
+        if (!items[itemIndex]) return `doc_upload_${subjectKey}_${resourceType}_default`;
+        return `doc_upload_${subjectKey}_${resourceType}_${items[itemIndex].id}`;
     }
 
     // 5. Render Sidebar Items List
@@ -89,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (chapterList.children.length === 0) {
-            chapterList.innerHTML = `<div style="padding: 1.5rem 1rem; color: #94a3b8; font-size: 0.9rem; text-align: center;">No matching chapters found</div>`;
+            chapterList.innerHTML = `<div style="padding: 1.5rem 1rem; color: #94a3b8; font-size: 0.9rem; text-align: center;">No matching ${itemPlural.toLowerCase()} found</div>`;
         }
     }
 
@@ -111,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             notesDocument.innerHTML = `
                 <div class="structure-header">
                     <h2>${currentItem.title}</h2>
-                    <p>${subjectData.title} &bull; Study Notes</p>
+                    <p>${subjectData.title} &bull; ${typeLabel}</p>
                 </div>
 
                 <div class="uploaded-document-card">
@@ -131,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <div class="doc-preview-body">
                         ${docData.type.startsWith('image/') ? `
-                            <img src="${docData.data}" alt="Notes Preview" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px;">
+                            <img src="${docData.data}" alt="Document Preview" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px;">
                         ` : docData.type === 'application/pdf' ? `
                             <iframe src="${docData.data}" title="PDF Preview"></iframe>
                         ` : `
@@ -145,12 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="document-outline-card">
-                    <h4>📋 Chapter Information</h4>
+                    <h4>📋 ${isQB ? 'Question Bank' : 'Chapter'} Details</h4>
                     <div class="outline-sections-grid">
                         <div class="outline-item"><span class="outline-item-num">01</span> ${currentItem.name || currentItem.title}</div>
                         <div class="outline-item"><span class="outline-item-num">02</span> Subject: ${subjectData.title}</div>
                         <div class="outline-item"><span class="outline-item-num">03</span> Semester: ${subjectData.semester}</div>
-                        <div class="outline-item"><span class="outline-item-num">04</span> Status: Active Notes</div>
+                        <div class="outline-item"><span class="outline-item-num">04</span> Status: Active ${typeLabel}</div>
                     </div>
                 </div>
             `;
@@ -173,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             notesDocument.innerHTML = `
                 <div class="structure-header">
                     <h2>${currentItem.title}</h2>
-                    <p>${subjectData.title} &bull; Study Notes</p>
+                    <p>${subjectData.title} &bull; ${typeLabel}</p>
                 </div>
 
                 <!-- Interactive Upload Dropzone Structure -->
@@ -185,14 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
                     </div>
-                    <h3>Upload Study Notes</h3>
+                    <h3>Upload ${typeLabel}</h3>
                     <p>Click here or drag & drop your study notes or PDF document for <strong>${currentItem.title}</strong>.</p>
                     <div class="upload-action-pill">Choose File (PDF, DOCX, TXT, Images)</div>
                 </div>
 
                 <!-- Structured Outline Layout -->
                 <div class="document-outline-card">
-                    <h4>📋 Chapter Information</h4>
+                    <h4>📋 ${isQB ? 'Question Bank' : 'Chapter'} Details</h4>
                     <div class="outline-sections-grid">
                         <div class="outline-item"><span class="outline-item-num">01</span> ${currentItem.name || currentItem.title}</div>
                         <div class="outline-item"><span class="outline-item-num">02</span> Subject: ${subjectData.title}</div>
@@ -265,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.files && e.target.files[0]) {
             handleFileSelection(e.target.files[0]);
         }
+        fileUploadInput.value = ''; // Reset input value so same file can be selected again
     });
 
     uploadFileBtn.addEventListener('click', () => {
@@ -273,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 8. Pagination (Prev / Next Item)
     function updatePagination(index) {
-        if (index > 0) {
+        if (index > 0 && items[index - 1]) {
             prevChapterBtn.disabled = false;
             prevChapterTitle.textContent = items[index - 1].title;
         } else {
@@ -281,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             prevChapterTitle.textContent = 'None';
         }
 
-        if (index < items.length - 1) {
+        if (index < items.length - 1 && items[index + 1]) {
             nextChapterBtn.disabled = false;
             nextChapterTitle.textContent = items[index + 1].title;
         } else {
@@ -335,3 +365,4 @@ document.addEventListener('DOMContentLoaded', () => {
     renderItemList();
     loadItemContent(0);
 });
+

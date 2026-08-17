@@ -42,13 +42,13 @@
                     <span class="semester-tag">Semester 2</span>
                 </div>
                 <div class="resource-links">
-                    <a href="viewer.html?subject=dsa" class="btn">
+                    <a href="viewer.html?subject=dsa&type=notes" class="btn">
                         <span class="btn-icon">📖</span> Study Notes
                     </a>
-                    <a href="#" class="btn">
+                    <a href="viewer.html?subject=dsa&type=qb" class="btn">
                         <span class="btn-icon">❓</span> Question Banks
                     </a>
-                    <a href="#" class="btn">
+                    <a href="assignments.html?subject=dsa" class="btn">
                         <span class="btn-icon">📁</span> Assignments
                     </a>
                 </div>
@@ -61,13 +61,13 @@
                     <span class="semester-tag">Semester 2</span>
                 </div>
                 <div class="resource-links">
-                    <a href="viewer.html?subject=oop" class="btn">
+                    <a href="viewer.html?subject=oop&type=notes" class="btn">
                         <span class="btn-icon">📖</span> Study Notes
                     </a>
-                    <a href="#" class="btn">
+                    <a href="viewer.html?subject=oop&type=qb" class="btn">
                         <span class="btn-icon">❓</span> Question Banks
                     </a>
-                    <a href="#" class="btn">
+                    <a href="assignments.html?subject=oop" class="btn">
                         <span class="btn-icon">📁</span> Assignments
                     </a>
                 </div>
@@ -80,13 +80,13 @@
                     <span class="semester-tag">Semester 2</span>
                 </div>
                 <div class="resource-links">
-                    <a href="viewer.html?subject=hardware" class="btn">
+                    <a href="viewer.html?subject=hardware&type=notes" class="btn">
                         <span class="btn-icon">📖</span> Study Notes
                     </a>
-                    <a href="#" class="btn">
+                    <a href="viewer.html?subject=hardware&type=qb" class="btn">
                         <span class="btn-icon">❓</span> Question Banks
                     </a>
-                    <a href="#" class="btn">
+                    <a href="assignments.html?subject=hardware" class="btn">
                         <span class="btn-icon">📁</span> Assignments
                     </a>
                 </div>
@@ -99,13 +99,13 @@
                     <span class="semester-tag">Semester 2</span>
                 </div>
                 <div class="resource-links">
-                    <a href="viewer.html?subject=maths" class="btn">
+                    <a href="viewer.html?subject=maths&type=notes" class="btn">
                         <span class="btn-icon">📖</span> Study Notes
                     </a>
-                    <a href="#" class="btn">
+                    <a href="viewer.html?subject=maths&type=qb" class="btn">
                         <span class="btn-icon">❓</span> Question Banks
                     </a>
-                    <a href="#" class="btn">
+                    <a href="assignments.html?subject=maths" class="btn">
                         <span class="btn-icon">📁</span> Assignments
                     </a>
                 </div>
@@ -118,19 +118,26 @@
                     <span class="semester-tag">Semester 2</span>
                 </div>
                 <div class="resource-links">
-                    <a href="viewer.html?subject=os" class="btn">
+                    <a href="viewer.html?subject=os&type=notes" class="btn">
                         <span class="btn-icon">📖</span> Study Notes
                     </a>
-                    <a href="#" class="btn">
+                    <a href="viewer.html?subject=os&type=qb" class="btn">
                         <span class="btn-icon">❓</span> Question Banks
                     </a>
-                    <a href="#" class="btn">
+                    <a href="assignments.html?subject=os" class="btn">
                         <span class="btn-icon">📁</span> Assignments
                     </a>
                 </div>
             </div>
 
         </section>
+
+        <!-- No Results Feedback Message -->
+        <div id="noResultsMessage" class="no-results-box" style="display: none;">
+            <div class="no-results-icon">🔍</div>
+            <h3>No matching subjects or topics found</h3>
+            <p>Try searching for another topic like "Stack", "Sorting", "Trees", "Deadlock", "Fourier", or "Classes".</p>
+        </div>
     </main>
 
     <footer>
@@ -139,6 +146,7 @@
         </div>
     </footer>
 
+    <script src="data.js"></script>
     <script src="script.js"></script>
 </body>
 

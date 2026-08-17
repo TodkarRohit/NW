@@ -233,7 +233,7 @@ Complex operator+(const Complex& c) {<br>
                 }
             ]
         },
-        'math': {
+        'maths': {
             title: 'Engineering Mathematics',
             subtitle: 'Semester 2 • NMIET Computer Engineering Department',
             assignments: [
@@ -293,6 +293,10 @@ Complex operator+(const Complex& c) {<br>
         }
     };
 
+    // Subject Aliases
+    subjectsData['math'] = subjectsData['maths'];
+    subjectsData['coa'] = subjectsData['hardware'];
+
     // Get current subject from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     let subjectKey = urlParams.get('subject') || 'dsa';
@@ -304,11 +308,17 @@ Complex operator+(const Complex& c) {<br>
 
     const currentSubject = subjectsData[subjectKey];
 
-    // Update Header Elements
+    // Update Header Elements & Quick Nav
     const subjectTitleEl = document.getElementById('subjectTitle');
     const subjectSubtitleEl = document.getElementById('subjectSubtitle');
+    const notesNavBtn = document.getElementById('notesNavBtn');
+    const qbNavBtn = document.getElementById('qbNavBtn');
+
     if (subjectTitleEl) subjectTitleEl.textContent = currentSubject.title;
     if (subjectSubtitleEl) subjectSubtitleEl.textContent = currentSubject.subtitle;
+    if (notesNavBtn) notesNavBtn.href = `viewer.html?subject=${subjectKey}&type=notes`;
+    if (qbNavBtn) qbNavBtn.href = `viewer.html?subject=${subjectKey}&type=qb`;
+    document.title = `${currentSubject.title} - Assignments | Engineering Notes Hub`;
 
     // Persistent Counts & Comments Helper
     function getStoredCounts(assId, defaultViews, defaultDownloads) {
@@ -372,6 +382,7 @@ Complex operator+(const Complex& c) {<br>
             }
 
             const card = document.createElement('div');
+            card.id = ass.id;
             card.className = 'assignment-card';
             card.setAttribute('data-id', ass.id);
 
@@ -584,8 +595,48 @@ Complex operator+(const Complex& c) {<br>
         document.querySelectorAll('.view-pdf-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const fileName = btn.getAttribute('data-file');
-                showToast(`Opening ${fileName} in Full Preview...`);
+                const previewBox = btn.closest('.pdf-preview-box');
+                const bodyContent = previewBox ? previewBox.querySelector('.pdf-body-content') : null;
+                const contentHtml = bodyContent ? bodyContent.innerHTML : `<p>Viewing ${fileName}</p>`;
+                openFullView(fileName, contentHtml);
             });
+        });
+    }
+
+    // Full PDF Preview Modal Logic
+    const fullViewModal = document.getElementById('fullViewModal');
+    const fullViewFileName = document.getElementById('fullViewFileName');
+    const fullViewContent = document.getElementById('fullViewContent');
+    const fullViewDownloadBtn = document.getElementById('fullViewDownloadBtn');
+    const closeFullViewModal = document.getElementById('closeFullViewModal');
+
+    let activeFullViewFile = null;
+
+    function openFullView(filename, contentHtml) {
+        if (!fullViewModal) return;
+        activeFullViewFile = filename;
+        if (fullViewFileName) fullViewFileName.textContent = filename;
+        if (fullViewContent) fullViewContent.innerHTML = contentHtml;
+        fullViewModal.classList.add('active');
+    }
+
+    function closeFullView() {
+        if (!fullViewModal) return;
+        fullViewModal.classList.remove('active');
+    }
+
+    if (closeFullViewModal) closeFullViewModal.addEventListener('click', closeFullView);
+    if (fullViewModal) {
+        fullViewModal.addEventListener('click', (e) => {
+            if (e.target === fullViewModal) closeFullView();
+        });
+    }
+    if (fullViewDownloadBtn) {
+        fullViewDownloadBtn.addEventListener('click', () => {
+            if (activeFullViewFile) {
+                triggerBlobDownload(activeFullViewFile);
+                showToast(`Downloading ${activeFullViewFile}...`);
+            }
         });
     }
 
@@ -711,4 +762,15 @@ Complex operator+(const Complex& c) {<br>
 
     // Initial render
     renderAssignments();
+
+    // Scroll to hash target if provided
+    if (window.location.hash) {
+        setTimeout(() => {
+            const targetId = window.location.hash.substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 250);
+    }
 });
