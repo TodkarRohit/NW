@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="viewer.css">
 </head>
 
@@ -50,6 +51,11 @@
             <!-- Hidden File Input for uploading note/assignment -->
             <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
             
+            <button class="action-btn upload-btn" id="uploadFileBtn" title="Upload Question Paper or Solution PDF">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="uploadBtnText">Upload PDF</span>
+            </button>
+
             <button class="action-btn primary-btn" id="downloadFileBtn" title="Download active PDF file">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -66,6 +72,11 @@
                     <rect x="6" y="14" width="12" height="8"></rect>
                 </svg>
                 <span>Print</span>
+            </button>
+
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <i class="fa-solid fa-moon"></i>
+                <span class="theme-btn-text">Dark Mode</span>
             </button>
 
             <button class="mobile-toggle-btn" id="mobileSidebarToggle" aria-label="Toggle Chapter List">
@@ -157,6 +168,63 @@
                 </button>
             </footer>
         </main>
+    </div>
+
+    <!-- Question Bank Upload Modal -->
+    <div class="modal-backdrop" id="qbUploadModalBackdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-cloud-arrow-up" style="color: #059669; font-size: 1.3rem;"></i>
+                    <h3 id="qbModalTitle">Upload Question Bank PDF</h3>
+                </div>
+                <button class="close-modal-btn" id="closeQbModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="qbUploadForm" class="modal-form">
+                <div class="form-group">
+                    <label for="qbModalItemSelect"><i class="fa-solid fa-folder-tree"></i> Select Target Unit / Chapter</label>
+                    <select id="qbModalItemSelect" required>
+                        <!-- Populated dynamically via viewer.js -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fa-solid fa-layer-group"></i> Document Type to Upload</label>
+                    <div class="doc-type-switcher">
+                        <label class="doc-type-radio">
+                            <input type="radio" name="qbUploadDocType" value="questions" checked>
+                            <span><i class="fa-solid fa-file-circle-question" style="color:#0284c7"></i> Question Paper PDF</span>
+                        </label>
+                        <label class="doc-type-radio">
+                            <input type="radio" name="qbUploadDocType" value="answers">
+                            <span><i class="fa-solid fa-file-circle-check" style="color:#16a34a"></i> Model Solutions / Answer Key PDF</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="qbModalFileInput"><i class="fa-solid fa-file-pdf"></i> Select PDF Document</label>
+                    <div class="file-dropzone" id="qbModalDropzone">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: #059669;"></i>
+                        <span class="file-name-display" id="qbModalFileNameDisplay">Drag & drop PDF here or click to browse</span>
+                        <input type="file" id="qbModalFileInput" accept=".pdf,.doc,.docx,.txt" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" id="cancelQbModalBtn">Cancel</button>
+                    <button type="submit" class="submit-upload-btn" id="submitQbUploadBtn">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload & Attach File
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMessage">File uploaded successfully!</span>
     </div>
 
     <!-- Scripts -->
