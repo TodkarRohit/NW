@@ -1085,3 +1085,872 @@ body {
 .answer-paper .strip-upload-btn:hover {
     background: #15803d;
 }
+
+/* ==========================================================================
+   THEME TOGGLE BUTTON (Viewer Header)
+   ========================================================================== */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    color: var(--text-heading);
+    border: 1px solid var(--border-color);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.825rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.theme-toggle-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.theme-toggle-btn i {
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   1. STUDY NOTES THEME - LIGHT MODE (Indigo / Sapphire)
+   ========================================================================== */
+body[data-resource="notes"] {
+    --primary-color: #4f46e5;
+    --primary-light: #eef2ff;
+    --primary-hover: #4338ca;
+    --border-color: #e0e7ff;
+}
+
+body[data-resource="notes"] .resource-badge {
+    background-color: #eef2ff;
+    color: #4f46e5;
+    border-color: #c7d2fe;
+}
+
+body[data-resource="notes"] .res-tab-pill.active {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+body[data-resource="notes"] .res-tab-pill:hover {
+    color: #4f46e5;
+    background: #eef2ff;
+    border-color: #c7d2fe;
+}
+
+body[data-resource="notes"] .chapter-item.active {
+    background: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12);
+}
+
+body[data-resource="notes"] .chapter-item.active::before {
+    background: linear-gradient(180deg, #6366f1, #4f46e5);
+}
+
+body[data-resource="notes"] .chapter-item.active .chapter-item-title {
+    color: #4f46e5;
+}
+
+body[data-resource="notes"] .upload-icon {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+body[data-resource="notes"] .upload-action-pill,
+body[data-resource="notes"] #downloadFileBtn,
+body[data-resource="notes"] .action-btn.primary-btn {
+    background: linear-gradient(135deg, #4f46e5, #4338ca);
+    border-color: #4338ca;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+}
+
+body[data-resource="notes"] #downloadFileBtn:hover,
+body[data-resource="notes"] .action-btn.primary-btn:hover {
+    background: linear-gradient(135deg, #4338ca, #3730a3);
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45);
+}
+
+body[data-resource="notes"] .outline-item-num {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+body[data-resource="notes"] .structure-header {
+    border-bottom: 2px solid #e0e7ff;
+}
+
+/* ==========================================================================
+   2. STUDY NOTES THEME - DARK MODE (Electric Indigo & Midnight Obsidian)
+   ========================================================================== */
+body[data-resource="notes"][data-theme="dark"] {
+    --bg-page: #0b0f19;
+    --bg-surface: #111827;
+    --border-color: #1f293d;
+    --border-subtle: #162032;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-heading: #ffffff;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --primary-color: #818cf8;
+    --primary-light: rgba(99, 102, 241, 0.15);
+    --primary-hover: #a5b4fc;
+}
+
+body[data-resource="notes"][data-theme="dark"] .viewer-header {
+    background: #111827;
+    border-bottom-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .sidebar-panel {
+    background: #0f172a;
+    border-right-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .sidebar-header {
+    background: #0f172a;
+    border-bottom-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .sidebar-search input {
+    background: #111827;
+    border-color: #1f293d;
+    color: #ffffff;
+}
+
+body[data-resource="notes"][data-theme="dark"] .sidebar-search input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+body[data-resource="notes"][data-theme="dark"] .chapter-item {
+    background: #111827;
+    border-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .chapter-item:hover {
+    background: #1e293b;
+    border-color: #4f46e5;
+}
+
+body[data-resource="notes"][data-theme="dark"] .chapter-item.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+    border-color: #818cf8;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
+}
+
+body[data-resource="notes"][data-theme="dark"] .chapter-item.active::before {
+    background: #a5b4fc;
+}
+
+body[data-resource="notes"][data-theme="dark"] .chapter-item.active .chapter-item-title {
+    color: #ffffff;
+}
+
+body[data-resource="notes"][data-theme="dark"] .notes-document {
+    background: #111827;
+    border-color: #1f293d;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+body[data-resource="notes"][data-theme="dark"] .structure-header {
+    border-bottom-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .structure-header h2 {
+    color: #ffffff;
+}
+
+body[data-resource="notes"][data-theme="dark"] .upload-dropzone {
+    background: #0f172a;
+    border-color: #312e81;
+}
+
+body[data-resource="notes"][data-theme="dark"] .upload-dropzone:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: #818cf8;
+}
+
+body[data-resource="notes"][data-theme="dark"] .upload-icon {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+body[data-resource="notes"][data-theme="dark"] .document-outline-card {
+    background: #0f172a;
+    border-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .outline-item {
+    background: #111827;
+    border-color: #1f293d;
+    color: #f1f5f9;
+}
+
+body[data-resource="notes"][data-theme="dark"] .outline-item-num {
+    background: rgba(99, 102, 241, 0.25);
+    color: #a5b4fc;
+}
+
+body[data-resource="notes"][data-theme="dark"] .uploaded-document-card {
+    background: #111827;
+    border-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .uploaded-doc-header {
+    background: #0f172a;
+    border-bottom-color: #1f293d;
+}
+
+body[data-resource="notes"][data-theme="dark"] .doc-action-btn {
+    background: #1e293b;
+    color: #ffffff;
+    border-color: #334155;
+}
+
+body[data-resource="notes"][data-theme="dark"] .page-btn {
+    background: #111827;
+    border-color: #1f293d;
+    color: #ffffff;
+}
+
+body[data-resource="notes"][data-theme="dark"] .page-btn:hover:not(:disabled) {
+    border-color: #818cf8;
+    background: #1e293b;
+}
+
+/* ==========================================================================
+   3. QUESTION BANKS THEME - LIGHT MODE (Emerald & Mint)
+   ========================================================================== */
+body[data-resource="qb"] {
+    --primary-color: #059669;
+    --primary-light: #ecfdf5;
+    --primary-hover: #047857;
+    --border-color: #d1fae5;
+}
+
+body[data-resource="qb"] .resource-badge {
+    background-color: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+body[data-resource="qb"] .res-tab-pill.active {
+    background: #059669;
+    border-color: #059669;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+
+body[data-resource="qb"] .res-tab-pill:hover {
+    color: #059669;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+body[data-resource="qb"] .chapter-item.active {
+    background: #ffffff;
+    border-color: #10b981;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.15);
+}
+
+body[data-resource="qb"] .chapter-item.active::before {
+    background: linear-gradient(180deg, #10b981, #059669);
+}
+
+body[data-resource="qb"] .chapter-item.active .chapter-item-title {
+    color: #059669;
+}
+
+body[data-resource="qb"] .upload-icon {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+body[data-resource="qb"] .upload-action-pill,
+body[data-resource="qb"] #downloadFileBtn,
+body[data-resource="qb"] .action-btn.primary-btn {
+    background: linear-gradient(135deg, #059669, #047857);
+    border-color: #047857;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+}
+
+body[data-resource="qb"] #downloadFileBtn:hover,
+body[data-resource="qb"] .action-btn.primary-btn:hover {
+    background: linear-gradient(135deg, #047857, #065f46);
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+}
+
+body[data-resource="qb"] .outline-item-num {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+body[data-resource="qb"] .paper-section h4 {
+    border-left-color: #059669;
+    color: #047857;
+}
+
+body[data-resource="qb"] .qb-paper-view {
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+/* ==========================================================================
+   4. QUESTION BANKS THEME - DARK MODE (Neon Emerald & Forest Obsidian)
+   ========================================================================== */
+body[data-resource="qb"][data-theme="dark"] {
+    --bg-page: #06110d;
+    --bg-surface: #0a1c15;
+    --border-color: #143529;
+    --border-subtle: #0f2b21;
+    --text-main: #ecfdf5;
+    --text-muted: #a7f3d0;
+    --text-heading: #ffffff;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --primary-color: #34d399;
+    --primary-light: rgba(16, 185, 129, 0.15);
+    --primary-hover: #6ee7b7;
+}
+
+body[data-resource="qb"][data-theme="dark"] .viewer-header {
+    background: #0a1c15;
+    border-bottom-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .sidebar-panel {
+    background: #081611;
+    border-right-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .sidebar-header {
+    background: #081611;
+    border-bottom-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .sidebar-search input {
+    background: #0a1c15;
+    border-color: #143529;
+    color: #ffffff;
+}
+
+body[data-resource="qb"][data-theme="dark"] .sidebar-search input:focus {
+    border-color: #34d399;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
+body[data-resource="qb"][data-theme="dark"] .chapter-item {
+    background: #0a1c15;
+    border-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .chapter-item:hover {
+    background: #112d22;
+    border-color: #10b981;
+}
+
+body[data-resource="qb"][data-theme="dark"] .chapter-item.active {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    border-color: #34d399;
+    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
+}
+
+body[data-resource="qb"][data-theme="dark"] .chapter-item.active::before {
+    background: #6ee7b7;
+}
+
+body[data-resource="qb"][data-theme="dark"] .chapter-item.active .chapter-item-title {
+    color: #ffffff;
+}
+
+body[data-resource="qb"][data-theme="dark"] .notes-document {
+    background: #0a1c15;
+    border-color: #143529;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+body[data-resource="qb"][data-theme="dark"] .structure-header h2,
+body[data-resource="qb"][data-theme="dark"] .paper-header h3 {
+    color: #ffffff;
+}
+
+body[data-resource="qb"][data-theme="dark"] .paper-header {
+    border-bottom-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .paper-section h4 {
+    border-left-color: #34d399;
+    color: #6ee7b7;
+}
+
+body[data-resource="qb"][data-theme="dark"] .q-item {
+    background: #0d241c;
+    border-color: #143529;
+    color: #ecfdf5;
+}
+
+body[data-resource="qb"][data-theme="dark"] .q-num {
+    color: #38bdf8;
+}
+
+body[data-resource="qb"][data-theme="dark"] .sol-tag {
+    color: #4ade80;
+}
+
+body[data-resource="qb"][data-theme="dark"] .sol-code-block {
+    background: #050e0a;
+    border: 1px solid #143529;
+    color: #4ade80;
+}
+
+body[data-resource="qb"][data-theme="dark"] .paper-badge.question-badge {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border-color: #0284c7;
+}
+
+body[data-resource="qb"][data-theme="dark"] .paper-badge.answer-badge {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+    border-color: #16a34a;
+}
+
+body[data-resource="qb"][data-theme="dark"] .upload-pdf-strip {
+    background: #0d241c;
+    border-color: #059669;
+    color: #6ee7b7;
+}
+
+body[data-resource="qb"][data-theme="dark"] .document-outline-card {
+    background: #081611;
+    border-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .outline-item {
+    background: #0a1c15;
+    border-color: #143529;
+    color: #ecfdf5;
+}
+
+body[data-resource="qb"][data-theme="dark"] .outline-item-num {
+    background: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+
+body[data-resource="qb"][data-theme="dark"] .uploaded-document-card {
+    background: #0a1c15;
+    border-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .uploaded-doc-header {
+    background: #081611;
+    border-bottom-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .doc-action-btn {
+    background: #112d22;
+    color: #ffffff;
+    border-color: #1b4534;
+}
+
+body[data-resource="qb"][data-theme="dark"] .page-btn {
+    background: #0a1c15;
+    border-color: #143529;
+    color: #ffffff;
+}
+
+body[data-resource="qb"][data-theme="dark"] .page-btn:hover:not(:disabled) {
+    border-color: #34d399;
+    background: #112d22;
+}
+
+body[data-resource="qb"][data-theme="dark"] .qb-tab-bar {
+    background: #081611;
+    border-color: #143529;
+}
+
+body[data-resource="qb"][data-theme="dark"] .qb-tab-btn {
+    background: transparent;
+    color: #a7f3d0;
+}
+
+body[data-resource="qb"][data-theme="dark"] .qb-tab-btn.question-tab.active {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+}
+
+body[data-resource="qb"][data-theme="dark"] .qb-tab-btn.answer-tab.active {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);
+}
+
+/* ==========================================================================
+   UPLOAD BUTTON (Header Action)
+   ========================================================================== */
+.action-btn.upload-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border-color: #059669;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.upload-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.45);
+}
+
+body[data-resource="notes"] .action-btn.upload-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-color: #4f46e5;
+    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.3);
+}
+
+body[data-resource="notes"] .action-btn.upload-btn:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+}
+
+/* ==========================================================================
+   QUESTION BANK UPLOAD MODAL & DROPZONES
+   ========================================================================== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-backdrop.active {
+    display: flex;
+}
+
+.modal-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 540px;
+    padding: 1.75rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .modal-card {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+@keyframes slideUpModal {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1.25rem;
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: #334155;
+}
+
+.modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-title-group h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+[data-theme="dark"] .modal-title-group h3 {
+    color: #f8fafc;
+}
+
+.close-modal-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.close-modal-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+[data-theme="dark"] .form-group label {
+    color: #cbd5e1;
+}
+
+.form-group select,
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #f8fafc;
+    color: #0f172a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group input[type="text"] {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+/* Document Type Radio Switcher */
+.doc-type-switcher {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.doc-type-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #334155;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .doc-type-radio {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+.doc-type-radio input[type="radio"] {
+    accent-color: #059669;
+}
+
+.doc-type-radio:hover {
+    border-color: #059669;
+    background: #ecfdf5;
+}
+
+[data-theme="dark"] .doc-type-radio:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+/* File Dropzone in Modal */
+.file-dropzone {
+    position: relative;
+    border: 2px dashed #34d399;
+    background: rgba(52, 211, 153, 0.06);
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.file-dropzone:hover {
+    background: rgba(52, 211, 153, 0.14);
+    border-color: #059669;
+}
+
+.file-dropzone input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-name-display {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    word-break: break-all;
+}
+
+[data-theme="dark"] .file-name-display {
+    color: #f8fafc;
+}
+
+.modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+[data-theme="dark"] .modal-actions {
+    border-top-color: #334155;
+}
+
+.cancel-btn {
+    background: transparent;
+    border: 1.5px solid #cbd5e1;
+    color: #64748b;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .cancel-btn {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .cancel-btn:hover {
+    background: #1e293b;
+    color: #ffffff;
+}
+
+.submit-upload-btn {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: #ffffff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.submit-upload-btn:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.5);
+}
+
+/* Toast Notification */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    border: 1px solid #334155;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast i {
+    color: #4ade80;
+    font-size: 1.1rem;
+}
+
+.toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+

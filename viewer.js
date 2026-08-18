@@ -1,11 +1,49 @@
 // Engineering Notes Hub - Resource Viewer & Upload Management Script
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ---------------------------------------------------------
+    // 0. Theme Management (Dark / Light Mode)
+    // ---------------------------------------------------------
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i> <span class="theme-btn-text">Light Mode</span>';
+            }
+        } else {
+            document.body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i> <span class="theme-btn-text">Dark Mode</span>';
+            }
+        }
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+    }
+
+    initTheme();
+
     // 1. Parse URL Parameters
     const urlParams = new URLSearchParams(window.location.search);
     let subjectKey = urlParams.get('subject') || 'dsa';
     const resourceType = urlParams.get('type') === 'qb' ? 'qb' : 'notes';
     const isQB = resourceType === 'qb';
+
+    // Set data-resource on body for scoped theme styling (notes vs qb)
+    document.body.setAttribute('data-resource', isQB ? 'qb' : 'notes');
 
     // 2. Load Subject Data with Fallback
     if (!subjectsData[subjectKey]) {
@@ -26,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const chapterSearchInput = document.getElementById('chapterSearchInput');
 
     const fileUploadInput = document.getElementById('fileUploadInput');
-    const uploadFileBtn = document.getElementById('uploadFileBtn');
 
     const prevChapterBtn = document.getElementById('prevChapterBtn');
     const nextChapterBtn = document.getElementById('nextChapterBtn');
@@ -369,8 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const stripQBtn = document.getElementById('stripUploadQBtn');
             const stripABtn = document.getElementById('stripUploadABtn');
-            if (stripQBtn) stripQBtn.addEventListener('click', () => fileUploadInput.click());
-            if (stripABtn) stripABtn.addEventListener('click', () => fileUploadInput.click());
+            if (stripQBtn) stripQBtn.addEventListener('click', () => openQbUploadModal('questions'));
+            if (stripABtn) stripABtn.addEventListener('click', () => openQbUploadModal('answers'));
 
         } else {
             // Clean Upload / Outline Blueprint Structure for Study Notes
@@ -463,7 +500,129 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePagination(index);
     }
 
-    // 7. Handle File Upload Selection
+    // 7. Question Bank Upload Modal & File Selection
+    const qbUploadModalBackdrop = document.getElementById('qbUploadModalBackdrop');
+    const closeQbModalBtn = document.getElementById('closeQbModalBtn');
+    const cancelQbModalBtn = document.getElementById('cancelQbModalBtn');
+    const qbUploadForm = document.getElementById('qbUploadForm');
+    const qbModalItemSelect = document.getElementById('qbModalItemSelect');
+    const qbModalFileInput = document.getElementById('qbModalFileInput');
+    const qbModalFileNameDisplay = document.getElementById('qbModalFileNameDisplay');
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    const uploadBtnText = document.getElementById('uploadBtnText');
+
+    function updateUploadBtnUI() {
+        if (!uploadBtnText) return;
+        if (isQB) {
+            uploadBtnText.textContent = "Upload QB PDF";
+        } else {
+            uploadBtnText.textContent = "Upload Notes PDF";
+        }
+    }
+
+    function openQbUploadModal(defaultType = 'questions') {
+        if (!qbUploadModalBackdrop) return;
+
+        if (qbUploadForm) {
+            qbUploadForm.reset();
+        }
+
+        // Populate unit / chapter select options
+        if (qbModalItemSelect) {
+            qbModalItemSelect.innerHTML = items.map((item, idx) => `
+                <option value="${idx}" ${idx === activeIndex ? 'selected' : ''}>
+                    ${item.title}
+                </option>
+            `).join('');
+            qbModalItemSelect.value = activeIndex;
+        }
+
+        // Set radio button for document type
+        const radios = document.querySelectorAll('input[name="qbUploadDocType"]');
+        radios.forEach(r => {
+            r.checked = (r.value === defaultType);
+        });
+
+        if (qbModalFileNameDisplay) {
+            qbModalFileNameDisplay.textContent = "Drag & drop PDF here or click to browse";
+        }
+
+        qbUploadModalBackdrop.classList.add('active');
+    }
+
+    function closeQbUploadModal() {
+        if (!qbUploadModalBackdrop) return;
+        qbUploadModalBackdrop.classList.remove('active');
+    }
+
+    if (closeQbModalBtn) closeQbModalBtn.addEventListener('click', closeQbUploadModal);
+    if (cancelQbModalBtn) cancelQbModalBtn.addEventListener('click', closeQbUploadModal);
+    if (qbUploadModalBackdrop) {
+        qbUploadModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === qbUploadModalBackdrop) closeQbUploadModal();
+        });
+    }
+
+    if (uploadFileBtn) {
+        uploadFileBtn.addEventListener('click', () => {
+            if (isQB) {
+                openQbUploadModal(currentQBView);
+            } else {
+                fileUploadInput.click();
+            }
+        });
+    }
+
+    if (qbModalFileInput && qbModalFileNameDisplay) {
+        qbModalFileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                qbModalFileNameDisplay.textContent = '📄 ' + e.target.files[0].name;
+            }
+        });
+    }
+
+    if (qbUploadForm) {
+        qbUploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const targetIndex = parseInt(qbModalItemSelect.value, 10);
+            const selectedDocType = document.querySelector('input[name="qbUploadDocType"]:checked')?.value || 'questions';
+            const file = qbModalFileInput.files[0];
+
+            if (!file) {
+                alert("Please select a PDF file to upload.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const docData = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type || 'application/pdf',
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                    data: evt.target.result
+                };
+
+                try {
+                    const storageKey = getStorageKey(targetIndex, selectedDocType);
+                    localStorage.setItem(storageKey, JSON.stringify(docData));
+                    closeQbUploadModal();
+                    
+                    activeIndex = targetIndex;
+                    currentQBView = selectedDocType;
+                    renderItemList(chapterSearchInput.value);
+                    loadItemContent(activeIndex);
+
+                    const targetTitle = items[targetIndex] ? items[targetIndex].title : 'Question Bank';
+                    showToast(`${selectedDocType === 'questions' ? 'Question Paper' : 'Model Answer'} PDF attached to ${targetTitle}!`);
+                } catch (err) {
+                    alert("File size is too large for local storage. Please choose a smaller PDF file.");
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     function handleFileSelection(file) {
         if (!file) return;
 
@@ -472,15 +631,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const docData = {
                 name: file.name,
                 size: file.size,
-                type: file.type,
+                type: file.type || 'application/pdf',
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                 data: e.target.result
             };
 
             try {
-                localStorage.setItem(getStorageKey(activeIndex), JSON.stringify(docData));
+                const storageKey = getStorageKey(activeIndex, isQB ? currentQBView : null);
+                localStorage.setItem(storageKey, JSON.stringify(docData));
                 renderItemList(chapterSearchInput.value);
                 loadItemContent(activeIndex);
+                showToast(`File "${file.name}" uploaded successfully!`);
             } catch (err) {
                 alert("File size is large for browser local cache. Please select a smaller PDF, text, or document file.");
             }
@@ -494,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.files && e.target.files[0]) {
             handleFileSelection(e.target.files[0]);
         }
-        fileUploadInput.value = ''; // Reset input value so same file can be selected again
+        fileUploadInput.value = '';
     });
 
     // Download Active File Handler
@@ -512,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             downloadBtnText.textContent = "Download Notes PDF";
         }
+        updateUploadBtnUI();
     }
 
     function handleDownloadActiveFile() {
@@ -530,6 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            showToast(`Downloading ${docData.name}...`);
         } else {
             // Generate & download document file for built-in Question/Answer/Notes
             let fileTitle = "";
@@ -607,11 +770,24 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            showToast(`Downloading ${fileTitle}...`);
         }
     }
 
     if (downloadFileBtn) {
         downloadFileBtn.addEventListener('click', handleDownloadActiveFile);
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        if (!toast || !toastMessage) return;
+
+        toastMessage.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3200);
     }
 
     // 8. Pagination (Prev / Next Item)

@@ -70,7 +70,27 @@
     </header>
 
     <main class="container assignments-main">
-        <!-- Top Split View Navigation / Tab Switcher (Matching Wireframe Header) -->
+        <!-- 1. Visible Chapter / Unit Selection Navigation Bar -->
+        <section class="chapter-nav-section">
+            <div class="chapter-nav-header">
+                <div class="chapter-nav-title">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    <span>Chapters / Units</span>
+                    <span class="chapter-badge-count" id="totalChaptersBadge">4 Units</span>
+                </div>
+                <span class="chapter-nav-hint"><i class="fa-solid fa-arrow-pointer"></i> Click a chapter name to view assignments</span>
+            </div>
+            <div class="chapter-nav-pills" id="chapterNavPills">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </section>
+
+        <!-- 2. Assignment File Upload Section (Admin Controlled) -->
+        <section class="admin-upload-portal-section" id="adminUploadPortalSection">
+            <!-- Rendered dynamically by updateAdminUI() in assignments.js -->
+        </section>
+
+        <!-- 3. Top Split View Navigation / Tab Switcher -->
         <section class="view-switcher-section">
             <div class="split-tab-bar">
                 <button class="tab-btn active" data-view="both">
@@ -88,7 +108,7 @@
             </div>
         </section>
 
-        <!-- Column Header Banner (Matching Wireframe Questions < Chevron > Answers) -->
+        <!-- 4. Column Header Banner (Questions < Chevron > Answers) -->
         <div class="column-header-banner" id="columnHeaderBanner">
             <div class="col-banner question-banner">
                 <i class="fa-solid fa-file-circle-question"></i>
@@ -103,13 +123,13 @@
             </div>
         </div>
 
-        <!-- Assignments Container -->
+        <!-- 5. Assignments Container (Two Sections Format per Chapter) -->
         <section class="assignments-container" id="assignmentsList">
             <!-- Dynamic Assignment Cards rendered via JS -->
         </section>
     </main>
 
-    <!-- Full PDF Preview Modal -->
+    <!-- Full PDF / Document Preview Modal -->
     <div class="modal-backdrop" id="fullViewModal">
         <div class="full-view-dialog">
             <div class="full-view-header">
@@ -123,7 +143,7 @@
                 </div>
             </div>
             <div class="full-view-body" id="fullViewContent">
-                <!-- Injected full content -->
+                <!-- Injected full content / preview -->
             </div>
         </div>
     </div>
@@ -149,7 +169,7 @@
                     <input type="password" id="adminPasswordInput" placeholder="Enter password (default: admin123)" required autocomplete="current-password">
                 </div>
                 <div id="loginErrorMsg" class="login-error-msg" style="display:none;">
-                    <i class="fa-solid fa-circle-exclamation"></i> Invalid admin username or password!
+                    <i class="fa-solid fa-circle-exclamation"></i> Invalid admin username or password! (Try: admin / admin123)
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="cancel-btn" id="cancelAdminLoginBtn">Cancel</button>
@@ -159,7 +179,7 @@
         </div>
     </div>
 
-    <!-- Admin PDF Upload Modal -->
+    <!-- Admin PDF Upload Modal (Popup alternative) -->
     <div class="admin-upload-backdrop" id="uploadModalBackdrop">
         <div class="admin-upload-card">
             <div class="upload-modal-header">
@@ -177,34 +197,42 @@
                             <option value="dsa">Data Structure and Algorithm (C++)</option>
                             <option value="oop">Object Oriented Programming (Using C++)</option>
                             <option value="os">Operating System</option>
-                            <option value="math">Engineering Mathematics</option>
+                            <option value="maths">Engineering Mathematics</option>
                             <option value="hardware">Computer hardware and its organization</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="uploadAssNum"><i class="fa-solid fa-hashtag"></i> Assignment No.</label>
-                        <input type="number" id="uploadAssNum" min="1" max="50" placeholder="e.g. 4" required>
+                        <label for="uploadChapterSelect"><i class="fa-solid fa-folder"></i> Target Chapter / Unit</label>
+                        <select id="uploadChapterSelect" required>
+                            <!-- Populated dynamically -->
+                        </select>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="uploadAssTitle"><i class="fa-solid fa-heading"></i> Assignment Title</label>
-                    <input type="text" id="uploadAssTitle" placeholder="e.g. ASSIGNMENT 4: Dynamic Programming & Greedy Algorithms" required>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="uploadAssNum"><i class="fa-solid fa-hashtag"></i> Assignment No.</label>
+                        <input type="number" id="uploadAssNum" min="1" max="50" placeholder="e.g. 1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadAssTitle"><i class="fa-solid fa-heading"></i> Assignment Title</label>
+                        <input type="text" id="uploadAssTitle" placeholder="e.g. ASSIGNMENT 1: Array Operations & Matrices" required>
+                    </div>
                 </div>
 
                 <!-- PDF File Dropzone Row -->
                 <div class="form-row-2">
                     <div class="form-group">
                         <label for="uploadQuestionPdf"><i class="fa-solid fa-file-pdf" style="color:#0284c7"></i> Question PDF File</label>
-                        <div class="file-dropzone">
+                        <div class="file-dropzone" id="qDropzone">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <span class="file-name-display" id="qPdfName">Choose Question PDF...</span>
                             <input type="file" id="uploadQuestionPdf" accept=".pdf" required>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="uploadAnswerPdf"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> Answer PDF File</label>
-                        <div class="file-dropzone">
+                        <label for="uploadAnswerPdf"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> Answer / Solution PDF File</label>
+                        <div class="file-dropzone" id="aDropzone">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <span class="file-name-display" id="aPdfName">Choose Solution PDF...</span>
                             <input type="file" id="uploadAnswerPdf" accept=".pdf" required>
@@ -271,6 +299,8 @@
         </div>
     </footer>
 
+    <!-- Include Data & Script -->
+    <script src="data.js"></script>
     <script src="assignments.js"></script>
 </body>
 

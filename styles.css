@@ -3,7 +3,7 @@
    ========================================================================== */
 
 :root {
-    --primary-color: #2563eb;
+    --primary-color: hsl(221, 83%, 53%);
     --primary-hover: #1d4ed8;
     --primary-active: #1e40af;
     --primary-light: #e0f2fe;
@@ -70,8 +70,7 @@ body {
 .hub-header {
     background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
     color: #ffffff;
-    padding: 3.5rem 0 3rem 0;
-    text-align: center;
+    padding: 2.75rem 0 2.5rem 0;
     position: relative;
     box-shadow: 0 4px 20px rgba(37, 99, 235, 0.12);
 }
@@ -84,6 +83,52 @@ body {
     width: 100%;
 }
 
+.header-brand-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    text-align: left;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 860px;
+}
+
+.header-big-logo-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 3.5px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 24px rgba(56, 189, 248, 0.5);
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.header-big-logo-badge:hover {
+    transform: scale(1.08) rotate(4deg);
+    border-color: #38bdf8;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35), 0 0 32px rgba(56, 189, 248, 0.7);
+}
+
+.hub-big-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.header-brand-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .header-badge {
     display: inline-flex;
     align-items: center;
@@ -92,13 +137,13 @@ body {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: #ffffff;
-    padding: 6px 16px;
+    padding: 5px 14px;
     border-radius: var(--radius-pill);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
@@ -111,19 +156,18 @@ body {
 }
 
 .hub-header h1 {
-    font-size: 2.6rem;
+    font-size: 2.5rem;
     font-weight: 800;
     letter-spacing: -0.03em;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
     line-height: 1.2;
 }
 
 .hub-header p {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     opacity: 0.92;
-    max-width: 620px;
-    margin: 0 auto;
     font-weight: 400;
+    margin: 0;
 }
 
 /* ==========================================================================
@@ -468,13 +512,52 @@ mark.search-highlight {
    Footer
    ========================================================================== */
 footer {
+
+    background: #1f2937;
+    color: white;
     text-align: center;
-    padding: 2.5rem 0;
-    color: var(--text-muted);
-    border-top: 1px solid var(--border-color);
-    background-color: #ffffff;
-    font-size: 0.92rem;
-    margin-top: auto;
+    padding: 30px 20px;
+    margin-top: 40px;
+}
+
+.footer h3 {
+    margin: 0 0 10px;
+    font-size: 22px;
+}
+
+.footer p {
+    margin: 8px 0;
+    color: #d1d5db;
+}
+
+.footer .developed-by {
+    margin-top: 18px;
+    font-weight: 600;
+}
+
+.developers {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.developers a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.developers a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.developers span {
+    color: #9ca3af;
 }
 
 /* ==========================================================================
@@ -820,4 +903,62 @@ footer {
     background: linear-gradient(135deg, #be123c, #9f1239);
     transform: translateY(-1px);
 }
+
+/* ==========================================================================
+   HOME PAGE AMBIENT WATERMARK (Matched with components)
+   ========================================================================== */
+.home-watermark {
+    position: fixed;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 640px;
+    max-width: 85vw;
+    height: 640px;
+    max-height: 85vw;
+    background: url('logo.png') no-repeat center center;
+    background-size: contain;
+    opacity: 0.055;
+    pointer-events: none;
+    z-index: 0;
+    filter: drop-shadow(0 0 35px rgba(37, 99, 235, 0.22));
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .home-watermark {
+    opacity: 0.085;
+    filter: drop-shadow(0 0 45px rgba(56, 189, 248, 0.35));
+}
+
+@media (max-width: 768px) {
+    .header-brand-hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 14px;
+        align-items: center;
+        margin-top: 2.5rem;
+    }
+
+    .header-brand-info {
+        align-items: center;
+    }
+
+    .header-big-logo-badge {
+        width: 78px;
+        height: 78px;
+    }
+
+    .hub-header h1 {
+        font-size: 1.85rem;
+    }
+
+    .header-right-actions {
+        top: -12px;
+        right: 12px;
+    }
+
+    .header-left-actions {
+        top: -12px;
+        left: 12px;
+    }
 }

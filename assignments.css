@@ -1639,3 +1639,439 @@ body {
     background: rgba(239, 68, 68, 0.15) !important;
     color: #f87171 !important;
 }
+
+/* ==========================================================================
+   CHAPTER NAVIGATION BAR (Visible Chapters & Units Selection)
+   ========================================================================== */
+.chapter-nav-section {
+    background: var(--banner-bg);
+    border: 1px solid var(--banner-border);
+    border-radius: 14px;
+    padding: 1.15rem 1.25rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
+}
+
+[data-theme="dark"] .chapter-nav-section {
+    background: #1e293b;
+    border: 2px solid #334155;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.chapter-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chapter-nav-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.chapter-nav-title i {
+    color: #2563eb;
+    font-size: 1.15rem;
+}
+
+[data-theme="dark"] .chapter-nav-title i {
+    color: #38bdf8;
+}
+
+.chapter-badge-count {
+    font-size: 0.75rem;
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+}
+
+[data-theme="dark"] .chapter-badge-count {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border-color: #0284c7;
+}
+
+.chapter-nav-hint {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chapter-nav-pills {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+.chapter-nav-pills::-webkit-scrollbar {
+    height: 5px;
+}
+
+.chapter-nav-pills::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+[data-theme="dark"] .chapter-nav-pills::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+.chapter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--element-bg);
+    border: 1.5px solid var(--element-border);
+    color: var(--text-dark);
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    flex-shrink: 0;
+}
+
+.chapter-pill i {
+    font-size: 0.9rem;
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+
+.chapter-pill:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.chapter-pill:hover i {
+    color: #2563eb;
+}
+
+.chapter-pill.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-color: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.chapter-pill.active i {
+    color: #ffffff;
+}
+
+.chapter-pill-title {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chapter-pill-badge {
+    font-size: 0.72rem;
+    background: rgba(148, 163, 184, 0.18);
+    color: inherit;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.chapter-pill.active .chapter-pill-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .chapter-pill {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .chapter-pill:hover {
+    background: #1e293b;
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+[data-theme="dark"] .chapter-pill.active {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   ADMIN UPLOAD PORTAL SECTION (On-Page Card)
+   ========================================================================== */
+.admin-upload-portal-section {
+    margin-bottom: 2rem;
+}
+
+/* 1. Non-Admin Locked View */
+.admin-upload-locked-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border: 1.5px dashed #93c5fd;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    gap: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .admin-upload-locked-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1.5px dashed #0284c7;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.locked-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #dbeafe;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .locked-icon-wrap {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+}
+
+.locked-info-content {
+    flex: 1;
+}
+
+.locked-info-content h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 3px;
+}
+
+.locked-info-content p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.admin-login-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-flex;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: all 0.22s ease;
+    white-space: nowrap;
+}
+
+.admin-login-cta-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+}
+
+/* 2. Admin Active Upload Card */
+.admin-upload-active-card {
+    background: var(--card-bg);
+    border: 2px solid #3b82f6;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .admin-upload-active-card {
+    background: #1e293b;
+    border-color: #0284c7;
+    box-shadow: 0 8px 30px rgba(2, 132, 199, 0.25);
+}
+
+.upload-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--element-border);
+}
+
+.upload-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.upload-title-wrap i {
+    font-size: 1.6rem;
+    color: #2563eb;
+}
+
+[data-theme="dark"] .upload-title-wrap i {
+    color: #38bdf8;
+}
+
+.upload-title-wrap h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+}
+
+.upload-title-wrap p {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.admin-status-badge {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+[data-theme="dark"] .admin-status-badge {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border-color: #22c55e;
+}
+
+.inpage-upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr 1.5fr;
+    gap: 1rem;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-actions-right {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+}
+
+/* Empty State */
+.empty-assignments-box {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 2px dashed var(--element-border);
+    margin: 1.5rem 0;
+}
+
+.empty-assignments-box i {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    color: #94a3b8;
+}
+
+.empty-assignments-box h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.empty-assignments-box p {
+    font-size: 0.925rem;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* Full View PDF Wrapper */
+.full-view-pdf-wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 550px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.full-view-pdf-wrapper object,
+.full-view-pdf-wrapper iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+}
+
+.full-view-text-wrapper {
+    padding: 1.5rem;
+    background: var(--page-bg);
+    border-radius: 10px;
+    line-height: 1.6;
+    color: var(--text-dark);
+}
+
+@media (max-width: 900px) {
+    .form-grid-3,
+    .form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-upload-locked-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-login-cta-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
