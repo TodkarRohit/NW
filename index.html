@@ -159,35 +159,56 @@
         </div>
     </main>
 
-    <!-- Admin Login Modal -->
+    <!-- Auth / Admin Login & Register Modal -->
     <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
         <div class="admin-login-card">
             <div class="login-modal-header">
                 <div class="modal-title-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <h3>Admin Authentication</h3>
+                    <i class="fa-solid fa-user-shield"></i>
+                    <h3 id="authModalTitle">Student & Faculty Portal</h3>
                 </div>
-                <button class="close-modal-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
+                <button class="close-modal-btn" id="closeAdminLoginModalBtn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            
+            <div style="padding: 1.25rem 1.5rem 0 1.5rem;">
+                <div class="auth-mode-tabs" role="tablist">
+                    <button type="button" class="auth-tab-btn active" id="tabModeLoginBtn" role="tab">
+                        <i class="fa-solid fa-right-to-bracket"></i> Login
+                    </button>
+                    <button type="button" class="auth-tab-btn" id="tabModeRegisterBtn" role="tab">
+                        <i class="fa-solid fa-user-plus"></i> Register
+                    </button>
+                </div>
+            </div>
+
             <form id="adminLoginForm" class="login-modal-body">
-                <p class="login-hint">Enter your admin credentials to enable PDF upload and management privileges.</p>
+                <p class="login-hint" id="authModeHint">Enter your credentials to access study resources and upload privileges. Browsing is always free and open without logging in.</p>
+                
                 <div class="form-group">
                     <label for="adminUsernameInput"><i class="fa-solid fa-user"></i> Username</label>
-                    <input type="text" id="adminUsernameInput" placeholder="Enter username (default: admin)" required
-                        autocomplete="username">
+                    <input type="text" id="adminUsernameInput" placeholder="Enter username (exactly 8 chars)" required
+                        autocomplete="username" maxlength="20">
+                    <div class="auth-input-helper">
+                        <span id="usernameRuleText">Username must be exactly 8 characters</span>
+                        <span class="char-counter-badge" id="usernameCharBadge">0/8</span>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label for="adminPasswordInput"><i class="fa-solid fa-key"></i> Password</label>
-                    <input type="password" id="adminPasswordInput" placeholder="Enter password (default: admin123)"
+                    <input type="password" id="adminPasswordInput" placeholder="Enter password (min. 6 characters)"
                         required autocomplete="current-password">
                 </div>
+
                 <div id="loginErrorMsg" class="login-error-msg" style="display:none;">
-                    <i class="fa-solid fa-circle-exclamation"></i> Invalid admin username or password!
+                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid username or password!</span>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="cancel-btn" id="cancelAdminLoginBtn">Cancel</button>
-                    <button type="submit" class="submit-login-btn"><i class="fa-solid fa-right-to-bracket"></i> Login as
-                        Admin</button>
+                    <button type="submit" class="submit-login-btn auth-submit-btn" id="authSubmitBtn">
+                        <i class="fa-solid fa-right-to-bracket"></i> <span id="authSubmitBtnText">Login</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -227,10 +248,8 @@
         </div>
     </footer>
 
-
-
-
     <div class="home-watermark" aria-hidden="true"></div>
+    <script src="auth.js"></script>
     <script src="data.js"></script>
     <script src="script.js"></script>
 </body>

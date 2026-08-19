@@ -110,49 +110,92 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    // Admin Authentication Management
+    // ---------------------------------------------------------
+    // User & Admin Authentication Management
+    // ---------------------------------------------------------
     const adminToggleBtn = document.getElementById('adminToggleBtn');
     const loginModalBackdrop = document.getElementById('adminLoginModalBackdrop');
     const closeLoginModalBtn = document.getElementById('closeAdminLoginModalBtn');
     const cancelLoginBtn = document.getElementById('cancelAdminLoginBtn');
     const adminLoginForm = document.getElementById('adminLoginForm');
     const loginErrorMsg = document.getElementById('loginErrorMsg');
+    const loginErrorText = document.getElementById('loginErrorText');
+    const usernameInput = document.getElementById('adminUsernameInput');
+    const passwordInput = document.getElementById('adminPasswordInput');
+    const usernameCharBadge = document.getElementById('usernameCharBadge');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authSubmitBtnText = document.getElementById('authSubmitBtnText');
+    const authModeHint = document.getElementById('authModeHint');
+    const tabModeLoginBtn = document.getElementById('tabModeLoginBtn');
+    const tabModeRegisterBtn = document.getElementById('tabModeRegisterBtn');
 
-    let isAdminLoggedIn = localStorage.getItem('isAdminMode') === 'true';
+    let currentAuthMode = 'login'; // 'login' | 'register'
 
-    function updateAdminStateUI() {
-        if (!adminToggleBtn) return;
-        if (isAdminLoggedIn) {
-            adminToggleBtn.classList.add('active');
-            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> <span>Admin Active (Logout)</span>';
+    function setAuthMode(mode) {
+        currentAuthMode = mode;
+        if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+
+        if (mode === 'register') {
+            if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');
+            if (tabModeLoginBtn) tabModeLoginBtn.classList.remove('active');
+            if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Account';
+            if (authModeHint) authModeHint.textContent = 'Create a new account. Username must be exactly 8 characters.';
         } else {
-            adminToggleBtn.classList.remove('active');
-            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-shield"></i> <span>Admin Mode</span>';
+            if (tabModeLoginBtn) tabModeLoginBtn.classList.add('active');
+            if (tabModeRegisterBtn) tabModeRegisterBtn.classList.remove('active');
+            if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
+            if (authModeHint) authModeHint.textContent = 'Enter your credentials to access study resources and upload privileges.';
+        }
+        updateCharBadge();
+    }
+
+    if (tabModeLoginBtn) tabModeLoginBtn.addEventListener('click', () => setAuthMode('login'));
+    if (tabModeRegisterBtn) tabModeRegisterBtn.addEventListener('click', () => setAuthMode('register'));
+
+    function updateCharBadge() {
+        if (!usernameInput || !usernameCharBadge) return;
+        const len = usernameInput.value.length;
+        usernameCharBadge.textContent = `${len}/8`;
+        if (len === 8) {
+            usernameCharBadge.className = 'char-counter-badge valid';
+        } else if (len > 0) {
+            usernameCharBadge.className = 'char-counter-badge invalid';
+        } else {
+            usernameCharBadge.className = 'char-counter-badge';
         }
     }
 
-    if (adminToggleBtn) {
-        adminToggleBtn.addEventListener('click', () => {
-            if (isAdminLoggedIn) {
-                // Logout Admin
-                isAdminLoggedIn = false;
-                localStorage.setItem('isAdminMode', 'false');
-                updateAdminStateUI();
-                showToast('Logged out from Admin Mode.');
-            } else {
-                // Open Login Modal
-                if (loginModalBackdrop) {
-                    loginModalBackdrop.classList.add('active');
-                    if (loginErrorMsg) loginErrorMsg.style.display = 'none';
-                }
+    if (usernameInput) {
+        usernameInput.addEventListener('input', updateCharBadge);
+    }
+
+    function openLoginModal() {
+        if (loginModalBackdrop) {
+            loginModalBackdrop.classList.add('active');
+            if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+            setAuthMode('login');
+            if (usernameInput) {
+                usernameInput.focus();
+                updateCharBadge();
             }
-        });
+        }
     }
 
     function closeLoginModal() {
         if (loginModalBackdrop) loginModalBackdrop.classList.remove('active');
         if (adminLoginForm) adminLoginForm.reset();
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+        updateCharBadge();
+    }
+
+    if (adminToggleBtn) {
+        adminToggleBtn.addEventListener('click', () => {
+            if (window.authService && window.authService.isLoggedIn()) {
+                window.authService.logout();
+            } else {
+                openLoginModal();
+            }
+        });
     }
 
     if (closeLoginModalBtn) closeLoginModalBtn.addEventListener('click', closeLoginModal);
@@ -164,25 +207,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (adminLoginForm) {
-        adminLoginForm.addEventListener('submit', (e) => {
+        adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userVal = document.getElementById('adminUsernameInput').value.trim();
-            const passVal = document.getElementById('adminPasswordInput').value;
+            const userVal = usernameInput ? usernameInput.value.trim() : '';
+            const passVal = passwordInput ? passwordInput.value : '';
 
-            // Admin Credentials Verification (Default: admin / admin123)
-            if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
-                isAdminLoggedIn = true;
-                localStorage.setItem('isAdminMode', 'true');
-                updateAdminStateUI();
-                closeLoginModal();
-                showToast('Welcome Admin! You now have full PDF upload & management privileges.');
-            } else {
-                if (loginErrorMsg) loginErrorMsg.style.display = 'flex';
+            if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+            if (authSubmitBtn) {
+                authSubmitBtn.disabled = true;
+                if (authSubmitBtnText) authSubmitBtnText.textContent = 'Processing...';
+            }
+
+            try {
+                if (currentAuthMode === 'register') {
+                    if (userVal.length !== 8) {
+                        throw new Error('Username must be exactly 8 characters long.');
+                    }
+                    if (passVal.length < 6) {
+                        throw new Error('Password must be at least 6 characters long.');
+                    }
+                    await window.authService.register(userVal, passVal);
+                    closeLoginModal();
+                    showToast(`Registration successful! Welcome, ${userVal}!`);
+                } else {
+                    // Try backend login first
+                    try {
+                        await window.authService.login(userVal, passVal);
+                        closeLoginModal();
+                        showToast(`Welcome back, ${userVal}!`);
+                    } catch (apiErr) {
+                        // Fallback for offline admin compatibility if default admin credentials used
+                        if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
+                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'admin' });
+                            closeLoginModal();
+                            showToast('Logged in as Admin (Local Mode).');
+                        } else {
+                            throw apiErr;
+                        }
+                    }
+                }
+            } catch (err) {
+                if (loginErrorMsg) {
+                    loginErrorMsg.style.display = 'flex';
+                    if (loginErrorText) loginErrorText.textContent = err.message || 'Authentication failed.';
+                }
+            } finally {
+                if (authSubmitBtn) {
+                    authSubmitBtn.disabled = false;
+                    if (authSubmitBtnText) authSubmitBtnText.textContent = currentAuthMode === 'register' ? 'Create Account' : 'Login';
+                }
             }
         });
     }
-
-    updateAdminStateUI();
 
     // Theme System Management
     const themeToggleBtn = document.getElementById('themeToggleBtn');
