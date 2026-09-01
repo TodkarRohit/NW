@@ -24,9 +24,6 @@
     --radius-card: 18px;
     --radius-btn: 10px;
     --radius-pill: 9999px;
-    
-    --modal-gradient-start: rgba(80, 140, 200, 0.95);
-    --modal-gradient-end: rgba(40, 90, 150, 0.95);
 }
 
 [data-theme="dark"] {
@@ -40,9 +37,6 @@
     --text-light: #64748b;
     --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
     --shadow-hover: 0 12px 30px rgba(2, 132, 199, 0.25);
-    
-    --modal-gradient-start: rgba(116, 171, 226, 0.85);
-    --modal-gradient-end: rgba(13, 50, 107, 0.85);
 }
 
 * {
@@ -915,12 +909,15 @@ footer {
    ========================================================================== */
 .home-watermark {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: url('logo1.png') no-repeat center center;
-    background-size: cover;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 640px;
+    max-width: 85vw;
+    height: 640px;
+    max-height: 85vw;
+    background: url('logo.png') no-repeat center center;
+    background-size: contain;
     opacity: 0.055;
     pointer-events: none;
     z-index: 0;
@@ -964,146 +961,236 @@ footer {
         top: -12px;
         left: 12px;
     }
-    
-    .hide-on-mobile {
-        display: none !important;
-    }
-    
-    #adminBtnText,
-    .theme-btn-text {
-        display: none !important;
-    }
-    
-    .admin-toggle-btn, .theme-toggle-btn, .online-users-badge {
-        padding: 8px 12px;
-        font-size: 1.1rem;
-    }
 }
 
 /* ==========================================================================
-   CUSTOM LOGIN MODAL DESIGN (IMAGE MATCH)
+   AUTH MODAL ENHANCEMENTS (Login & Register Tabs)
    ========================================================================== */
+.auth-mode-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    gap: 4px;
+}
+
+[data-theme="dark"] .auth-mode-tabs {
+    background: #1e293b;
+}
+
+.auth-tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.auth-tab-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .auth-tab-btn.active {
+    background: #334155;
+    color: #38bdf8;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.auth-input-helper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+.char-counter-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.char-counter-badge.valid {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.char-counter-badge.invalid {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.auth-submit-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border: none;
+    padding: 11px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+}
+
+.auth-submit-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+}
+
+.auth-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================================================
+   Custom Login UI Additions (Glassmorphism Modal)
+   ========================================================================== */
+
+.admin-login-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
 .admin-login-backdrop.active {
-    background: rgba(15, 23, 42, 0.7); /* Original semi-transparent dark overlay */
-    backdrop-filter: none;
+    display: flex;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .custom-login-design {
-    background: linear-gradient(135deg, var(--modal-gradient-start) 0%, var(--modal-gradient-end) 100%) !important;
-    backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    background: rgba(255, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 100, 100, 0.4) !important;
+    box-shadow: 0 8px 32px 0 rgba(255, 0, 0, 0.3) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 20px !important;
     color: white !important;
-    max-width: 440px !important;
-    padding: 40px !important;
-    border-radius: 16px !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 100% !important;
+    max-width: 400px !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
 .custom-close-btn {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    color: rgba(255, 255, 255, 0.7) !important;
-    background: transparent !important;
-    font-size: 1.2rem;
-    cursor: pointer;
-    z-index: 10;
-}
-
-.custom-close-btn:hover {
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: none;
     color: white !important;
-}
-
-.custom-login-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding: 0;
-    background: transparent !important;
-}
-
-.custom-user-icon {
-    width: 80px;
-    height: 80px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background-color: #0b2e61;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
-    font-size: 2.5rem;
-    color: white;
+    transition: background 0.2s;
+    z-index: 10;
+}
+.custom-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
 }
 
+.custom-login-header {
+    text-align: center;
+    padding: 30px 20px 10px;
+}
+.custom-user-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
 .custom-login-header h2 {
-    font-weight: 300;
-    letter-spacing: 2px;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
     margin: 0;
-    text-transform: uppercase;
 }
 
 .custom-login-body {
-    width: 100%;
-    padding: 0 !important;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    padding: 10px 30px 30px;
 }
 
 .custom-form-group {
     position: relative;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-    padding-bottom: 8px;
+    margin-bottom: 20px;
 }
-
 .custom-form-group i {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1rem;
-    margin-right: 15px;
-    width: 20px;
-    text-align: center;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
 }
-
 .custom-form-group input {
-    background: transparent !important;
-    border: none !important;
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 25px !important;
     color: white !important;
     font-size: 1rem;
-    flex: 1;
-    outline: none !important;
-    padding: 5px 0;
-    box-shadow: none !important;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
 }
-
 .custom-form-group input::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important;
-    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+}
+.custom-form-group input:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .custom-login-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 25px;
     font-size: 0.85rem;
-    margin-top: -10px;
 }
 
 .custom-checkbox-label {
     display: flex;
     align-items: center;
     cursor: pointer;
-    position: relative;
-    padding-left: 24px;
-    color: rgba(255, 255, 255, 0.9);
+    user-select: none;
+    color: rgba(255, 255, 255, 0.8);
 }
-
 .custom-checkbox-label input {
     position: absolute;
     opacity: 0;
@@ -1111,40 +1198,35 @@ footer {
     height: 0;
     width: 0;
 }
-
 .custom-checkmark {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    left: 0;
     height: 16px;
     width: 16px;
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
 }
-
+.custom-checkbox-label:hover input ~ .custom-checkmark {
+    background-color: rgba(255, 255, 255, 0.2);
+}
 .custom-checkbox-label input:checked ~ .custom-checkmark {
-    background-color: #ffffff;
-    border-color: #ffffff;
+    background-color: white;
 }
-
 .custom-checkmark:after {
     content: "";
     position: absolute;
     display: none;
 }
-
 .custom-checkbox-label input:checked ~ .custom-checkmark:after {
     display: block;
 }
-
 .custom-checkbox-label .custom-checkmark:after {
     left: 5px;
     top: 2px;
     width: 4px;
     height: 8px;
-    border: solid #0b2e61;
+    border: solid red;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
@@ -1152,95 +1234,82 @@ footer {
 .custom-forgot-link {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
-    font-style: italic;
     transition: color 0.2s;
 }
-
 .custom-forgot-link:hover {
     color: white;
+    text-decoration: underline;
 }
 
 .custom-submit-btn {
     width: 100%;
-    background-color: #0b2e61 !important;
-    background-image: none !important;
-    color: white;
+    background: white !important;
+    color: red !important;
     border: none;
-    padding: 14px;
+    padding: 12px;
+    border-radius: 25px !important;
     font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 1px;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: none !important;
-    border-radius: 4px !important;
-    margin-top: 10px;
-    display: block !important;
-    text-align: center;
-    transition: background-color 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 1px;
 }
-
 .custom-submit-btn:hover {
-    background-color: #061c3f !important;
-    transform: none !important;
-}
-
-.custom-error {
-    background: rgba(220, 38, 38, 0.2) !important;
-    color: #fca5a5 !important;
-    border: 1px solid rgba(252, 165, 165, 0.3) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .custom-toggle-link {
     text-align: center;
-    margin-top: 15px;
-    font-size: 0.9rem;
+    margin-top: 20px;
 }
-
 .custom-toggle-link a {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
+    font-size: 0.9rem;
     transition: color 0.2s;
 }
-
 .custom-toggle-link a:hover {
-    color: white !important;
+    color: white;
+    text-decoration: underline;
 }
 
-@media (max-width: 480px) {
-    .custom-login-design {
-        max-width: 90% !important;
-        padding: 30px 20px !important;
-        border-radius: 12px !important;
-    }
-
-    .custom-login-header h2 {
-        font-size: 1.2rem;
-    }
-
-    .custom-user-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 2rem;
-        margin-bottom: 1rem;
-    }
-
-    .custom-close-btn {
-        top: 15px;
-        right: 15px;
-    }
-
-    .custom-form-group i {
-        font-size: 1rem;
-        margin-right: 10px;
-    }
-
-    .custom-form-group input {
-        font-size: 0.95rem;
-    }
-
-    .custom-login-options {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
-    }
+.custom-error {
+    background: rgba(255, 50, 50, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+/* Auth Mode Tabs Styling (for new tabs in custom modal) */
+.auth-mode-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 15px;
+}
+.auth-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 8px 0;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.auth-tab-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+.auth-tab-btn:hover:not(.active) {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}

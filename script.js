@@ -110,49 +110,92 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    // Admin Authentication Management
+    // ---------------------------------------------------------
+    // User & Admin Authentication Management
+    // ---------------------------------------------------------
     const adminToggleBtn = document.getElementById('adminToggleBtn');
     const loginModalBackdrop = document.getElementById('adminLoginModalBackdrop');
     const closeLoginModalBtn = document.getElementById('closeAdminLoginModalBtn');
     const cancelLoginBtn = document.getElementById('cancelAdminLoginBtn');
     const adminLoginForm = document.getElementById('adminLoginForm');
     const loginErrorMsg = document.getElementById('loginErrorMsg');
+    const loginErrorText = document.getElementById('loginErrorText');
+    const usernameInput = document.getElementById('adminUsernameInput');
+    const passwordInput = document.getElementById('adminPasswordInput');
+    const usernameCharBadge = document.getElementById('usernameCharBadge');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authSubmitBtnText = document.getElementById('authSubmitBtnText');
+    const authModeHint = document.getElementById('authModeHint');
+    const tabModeLoginBtn = document.getElementById('tabModeLoginBtn');
+    const tabModeRegisterBtn = document.getElementById('tabModeRegisterBtn');
 
-    let isAdminLoggedIn = localStorage.getItem('isAdminMode') === 'true';
+    let currentAuthMode = 'login'; // 'login' | 'register'
 
-    function updateAdminStateUI() {
-        if (!adminToggleBtn) return;
-        if (isAdminLoggedIn) {
-            adminToggleBtn.classList.add('active');
-            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> <span id="adminBtnText" class="hide-on-mobile">Login Active (Logout)</span>';
+    function setAuthMode(mode) {
+        currentAuthMode = mode;
+        if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+
+        if (mode === 'register') {
+            if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');
+            if (tabModeLoginBtn) tabModeLoginBtn.classList.remove('active');
+            if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Account';
+            if (authModeHint) authModeHint.textContent = 'Create a new account. Username must be exactly 8 characters.';
         } else {
-            adminToggleBtn.classList.remove('active');
-            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-shield"></i> <span id="adminBtnText" class="hide-on-mobile">Login Mode</span>';
+            if (tabModeLoginBtn) tabModeLoginBtn.classList.add('active');
+            if (tabModeRegisterBtn) tabModeRegisterBtn.classList.remove('active');
+            if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
+            if (authModeHint) authModeHint.textContent = 'Enter your credentials to access study resources and upload privileges.';
+        }
+        updateCharBadge();
+    }
+
+    if (tabModeLoginBtn) tabModeLoginBtn.addEventListener('click', () => setAuthMode('login'));
+    if (tabModeRegisterBtn) tabModeRegisterBtn.addEventListener('click', () => setAuthMode('register'));
+
+    function updateCharBadge() {
+        if (!usernameInput || !usernameCharBadge) return;
+        const len = usernameInput.value.length;
+        usernameCharBadge.textContent = `${len}/8`;
+        if (len === 8) {
+            usernameCharBadge.className = 'char-counter-badge valid';
+        } else if (len > 0) {
+            usernameCharBadge.className = 'char-counter-badge invalid';
+        } else {
+            usernameCharBadge.className = 'char-counter-badge';
         }
     }
 
-    if (adminToggleBtn) {
-        adminToggleBtn.addEventListener('click', () => {
-            if (isAdminLoggedIn) {
-                // Logout Admin
-                isAdminLoggedIn = false;
-                localStorage.setItem('isAdminMode', 'false');
-                updateAdminStateUI();
-                showToast('Logged out from Login Mode.');
-            } else {
-                // Open Login Modal
-                if (loginModalBackdrop) {
-                    loginModalBackdrop.classList.add('active');
-                    if (loginErrorMsg) loginErrorMsg.style.display = 'none';
-                }
+    if (usernameInput) {
+        usernameInput.addEventListener('input', updateCharBadge);
+    }
+
+    function openLoginModal() {
+        if (loginModalBackdrop) {
+            loginModalBackdrop.classList.add('active');
+            if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+            setAuthMode('login');
+            if (usernameInput) {
+                usernameInput.focus();
+                updateCharBadge();
             }
-        });
+        }
     }
 
     function closeLoginModal() {
         if (loginModalBackdrop) loginModalBackdrop.classList.remove('active');
         if (adminLoginForm) adminLoginForm.reset();
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+        updateCharBadge();
+    }
+
+    if (adminToggleBtn) {
+        adminToggleBtn.addEventListener('click', () => {
+            if (window.authService && window.authService.isLoggedIn()) {
+                window.authService.logout();
+            } else {
+                openLoginModal();
+            }
+        });
     }
 
     if (closeLoginModalBtn) closeLoginModalBtn.addEventListener('click', closeLoginModal);
@@ -163,79 +206,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    let isSignUpMode = false;
-    const toggleAuthModeBtn = document.getElementById('toggleAuthModeBtn');
-    const nameFormGroup = document.getElementById('nameFormGroup');
-    const loginModeHint = document.getElementById('loginModeHint');
-    const submitLoginBtn = document.getElementById('submitLoginBtn');
-    const loginErrorText = document.getElementById('loginErrorText');
-    const adminNameInput = document.getElementById('adminNameInput');
-
-    if (toggleAuthModeBtn) {
-        toggleAuthModeBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            isSignUpMode = !isSignUpMode;
-            if (isSignUpMode) {
-                nameFormGroup.style.display = 'block';
-                if(adminNameInput) adminNameInput.required = true;
-                if(loginModeHint) loginModeHint.textContent = 'Create a new account.';
-                if(submitLoginBtn) submitLoginBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Sign Up';
-                toggleAuthModeBtn.textContent = 'Already have an account? Login';
-            } else {
-                nameFormGroup.style.display = 'none';
-                if(adminNameInput) adminNameInput.required = false;
-                if(loginModeHint) loginModeHint.textContent = 'Enter your credentials to login.';
-                if(submitLoginBtn) submitLoginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
-                toggleAuthModeBtn.textContent = "Don't have an account? Sign Up";
-            }
-            if (loginErrorMsg) loginErrorMsg.style.display = 'none';
-        });
-    }
-
     if (adminLoginForm) {
-        adminLoginForm.addEventListener('submit', (e) => {
+        adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userVal = document.getElementById('adminUsernameInput').value.trim();
-            const passVal = document.getElementById('adminPasswordInput').value;
-            const nameVal = adminNameInput ? adminNameInput.value.trim() : '';
+            const userVal = usernameInput ? usernameInput.value.trim() : '';
+            const passVal = passwordInput ? passwordInput.value : '';
 
-            let users = JSON.parse(localStorage.getItem('users') || '[]');
+            if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+            if (authSubmitBtn) {
+                authSubmitBtn.disabled = true;
+                if (authSubmitBtnText) authSubmitBtnText.textContent = 'Processing...';
+            }
 
-            if (isSignUpMode) {
-                if (users.find(u => u.username === userVal)) {
-                    if (loginErrorMsg) {
-                        if(loginErrorText) loginErrorText.textContent = 'Username already exists!';
-                        loginErrorMsg.style.display = 'flex';
+            try {
+                if (currentAuthMode === 'register') {
+                    if (userVal.length !== 8) {
+                        throw new Error('Username must be exactly 8 characters long.');
                     }
-                    return;
-                }
-                users.push({ username: userVal, password: passVal, name: nameVal });
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                isAdminLoggedIn = true;
-                localStorage.setItem('isAdminMode', 'true');
-                updateAdminStateUI();
-                closeLoginModal();
-                showToast(`Welcome ${nameVal || userVal}! Account created successfully.`);
-            } else {
-                const foundUser = users.find(u => u.username === userVal && u.password === passVal);
-                if (foundUser || ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin'))) {
-                    isAdminLoggedIn = true;
-                    localStorage.setItem('isAdminMode', 'true');
-                    updateAdminStateUI();
+                    if (passVal.length < 6) {
+                        throw new Error('Password must be at least 6 characters long.');
+                    }
+                    await window.authService.register(userVal, passVal);
                     closeLoginModal();
-                    showToast(`Welcome back ${foundUser ? foundUser.name || foundUser.username : 'Admin'}!`);
+                    showToast(`Registration successful! Welcome, ${userVal}!`);
                 } else {
-                    if (loginErrorMsg) {
-                        if(loginErrorText) loginErrorText.textContent = 'Invalid username or password!';
-                        loginErrorMsg.style.display = 'flex';
+                    // Try backend login first
+                    try {
+                        await window.authService.login(userVal, passVal);
+                        closeLoginModal();
+                        showToast(`Welcome back, ${userVal}!`);
+                    } catch (apiErr) {
+                        // Fallback for offline admin compatibility if default admin credentials used
+                        if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
+                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'admin' });
+                            closeLoginModal();
+                            showToast('Logged in as Admin (Local Mode).');
+                        } else {
+                            throw apiErr;
+                        }
                     }
+                }
+            } catch (err) {
+                if (loginErrorMsg) {
+                    loginErrorMsg.style.display = 'flex';
+                    if (loginErrorText) loginErrorText.textContent = err.message || 'Authentication failed.';
+                }
+            } finally {
+                if (authSubmitBtn) {
+                    authSubmitBtn.disabled = false;
+                    if (authSubmitBtnText) authSubmitBtnText.textContent = currentAuthMode === 'register' ? 'Create Account' : 'Login';
                 }
             }
         });
     }
-
-    updateAdminStateUI();
 
     // Theme System Management
     const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -246,13 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.setAttribute('data-theme', 'dark');
             document.documentElement.setAttribute('data-theme', 'dark');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text hide-on-mobile">Light Mode</span>';
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text">Light Mode</span>';
             }
         } else {
             document.body.removeAttribute('data-theme');
             document.documentElement.removeAttribute('data-theme');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text hide-on-mobile">Dark Mode</span>';
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text">Dark Mode</span>';
             }
         }
     }
