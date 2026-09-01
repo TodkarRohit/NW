@@ -1061,4 +1061,255 @@ footer {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+}
+
+/* ==========================================================================
+   Custom Login UI Additions (Glassmorphism Modal)
+   ========================================================================== */
+
+.admin-login-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+.admin-login-backdrop.active {
+    display: flex;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.custom-login-design {
+    background: rgba(255, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 100, 100, 0.4) !important;
+    box-shadow: 0 8px 32px 0 rgba(255, 0, 0, 0.3) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 20px !important;
+    color: white !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.custom-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: none;
+    color: white !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    z-index: 10;
+}
+.custom-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.custom-login-header {
+    text-align: center;
+    padding: 30px 20px 10px;
+}
+.custom-user-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+.custom-login-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.custom-login-body {
+    padding: 10px 30px 30px;
+}
+
+.custom-form-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+.custom-form-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+}
+.custom-form-group input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 25px !important;
+    color: white !important;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+.custom-form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+.custom-form-group input:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.custom-login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    font-size: 0.85rem;
+}
+
+.custom-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    color: rgba(255, 255, 255, 0.8);
+}
+.custom-checkbox-label input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+.custom-checkmark {
+    height: 16px;
+    width: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+}
+.custom-checkbox-label:hover input ~ .custom-checkmark {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+.custom-checkbox-label input:checked ~ .custom-checkmark {
+    background-color: white;
+}
+.custom-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+.custom-checkbox-label input:checked ~ .custom-checkmark:after {
+    display: block;
+}
+.custom-checkbox-label .custom-checkmark:after {
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid red;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.custom-forgot-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.custom-forgot-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.custom-submit-btn {
+    width: 100%;
+    background: white !important;
+    color: red !important;
+    border: none;
+    padding: 12px;
+    border-radius: 25px !important;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 1px;
+}
+.custom-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.custom-toggle-link {
+    text-align: center;
+    margin-top: 20px;
+}
+.custom-toggle-link a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+.custom-toggle-link a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.custom-error {
+    background: rgba(255, 50, 50, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Auth Mode Tabs Styling (for new tabs in custom modal) */
+.auth-mode-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 15px;
+}
+.auth-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 8px 0;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.auth-tab-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+.auth-tab-btn:hover:not(.active) {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
 }

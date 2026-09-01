@@ -12,7 +12,7 @@
     --text-muted: #64748b;
     --text-heading: #1e293b;
     --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    --header-height: 68px;
+    --header-height: 50px;
     --sidebar-width: 320px;
     --font-base: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'Fira Code', monospace;
@@ -29,8 +29,7 @@ body {
     background-color: var(--bg-page);
     color: var(--text-main);
     line-height: 1.6;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
@@ -39,15 +38,18 @@ body {
    Header Navigation Bar
    ========================================================================== */
 .viewer-header {
-    height: var(--header-height);
+    min-height: var(--header-height);
+    height: auto;
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1.5rem;
+    padding: 10px 1.5rem;
     z-index: 30;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .header-left {
@@ -55,6 +57,7 @@ body {
     align-items: center;
     gap: 1.25rem;
     min-width: 0;
+    flex-wrap: wrap;
 }
 
 .back-btn {
@@ -156,6 +159,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .action-btn {
@@ -265,18 +269,15 @@ body {
 }
 
 /* ==========================================================================
-   Two-Panel Layout
+   Main Layout Container
    ========================================================================== */
 .viewer-layout {
-    display: flex;
     flex: 1;
-    height: calc(100vh - var(--header-height));
-    overflow: hidden;
-    position: relative;
+    display: flex;
 }
 
 /* --------------------------------------------------------------------------
-   Left Panel: Chapter Sidebar
+   Left Sidebar: Chapters & Navigation
    -------------------------------------------------------------------------- */
 .sidebar-panel {
     width: var(--sidebar-width);
@@ -284,9 +285,10 @@ body {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
-    height: 100%;
     z-index: 20;
+    position: sticky;
+    top: 0;
+    height: 100vh;
 }
 
 .sidebar-header {
@@ -426,8 +428,6 @@ body {
 .preview-panel {
     flex: 1;
     background: var(--bg-page);
-    height: 100%;
-    overflow-y: auto;
     padding: 2rem 3rem 4rem 3rem;
     display: flex;
     flex-direction: column;

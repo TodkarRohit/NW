@@ -23,7 +23,7 @@
                 <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
                     <span class="online-pulse-dot"></span>
                     <i class="fa-solid fa-users"></i>
-                    <span id="onlineUsersCount">18</span> Online
+                    <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
                 </div>
             </div>
             <div class="header-titles">
@@ -45,7 +45,7 @@
             <div class="header-right">
                 <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
                     <i class="fa-solid fa-user-shield"></i>
-                    <span id="adminBtnText">Admin Mode</span>
+                    <span id="adminBtnText">Login Mode</span>
                 </button>
                 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
                     <i class="fa-solid fa-moon"></i>
@@ -150,15 +150,15 @@
 
     <!-- Auth / Admin Login & Register Modal -->
     <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
-        <div class="admin-login-card">
-            <div class="login-modal-header">
-                <div class="modal-title-group">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <h3 id="authModalTitle">Student & Faculty Portal</h3>
+        <div class="admin-login-card custom-login-design">
+            <button class="close-modal-btn custom-close-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="custom-login-header">
+                <div class="custom-user-icon">
+                    <i class="fa-regular fa-user"></i>
                 </div>
-                <button class="close-modal-btn" id="closeAdminLoginModalBtn" aria-label="Close modal"><i class="fa-solid fa-xmark"></i></button>
+                <h2 id="authModalTitle">STUDENT LOGIN</h2>
             </div>
-
+            
             <div style="padding: 1.25rem 1.5rem 0 1.5rem;">
                 <div class="auth-mode-tabs" role="tablist">
                     <button type="button" class="auth-tab-btn active" id="tabModeLoginBtn" role="tab">
@@ -170,27 +170,45 @@
                 </div>
             </div>
 
-            <form id="adminLoginForm" class="login-modal-body">
-                <p class="login-hint" id="authModeHint">Enter your credentials to enable assignment upload and management privileges.</p>
-                <div class="form-group">
-                    <label for="adminUsernameInput"><i class="fa-solid fa-user"></i> Username</label>
-                    <input type="text" id="adminUsernameInput" placeholder="Enter username (exactly 8 chars)" required autocomplete="username" maxlength="20">
-                    <div class="auth-input-helper">
-                        <span id="usernameRuleText">Username must be exactly 8 characters</span>
-                        <span class="char-counter-badge" id="usernameCharBadge">0/8</span>
-                    </div>
+            <form id="adminLoginForm" class="login-modal-body custom-login-body">
+                <p class="login-hint" id="authModeHint" style="font-size: 0.85rem; color: #fff; margin-bottom: 1rem; text-align: center;">Enter your credentials to enable assignment upload and management privileges.</p>
+                
+                <div class="form-group custom-form-group" id="nameFormGroup" style="display:none;">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="text" id="adminNameInput" placeholder="Full Name" autocomplete="name">
                 </div>
-                <div class="form-group">
-                    <label for="adminPasswordInput"><i class="fa-solid fa-key"></i> Password</label>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="text" id="adminUsernameInput" placeholder="Enter username (exactly 8 chars)" required autocomplete="username" maxlength="20">
+                </div>
+                <div class="auth-input-helper" style="font-size: 0.75rem; color: #ffb5b5; display: flex; justify-content: space-between; margin-top: -0.5rem; margin-bottom: 0.5rem; padding: 0 0.5rem;">
+                    <span id="usernameRuleText">Username must be exactly 8 characters</span>
+                    <span class="char-counter-badge" id="usernameCharBadge">0/8</span>
+                </div>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-lock"></i>
                     <input type="password" id="adminPasswordInput" placeholder="Enter password (min. 6 characters)" required autocomplete="current-password">
                 </div>
-                <div id="loginErrorMsg" class="login-error-msg" style="display:none;">
+
+                <div class="custom-login-options">
+                    <label class="custom-checkbox-label">
+                        <input type="checkbox" id="rememberMeCheckbox">
+                        <span class="custom-checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="custom-forgot-link">Forgot Password?</a>
+                </div>
+
+                <div id="loginErrorMsg" class="login-error-msg custom-error" style="display:none;">
                     <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid username or password!</span>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="cancel-btn" id="cancelAdminLoginBtn">Cancel</button>
-                    <button type="submit" class="submit-login-btn auth-submit-btn" id="authSubmitBtn">
-                        <i class="fa-solid fa-right-to-bracket"></i> <span id="authSubmitBtnText">Login</span>
+                
+                <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="cancel-btn custom-submit-btn" id="cancelAdminLoginBtn" style="background: rgba(255,255,255,0.2); flex: 1;">Cancel</button>
+                    <button type="submit" class="submit-login-btn custom-submit-btn auth-submit-btn" id="authSubmitBtn" style="flex: 1;">
+                        <span id="authSubmitBtnText">LOGIN</span>
                     </button>
                 </div>
             </form>
