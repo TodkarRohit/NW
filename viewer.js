@@ -137,20 +137,71 @@ document.addEventListener('DOMContentLoaded', () => {
                             (item.name && item.name.toLowerCase().includes(searchLower));
 
             if (matches) {
-                const hasQuestionDoc = localStorage.getItem(getStorageKey(index, 'questions'));
-                const hasAnswerDoc = localStorage.getItem(getStorageKey(index, 'answers'));
-                const hasDoc = hasQuestionDoc || hasAnswerDoc;
+                let uploadedFiles = [];
+                if (isQB) {
+                    const qDataStr = localStorage.getItem(getStorageKey(index, 'questions'));
+                    const aDataStr = localStorage.getItem(getStorageKey(index, 'answers'));
+                    if (qDataStr) {
+                        try { uploadedFiles.push(JSON.parse(qDataStr)); } catch(e){}
+                    }
+                    if (aDataStr) {
+                        try { uploadedFiles.push(JSON.parse(aDataStr)); } catch(e){}
+                    }
+                } else {
+                    const nDataStr = localStorage.getItem(getStorageKey(index));
+                    if (nDataStr) {
+                        try { uploadedFiles.push(JSON.parse(nDataStr)); } catch(e){}
+                    }
+                }
+                const hasDoc = uploadedFiles.length > 0;
 
-                const itemBtn = document.createElement('button');
-                itemBtn.className = `chapter-item ${index === activeIndex ? 'active' : ''}`;
-                itemBtn.setAttribute('type', 'button');
+                const itemBtn = document.createElement('div');
+                itemBtn.className = `chapter-item-container`;
+                itemBtn.style.display = 'flex';
+                itemBtn.style.flexDirection = 'column';
+                itemBtn.style.gap = '0';
                 
-                itemBtn.innerHTML = `
+                const btnInner = document.createElement('button');
+                btnInner.className = `chapter-item ${index === activeIndex ? 'active' : ''}`;
+                btnInner.setAttribute('type', 'button');
+                btnInner.style.width = '100%';
+                
+                btnInner.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                         <span class="chapter-item-title">${item.title}</span>
                         ${hasDoc ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
                     </div>
                 `;
+
+                itemBtn.appendChild(btnInner);
+
+                if (index === activeIndex && hasDoc) {
+                    const dropdown = document.createElement('div');
+                    dropdown.style.padding = '10px 12px';
+                    dropdown.style.background = 'var(--bg-page)';
+                    dropdown.style.border = '1px solid var(--border-color)';
+                    dropdown.style.borderTop = 'none';
+                    dropdown.style.borderBottomLeftRadius = '10px';
+                    dropdown.style.borderBottomRightRadius = '10px';
+                    dropdown.style.fontSize = '0.85rem';
+                    dropdown.style.display = 'flex';
+                    dropdown.style.flexDirection = 'column';
+                    dropdown.style.gap = '8px';
+                    
+                    // Adjust button radius so it merges with dropdown
+                    btnInner.style.borderBottomLeftRadius = '0';
+                    btnInner.style.borderBottomRightRadius = '0';
+                    btnInner.style.borderBottom = '1px solid transparent';
+                    
+                    dropdown.innerHTML = uploadedFiles.map(f => `
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
+                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 1.1rem;"></i>
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;" title="${f.name}">${f.name}</span>
+                        </div>
+                    `).join('');
+                    
+                    itemBtn.appendChild(dropdown);
+                }
 
                 itemBtn.addEventListener('click', () => {
                     activeIndex = index;
@@ -321,6 +372,8 @@ document.addEventListener('DOMContentLoaded', () => {
             itemUploadStatus.className = "status-indicator";
             statusText.textContent = currentQBView === 'questions' ? "Viewing Question Paper" : "Viewing Answer Key";
 
+            const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+            
             const paperViewHTML = currentQBView === 'questions' ? `
                 <div class="qb-paper-view question-paper">
                     <div class="paper-header">
@@ -350,10 +403,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p>Analyze best-case, average-case, and worst-case time complexities with step-by-step trace diagrams.</p>
                         </div>
                     </div>
+                    ${isAdminMode ? `
                     <div class="upload-pdf-strip">
                         <span>Have your own Question PDF for this unit?</span>
                         <button type="button" class="strip-upload-btn" id="stripUploadQBtn">Upload Question PDF</button>
                     </div>
+                    ` : ''}
                 </div>
             ` : `
                 <div class="qb-paper-view answer-paper">
@@ -382,10 +437,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <p><strong>Comparison:</strong> Contiguous memory allocation vs node-based dynamic references. Dynamic allocation avoids fixed memory limits but introduces pointer overhead.</p>
                         </div>
                     </div>
+                    ${isAdminMode ? `
                     <div class="upload-pdf-strip">
                         <span>Have your own Answer/Solution PDF for this unit?</span>
                         <button type="button" class="strip-upload-btn" id="stripUploadABtn">Upload Answer PDF</button>
                     </div>
+                    ` : ''}
                 </div>
             `;
 
@@ -413,13 +470,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clean Upload / Outline Blueprint Structure for Study Notes
             itemUploadStatus.className = "status-indicator";
             statusText.textContent = "Ready for Upload";
+            const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
 
             notesDocument.innerHTML = `
                 <div class="structure-header">
                     <h2>${currentItem.title}</h2>
                     <p>${subjectData.title} &bull; ${typeLabel}</p>
                 </div>
-
+                ${isAdminMode ? `
                 <!-- Interactive Upload Dropzone Structure -->
                 <div class="upload-dropzone" id="dropzoneBox">
                     <div class="upload-icon">
@@ -433,7 +491,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>Click here or drag & drop your study notes or PDF document for <strong>${currentItem.title}</strong>.</p>
                     <div class="upload-action-pill">Choose File (PDF, DOCX, TXT, Images)</div>
                 </div>
-
+                ` : `
+                <div class="upload-dropzone" style="cursor: default; background: var(--bg-surface); border-style: solid;">
+                    <div class="upload-icon" style="color: var(--text-muted); background: var(--bg-page);">
+                        <i class="fa-solid fa-lock" style="font-size: 1.2rem;"></i>
+                    </div>
+                    <h3 style="color: var(--text-muted);">Admin Upload Only</h3>
+                    <p style="color: var(--text-light);">Only authenticated admins can upload study materials here.</p>
+                </div>
+                `}
                 <!-- Structured Outline Layout -->
                 <div class="document-outline-card">
                     <h4>📋 Chapter Details</h4>
@@ -513,10 +579,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateUploadBtnUI() {
         if (!uploadBtnText) return;
-        if (isQB) {
-            uploadBtnText.textContent = "Upload QB PDF";
+        const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+        if (!isAdminMode) {
+            if (uploadFileBtn) uploadFileBtn.style.display = 'none';
         } else {
-            uploadBtnText.textContent = "Upload Notes PDF";
+            if (uploadFileBtn) uploadFileBtn.style.display = 'inline-flex';
+            if (isQB) {
+                uploadBtnText.textContent = "Upload QB PDF";
+            } else {
+                uploadBtnText.textContent = "Upload Notes PDF";
+            }
         }
     }
 

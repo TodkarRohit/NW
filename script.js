@@ -124,10 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminToggleBtn) return;
         if (isAdminLoggedIn) {
             adminToggleBtn.classList.add('active');
-            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> <span>Admin Active (Logout)</span>';
+            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> <span id="adminBtnText" class="hide-on-mobile">Login Active (Logout)</span>';
         } else {
             adminToggleBtn.classList.remove('active');
-            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-shield"></i> <span>Admin Mode</span>';
+            adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-shield"></i> <span id="adminBtnText" class="hide-on-mobile">Login Mode</span>';
         }
     }
 
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 isAdminLoggedIn = false;
                 localStorage.setItem('isAdminMode', 'false');
                 updateAdminStateUI();
-                showToast('Logged out from Admin Mode.');
+                showToast('Logged out from Login Mode.');
             } else {
                 // Open Login Modal
                 if (loginModalBackdrop) {
@@ -163,21 +163,74 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let isSignUpMode = false;
+    const toggleAuthModeBtn = document.getElementById('toggleAuthModeBtn');
+    const nameFormGroup = document.getElementById('nameFormGroup');
+    const loginModeHint = document.getElementById('loginModeHint');
+    const submitLoginBtn = document.getElementById('submitLoginBtn');
+    const loginErrorText = document.getElementById('loginErrorText');
+    const adminNameInput = document.getElementById('adminNameInput');
+
+    if (toggleAuthModeBtn) {
+        toggleAuthModeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            isSignUpMode = !isSignUpMode;
+            if (isSignUpMode) {
+                nameFormGroup.style.display = 'block';
+                if(adminNameInput) adminNameInput.required = true;
+                if(loginModeHint) loginModeHint.textContent = 'Create a new account.';
+                if(submitLoginBtn) submitLoginBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Sign Up';
+                toggleAuthModeBtn.textContent = 'Already have an account? Login';
+            } else {
+                nameFormGroup.style.display = 'none';
+                if(adminNameInput) adminNameInput.required = false;
+                if(loginModeHint) loginModeHint.textContent = 'Enter your credentials to login.';
+                if(submitLoginBtn) submitLoginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+                toggleAuthModeBtn.textContent = "Don't have an account? Sign Up";
+            }
+            if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+        });
+    }
+
     if (adminLoginForm) {
         adminLoginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const userVal = document.getElementById('adminUsernameInput').value.trim();
             const passVal = document.getElementById('adminPasswordInput').value;
+            const nameVal = adminNameInput ? adminNameInput.value.trim() : '';
 
-            // Admin Credentials Verification (Default: admin / admin123)
-            if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
+            let users = JSON.parse(localStorage.getItem('users') || '[]');
+
+            if (isSignUpMode) {
+                if (users.find(u => u.username === userVal)) {
+                    if (loginErrorMsg) {
+                        if(loginErrorText) loginErrorText.textContent = 'Username already exists!';
+                        loginErrorMsg.style.display = 'flex';
+                    }
+                    return;
+                }
+                users.push({ username: userVal, password: passVal, name: nameVal });
+                localStorage.setItem('users', JSON.stringify(users));
+                
                 isAdminLoggedIn = true;
                 localStorage.setItem('isAdminMode', 'true');
                 updateAdminStateUI();
                 closeLoginModal();
-                showToast('Welcome Admin! You now have full PDF upload & management privileges.');
+                showToast(`Welcome ${nameVal || userVal}! Account created successfully.`);
             } else {
-                if (loginErrorMsg) loginErrorMsg.style.display = 'flex';
+                const foundUser = users.find(u => u.username === userVal && u.password === passVal);
+                if (foundUser || ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin'))) {
+                    isAdminLoggedIn = true;
+                    localStorage.setItem('isAdminMode', 'true');
+                    updateAdminStateUI();
+                    closeLoginModal();
+                    showToast(`Welcome back ${foundUser ? foundUser.name || foundUser.username : 'Admin'}!`);
+                } else {
+                    if (loginErrorMsg) {
+                        if(loginErrorText) loginErrorText.textContent = 'Invalid username or password!';
+                        loginErrorMsg.style.display = 'flex';
+                    }
+                }
             }
         });
     }
@@ -193,13 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.setAttribute('data-theme', 'dark');
             document.documentElement.setAttribute('data-theme', 'dark');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text">Light Mode</span>';
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text hide-on-mobile">Light Mode</span>';
             }
         } else {
             document.body.removeAttribute('data-theme');
             document.documentElement.removeAttribute('data-theme');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text">Dark Mode</span>';
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text hide-on-mobile">Dark Mode</span>';
             }
         }
     }

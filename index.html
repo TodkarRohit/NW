@@ -23,7 +23,7 @@
                 <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
                     <span class="online-pulse-dot"></span>
                     <i class="fa-solid fa-users"></i>
-                    <span id="onlineUsersCount">18</span> Online
+                    <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
                 </div>
             </div>
             <div class="header-left-group">
@@ -37,7 +37,7 @@
             <div class="header-right-actions">
                 <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
                     <i class="fa-solid fa-user-shield"></i>
-                    <span id="adminBtnText">Admin Mode</span>
+                    <span id="adminBtnText">Login Mode</span>
                 </button>
                 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
                     <i class="fa-solid fa-moon"></i>
@@ -161,33 +161,45 @@
 
     <!-- Admin Login Modal -->
     <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
-        <div class="admin-login-card">
-            <div class="login-modal-header">
-                <div class="modal-title-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <h3>Admin Authentication</h3>
+        <div class="admin-login-card custom-login-design">
+            <button class="close-modal-btn custom-close-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="custom-login-header">
+                <div class="custom-user-icon">
+                    <i class="fa-regular fa-user"></i>
                 </div>
-                <button class="close-modal-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
+                <h2>STUDENT LOGIN</h2>
             </div>
-            <form id="adminLoginForm" class="login-modal-body">
-                <p class="login-hint">Enter your admin credentials to enable PDF upload and management privileges.</p>
-                <div class="form-group">
-                    <label for="adminUsernameInput"><i class="fa-solid fa-user"></i> Username</label>
-                    <input type="text" id="adminUsernameInput" placeholder="Enter username (default: admin)" required
-                        autocomplete="username">
+            <form id="adminLoginForm" class="login-modal-body custom-login-body">
+                <div class="form-group custom-form-group" id="nameFormGroup" style="display:none;">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="text" id="adminNameInput" placeholder="Full Name" autocomplete="name">
                 </div>
-                <div class="form-group">
-                    <label for="adminPasswordInput"><i class="fa-solid fa-key"></i> Password</label>
-                    <input type="password" id="adminPasswordInput" placeholder="Enter password (default: admin123)"
-                        required autocomplete="current-password">
+                <div class="form-group custom-form-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="text" id="adminUsernameInput" placeholder="Email ID or Username" required autocomplete="username">
                 </div>
-                <div id="loginErrorMsg" class="login-error-msg" style="display:none;">
-                    <i class="fa-solid fa-circle-exclamation"></i> Invalid admin username or password!
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="adminPasswordInput" placeholder="Password" required autocomplete="current-password">
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="cancel-btn" id="cancelAdminLoginBtn">Cancel</button>
-                    <button type="submit" class="submit-login-btn"><i class="fa-solid fa-right-to-bracket"></i> Login as
-                        Admin</button>
+                
+                <div class="custom-login-options">
+                    <label class="custom-checkbox-label">
+                        <input type="checkbox" id="rememberMeCheckbox">
+                        <span class="custom-checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="custom-forgot-link">Forgot Password?</a>
+                </div>
+
+                <div id="loginErrorMsg" class="login-error-msg custom-error" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid username or password!</span>
+                </div>
+                
+                <button type="submit" class="submit-login-btn custom-submit-btn" id="submitLoginBtn">LOGIN</button>
+                
+                <div class="auth-toggle-link custom-toggle-link">
+                    <a href="#" id="toggleAuthModeBtn">Don't have an account? Sign Up</a>
                 </div>
             </form>
         </div>
