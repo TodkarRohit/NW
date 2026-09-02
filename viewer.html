@@ -7,54 +7,89 @@
     <title>Notes Viewer | Engineering Notes Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="viewer.css">
 </head>
 
 <body>
     <!-- Top Header Navigation Bar -->
-    <header class="viewer-header">
-        <div class="header-left">
-            <button class="mobile-toggle-btn" id="mobileSidebarToggle" aria-label="Toggle Chapter List">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-            </button>
-            <a href="index.html" class="back-btn" id="backToHome">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                <span>Back to Subjects</span>
-            </a>
-            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
-                <span class="online-pulse-dot"></span>
-                <i class="fa-solid fa-users"></i>
-                <span id="onlineUsersCount">18</span> Online
+    <!-- Top Header Navigation Bar -->
+    <header class="assignments-header">
+        <div class="container header-grid">
+            <div class="header-left">
+                <button class="mobile-toggle-btn" id="mobileSidebarToggle" aria-label="Toggle Chapter List" style="background:transparent; border:none; color:inherit; cursor:pointer;">
+                    <i class="fa-solid fa-bars" style="font-size:1.25rem;"></i>
+                </button>
+                <a href="index.html" class="back-btn" id="backToHome">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Subjects
+                </a>
+                <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                    <span class="online-pulse-dot"></span>
+                    <i class="fa-solid fa-users"></i>
+                    <span id="onlineUsersCount">18</span> Online
+                </div>
+                <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span id="adminBtnText">Login Mode</span>
+                </button>
+                <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark/Light Mode">
+                    <i class="fa-solid fa-moon"></i>
+                    <span id="themeToggleText">Dark Mode</span>
+                </button>
             </div>
-        </div>
-
-        <div class="header-actions">
-            <!-- Theme Toggle -->
-            <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
-                <i class="fa-solid fa-moon"></i>
-                <span id="themeToggleText">Dark Mode</span>
-            </button>
+            <div class="header-titles" style="text-align: left;">
+                <div style="display:flex; align-items:center; gap: 1rem; margin-bottom: 1rem;">
+                    <span id="resourceTypeBadge" style="background: rgba(255,255,255,0.9); color: #1e293b; font-weight: 700; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">STUDY NOTES</span>
+                    <h1 id="subjectHeading" style="margin: 0; font-size: 1.5rem; font-weight: 700;">Subject Name</h1>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <!-- Resource Switcher Nav Pills -->
+                    <nav class="resource-switcher-nav" style="margin: 0;">
+                        <a href="viewer.html?subject=dsa&type=notes" class="res-tab-pill" id="tabNotesLink">
+                            <span>📖 Study Notes</span>
+                        </a>
+                        <a href="viewer.html?subject=dsa&type=qb" class="res-tab-pill" id="tabQbLink">
+                            <span>❓ Question Banks</span>
+                        </a>
+                        <a href="assignments.html?subject=dsa" class="res-tab-pill" id="tabAssLink">
+                            <span>📁 Assignments</span>
+                        </a>
+                    </nav>
+                    
+                    <div class="header-actions" style="display: flex; gap: 0.5rem;">
+                        <!-- Hidden File Input for uploading note/assignment -->
+                        <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
+                        <button class="action-btn upload-btn" id="uploadFileBtn" title="Upload PDF">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span id="uploadBtnText">Upload</span>
+                        </button>
+                        <button class="action-btn primary-btn" id="downloadFileBtn" title="Download active PDF file" style="background: #4f46e5; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-download"></i>
+                            <span id="downloadBtnText">Download Notes PDF</span>
+                        </button>
+                        <button class="action-btn" id="printBtn" title="Print this chapter" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-print"></i>
+                            <span>Print</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
     <!-- Main 2-Panel Layout (Left: Chapter Name, Right: Notes Preview) -->
     <div class="viewer-layout">
-        
+
         <!-- Left Panel: Chapter Names / Modules List -->
         <aside class="sidebar-panel" id="sidebarPanel">
             <div class="sidebar-header">
                 <div class="sidebar-title-row">
                     <h2 class="sidebar-title">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                         </svg>
@@ -63,12 +98,15 @@
                     <span class="chapter-count" id="chapterCount">0 Items</span>
                 </div>
                 <div class="sidebar-search">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" id="chapterSearchInput" placeholder="Filter items (Ctrl+K)..." autocomplete="off">
-                    <button type="button" class="search-clear-btn" id="chapterSearchClearBtn" style="display:none;" title="Clear Search (Esc)">
+                    <input type="text" id="chapterSearchInput" placeholder="Filter items (Ctrl+K)..."
+                        autocomplete="off">
+                    <button type="button" class="search-clear-btn" id="chapterSearchClearBtn" style="display:none;"
+                        title="Clear Search (Esc)">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </button>
                 </div>
@@ -85,56 +123,8 @@
 
         <!-- Right Panel: Notes / Assignment Preview Window -->
         <main class="preview-panel" id="previewPanel">
-            
-            <div class="document-header" style="width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem;">
-                <div class="subject-meta">
-                    <span class="resource-badge" id="resourceTypeBadge">Study Notes</span>
-                    <h1 class="header-title" id="subjectHeading">Subject Name</h1>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; align-items: center;">
-                    <!-- Resource Type Quick Switcher Tabs -->
-                    <nav class="resource-switcher-nav">
-                        <a href="viewer.html?subject=dsa&type=notes" class="res-tab-pill" id="tabNotesLink">
-                            <span>📖 Study Notes</span>
-                        </a>
-                        <a href="viewer.html?subject=dsa&type=qb" class="res-tab-pill" id="tabQbLink">
-                            <span>❓ Question Banks</span>
-                        </a>
-                        <a href="assignments.html?subject=dsa" class="res-tab-pill" id="tabAssLink">
-                            <span>📁 Assignments</span>
-                        </a>
-                    </nav>
 
-                    <div class="header-actions" style="gap: 0.5rem;">
-                        <!-- Hidden File Input for uploading note/assignment -->
-                        <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
-                        
-                        <button class="action-btn upload-btn" id="uploadFileBtn" title="Upload Question Paper or Solution PDF">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span id="uploadBtnText">Upload PDF</span>
-                        </button>
 
-                        <button class="action-btn primary-btn" id="downloadFileBtn" title="Download active PDF file">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            <span id="downloadBtnText">Download File</span>
-                        </button>
-
-                        <button class="action-btn" id="printBtn" title="Print this chapter">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                                <rect x="6" y="14" width="12" height="8"></rect>
-                            </svg>
-                            <span>Print</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <!-- Document Meta Bar -->
             <div class="preview-meta-bar">
@@ -156,7 +146,8 @@
             <!-- Bottom Navigation -->
             <footer class="chapter-pagination">
                 <button class="page-btn prev-btn" id="prevChapterBtn" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                     <div>
@@ -169,7 +160,8 @@
                         <span class="nav-direction">Next</span>
                         <span class="nav-title" id="nextChapterTitle">Next Item</span>
                     </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </button>
@@ -189,7 +181,8 @@
             </div>
             <form id="qbUploadForm" class="modal-form">
                 <div class="form-group">
-                    <label for="qbModalItemSelect"><i class="fa-solid fa-folder-tree"></i> Select Target Unit / Chapter</label>
+                    <label for="qbModalItemSelect"><i class="fa-solid fa-folder-tree"></i> Select Target Unit /
+                        Chapter</label>
                     <select id="qbModalItemSelect" required>
                         <!-- Populated dynamically via viewer.js -->
                     </select>
@@ -200,11 +193,13 @@
                     <div class="doc-type-switcher">
                         <label class="doc-type-radio">
                             <input type="radio" name="qbUploadDocType" value="questions" checked>
-                            <span><i class="fa-solid fa-file-circle-question" style="color:#0284c7"></i> Question Paper PDF</span>
+                            <span><i class="fa-solid fa-file-circle-question" style="color:#0284c7"></i> Question Paper
+                                PDF</span>
                         </label>
                         <label class="doc-type-radio">
                             <input type="radio" name="qbUploadDocType" value="answers">
-                            <span><i class="fa-solid fa-file-circle-check" style="color:#16a34a"></i> Model Solutions / Answer Key PDF</span>
+                            <span><i class="fa-solid fa-file-circle-check" style="color:#16a34a"></i> Model Solutions /
+                                Answer Key PDF</span>
                         </label>
                     </div>
                 </div>
@@ -213,7 +208,8 @@
                     <label for="qbModalFileInput"><i class="fa-solid fa-file-pdf"></i> Select PDF Document</label>
                     <div class="file-dropzone" id="qbModalDropzone">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: #059669;"></i>
-                        <span class="file-name-display" id="qbModalFileNameDisplay">Drag & drop PDF here or click to browse</span>
+                        <span class="file-name-display" id="qbModalFileNameDisplay">Drag & drop PDF here or click to
+                            browse</span>
                         <input type="file" id="qbModalFileInput" accept=".pdf,.doc,.docx,.txt" required>
                     </div>
                 </div>
