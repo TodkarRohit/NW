@@ -56,12 +56,12 @@
         <!-- Sidebar for Branch Selection -->
         <aside class="home-sidebar" id="homeSidebar">
             <h3 class="home-sidebar-title">Branch</h3>
-            <ul class="branch-list">
-                <li><a href="#" class="branch-item active" onclick="event.preventDefault()">CE</a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">CSE <span class="coming-soon-badge">Soon</span></a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">IT <span class="coming-soon-badge">Soon</span></a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">ECE <span class="coming-soon-badge">Soon</span></a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">AI DS <span class="coming-soon-badge">Soon</span></a></li>
+            <ul class="branch-list" id="homeBranchList">
+                <li><a href="#" class="branch-item active" data-branch="CE">CE</a></li>
+                <li><a href="#" class="branch-item" data-branch="CSE">CSE</a></li>
+                <li><a href="#" class="branch-item" data-branch="IT">IT</a></li>
+                <li><a href="#" class="branch-item" data-branch="ECE">ECE</a></li>
+                <li><a href="#" class="branch-item" data-branch="AIDS">AI DS</a></li>
             </ul>
         </aside>
 
@@ -218,6 +218,17 @@
                 <div class="auth-input-helper" style="font-size: 0.75rem; color: #ffb5b5; display: flex; justify-content: space-between; margin-top: -0.5rem; margin-bottom: 0.5rem; padding: 0 0.5rem;">
                     <span id="usernameRuleText">Username must be exactly 8 characters</span>
                     <span class="char-counter-badge" id="usernameCharBadge">0/8</span>
+                </div>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-code-branch"></i>
+                    <select id="userBranchSelect" class="custom-select" style="background: transparent; border: none; color: white; width: 100%; outline: none; padding-left: 10px; font-family: inherit; font-size: 0.95rem; -webkit-appearance: none; appearance: none; cursor: pointer;">
+                        <option style="color: #0f172a;" value="CE">Computer Engineering (CE)</option>
+                        <option style="color: #0f172a;" value="CSE">Computer Science (CSE)</option>
+                        <option style="color: #0f172a;" value="IT">Information Technology (IT)</option>
+                        <option style="color: #0f172a;" value="ECE">Electronics (ECE)</option>
+                        <option style="color: #0f172a;" value="AIDS">AI & DS</option>
+                    </select>
                 </div>
 
                 <div class="form-group custom-form-group">
