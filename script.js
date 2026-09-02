@@ -134,17 +134,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function setAuthMode(mode) {
         currentAuthMode = mode;
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+        const branchFormGroup = document.getElementById('branchFormGroup');
 
         if (mode === 'register') {
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');
             if (tabModeLoginBtn) tabModeLoginBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Account';
             if (authModeHint) authModeHint.textContent = 'Create a new account. Username must be exactly 8 characters.';
+            if (nameFormGroup) nameFormGroup.style.display = 'flex';
+            if (branchFormGroup) branchFormGroup.style.display = 'flex';
         } else {
             if (tabModeLoginBtn) tabModeLoginBtn.classList.add('active');
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
             if (authModeHint) authModeHint.textContent = 'Enter your credentials to access study resources and upload privileges.';
+            if (nameFormGroup) nameFormGroup.style.display = 'none';
+            if (branchFormGroup) branchFormGroup.style.display = 'none';
         }
         updateCharBadge();
     }
