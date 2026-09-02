@@ -348,6 +348,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Branch Selection Logic
     const branchItems = document.querySelectorAll('.branch-item');
+    const subjectsContainer = document.getElementById('subjectsContainer');
+    const branchUnavailableMessage = document.getElementById('branchUnavailableMessage');
+    const searchSection = document.querySelector('.search-section');
+
+    function updateBranchDisplay(branchName) {
+        if (branchName === 'CE') {
+            if (subjectsContainer) subjectsContainer.style.display = 'grid'; // or 'flex' depending on CSS
+            if (searchSection) searchSection.style.display = 'block';
+            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'none';
+        } else {
+            if (subjectsContainer) subjectsContainer.style.display = 'none';
+            if (searchSection) searchSection.style.display = 'none';
+            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'block';
+            
+            // Also hide "no results" message from search if it was visible
+            const noResMsg = document.getElementById('noResultsMessage');
+            if (noResMsg) noResMsg.style.display = 'none';
+        }
+    }
+
     if (branchItems.length > 0) {
         // Initialize from localStorage if available
         const savedBranch = localStorage.getItem('user_branch');
@@ -359,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.classList.remove('active');
                 }
             });
+            updateBranchDisplay(savedBranch);
         }
 
         // Add click listener
@@ -370,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const branchName = item.dataset.branch;
                 
                 showToast(`Switched to ${item.textContent.trim()} Branch`);
+                updateBranchDisplay(branchName);
                 
                 // Save selection if logged in
                 if (window.authService && window.authService.isLoggedIn()) {

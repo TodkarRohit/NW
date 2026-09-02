@@ -1278,7 +1278,8 @@ footer {
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.7);
 }
-.custom-form-group input {
+.custom-form-group input,
+.custom-form-group select {
     width: 100%;
     padding: 12px 15px 12px 45px;
     background: rgba(255, 255, 255, 0.1) !important;
@@ -1289,10 +1290,23 @@ footer {
     outline: none;
     transition: border-color 0.2s, background 0.2s;
 }
+
+.custom-form-group select {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.custom-form-group select option {
+    color: #0f172a;
+    background: white;
+}
+
 .custom-form-group input::placeholder {
     color: rgba(255, 255, 255, 0.6);
 }
-.custom-form-group input:focus {
+.custom-form-group input:focus,
+.custom-form-group select:focus {
     background: rgba(255, 255, 255, 0.15) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }

@@ -165,8 +165,16 @@
                             class="fa-solid fa-folder-open"></i> Assignments</a>
                 </div>
             </div>
-
         </section>
+
+        <!-- Branch Unavailable Message -->
+        <div id="branchUnavailableMessage" class="no-results-box" style="display: none; padding: 40px; text-align: center;">
+            <div class="no-results-icon">
+                <i class="fa-solid fa-person-digging" style="font-size: 3rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 15px;"></i>
+            </div>
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 10px;">Branch Content Unavailable</h3>
+            <p style="color: rgba(255, 255, 255, 0.7);">Study materials for this branch are currently being prepared and will be available soon.</p>
+        </div>
 
         <!-- No Results Feedback Message -->
         <div id="noResultsMessage" class="no-results-box" style="display: none;">
@@ -222,12 +230,12 @@
 
                 <div class="form-group custom-form-group">
                     <i class="fa-solid fa-code-branch"></i>
-                    <select id="userBranchSelect" class="custom-select" style="background: transparent; border: none; color: white; width: 100%; outline: none; padding-left: 10px; font-family: inherit; font-size: 0.95rem; -webkit-appearance: none; appearance: none; cursor: pointer;">
-                        <option style="color: #0f172a;" value="CE">Computer Engineering (CE)</option>
-                        <option style="color: #0f172a;" value="CSE">Computer Science (CSE)</option>
-                        <option style="color: #0f172a;" value="IT">Information Technology (IT)</option>
-                        <option style="color: #0f172a;" value="ECE">Electronics (ECE)</option>
-                        <option style="color: #0f172a;" value="AIDS">AI & DS</option>
+                    <select id="userBranchSelect" class="custom-select">
+                        <option value="CE">Computer Engineering (CE)</option>
+                        <option value="CSE">Computer Science (CSE)</option>
+                        <option value="IT">Information Technology (IT)</option>
+                        <option value="ECE">Electronics (ECE)</option>
+                        <option value="AIDS">AI & DS</option>
                     </select>
                 </div>
 
