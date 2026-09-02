@@ -17,23 +17,25 @@
 <body>
     <!-- Top Header Navigation -->
     <header class="assignments-header">
-        <div class="container header-grid">
-            <div class="header-left">
-                <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Subjects</a>
-                <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
-                    <span class="online-pulse-dot"></span>
-                    <i class="fa-solid fa-users"></i>
-                    <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
-                </div>
-                <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span id="adminBtnText">Login Mode</span>
-                </button>
-                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
-                    <i class="fa-solid fa-moon"></i>
-                    <span class="theme-btn-text">Dark Mode</span>
-                </button>
+        <div class="header-left-actions">
+            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Subjects</a>
+            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                <span class="online-pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
             </div>
+        </div>
+        <div class="header-right-actions">
+            <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
+                <i class="fa-solid fa-user-shield"></i>
+                <span id="adminBtnText">Login Mode</span>
+            </button>
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <i class="fa-solid fa-moon"></i>
+                <span class="theme-btn-text">Dark Mode</span>
+            </button>
+        </div>
+        <div class="container header-grid">
             <div class="header-titles">
                 <h1 id="subjectTitle">Data Structure and Algorithm (C++)</h1>
                 <p id="subjectSubtitle">Semester 2 • Course Assignments & Answer Keys</p>

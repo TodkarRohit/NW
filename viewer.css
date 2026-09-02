@@ -52,12 +52,24 @@ body {
     gap: 10px;
 }
 
-.header-left {
+.header-left-actions {
+    position: absolute;
+    top: 24px;
+    left: 24px;
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    min-width: 0;
-    flex-wrap: wrap;
+    gap: 12px;
+    z-index: 100;
+}
+
+.header-right-actions {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
 }
 
 .back-btn {

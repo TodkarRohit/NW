@@ -789,7 +789,7 @@ footer {
 /* Header Actions Positioned */
 .header-left-actions {
     position: absolute;
-    top: 0;
+    top: 24px;
     left: 24px;
     display: flex;
     align-items: center;
@@ -799,7 +799,7 @@ footer {
 
 .header-right-actions {
     position: absolute;
-    top: 0;
+    top: 24px;
     right: 24px;
     display: flex;
     align-items: center;

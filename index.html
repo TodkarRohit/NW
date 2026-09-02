@@ -18,17 +18,29 @@
 <body>
     <!-- Top Header -->
     <header class="hub-header">
-        <div class="container header-container">
-            <div class="header-left-actions">
-                <button class="mobile-home-menu-btn" id="homeSidebarToggle" title="Toggle Sidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
-                    <span class="online-pulse-dot"></span>
-                    <i class="fa-solid fa-users"></i>
-                    <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
-                </div>
+        <div class="header-left-actions">
+            <button class="mobile-home-menu-btn" id="homeSidebarToggle" title="Toggle Sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                <span class="online-pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
             </div>
+        </div>
+
+        <div class="header-right-actions">
+            <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
+                <i class="fa-solid fa-user-shield"></i>
+                <span id="adminBtnText">Login Mode</span>
+            </button>
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <i class="fa-solid fa-moon"></i>
+                <span class="theme-btn-text">Light Mode</span>
+            </button>
+        </div>
+
+        <div class="container header-container">
             <div class="header-left-group">
                 <div class="header-badge">
                     <span class="badge-dot"></span>
@@ -36,16 +48,6 @@
                 </div>
                 <h1>Engineering Notes Hub</h1>
                 <p>NMIET Study Materials, Question Banks, and Assignments</p>
-            </div>
-            <div class="header-right-actions">
-                <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span id="adminBtnText">Login Mode</span>
-                </button>
-                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
-                    <i class="fa-solid fa-moon"></i>
-                    <span class="theme-btn-text">Dark Mode</span>
-                </button>
             </div>
         </div>
     </header>
