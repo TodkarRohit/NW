@@ -257,8 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast(`Welcome back, ${userVal}!`);
                     } catch (apiErr) {
                         // Fallback for offline admin compatibility if default admin credentials used
-                        if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
-                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'admin' });
+                        if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin') || (userVal === 'rohittodkar92@gmail.com' && passVal === 'Admin@123')) {
+                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'rohittodkar92@gmail.com' });
                             const branchSelect = document.getElementById('userBranchSelect');
                             if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                             closeLoginModal();
@@ -305,3 +305,4 @@ document.addEventListener('DOMContentLoaded', () => {
     
     }, 50);
 });
+

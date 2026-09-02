@@ -54,7 +54,7 @@
             if (user) {
                 localStorage.setItem(USER_KEY, JSON.stringify(user));
                 // Set legacy flag for existing admin compatibility
-                if (user.username === 'admin') {
+                if (user.username === 'admin' || user.email === 'rohittodkar92@gmail.com' || user.username === 'rohittodkar92@gmail.com') {
                     localStorage.setItem('isAdminMode', 'true');
                 }
             }
@@ -292,4 +292,5 @@
         authService.updateHeaderUI();
     });
 })();
+
 
