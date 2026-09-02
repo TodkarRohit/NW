@@ -429,7 +429,7 @@ public:
 
     if (subjectTitleEl) subjectTitleEl.textContent = currentSubject.title;
     if (subjectSubtitleEl) subjectSubtitleEl.textContent = currentSubject.subtitle;
-    if (notesNavBtn) notesNavBtn.href = `../question_bank/viewer.html?subject=${subjectKey}&type=notes`;
+    if (notesNavBtn) notesNavBtn.href = `../notes/viewer.html?subject=${subjectKey}&type=notes`;
     if (qbNavBtn) qbNavBtn.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
     if (assNavBtn) assNavBtn.href = `assignments.html?subject=${subjectKey}`;
     if (totalChaptersBadge) totalChaptersBadge.textContent = `${subjectChapters.length} Units`;
@@ -513,7 +513,7 @@ public:
         usernameInput.addEventListener('input', updateCharBadge);
     }
 
-    function openAdminLoginModal() {
+    function window.location.href = "../admin/index.html" {
         if (adminLoginModalBackdrop) {
             adminLoginModalBackdrop.classList.add('active');
             if (loginErrorMsg) loginErrorMsg.style.display = 'none';
@@ -639,7 +639,7 @@ public:
                 updateAdminUI();
                 showToast('Logged out.');
             } else {
-                openAdminLoginModal();
+                window.location.href = '../admin/index.html';
             }
         });
     }
@@ -748,7 +748,7 @@ public:
                 </div>
             `;
             const inlineBtn = document.getElementById('inlineAdminLoginBtn');
-            if (inlineBtn) inlineBtn.addEventListener('click', openAdminLoginModal);
+            if (inlineBtn) inlineBtn.addEventListener('click', () => window.location.href = '../admin/index.html');
         } else {
             adminUploadPortalSection.innerHTML = `
                 <div class="admin-upload-active-card">
@@ -865,7 +865,7 @@ public:
             inpageForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!isAdminMode) {
-                    openAdminLoginModal();
+                    window.location.href = '../admin/index.html';
                     return;
                 }
 
@@ -1286,7 +1286,7 @@ public:
         document.querySelectorAll('.admin-delete-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (!isAdminMode) {
-                    openAdminLoginModal();
+                    window.location.href = '../admin/index.html';
                     return;
                 }
                 const assId = btn.getAttribute('data-id');
@@ -1547,7 +1547,7 @@ public:
     if (openUploadModalBtn) {
         openUploadModalBtn.addEventListener('click', () => {
             if (!isAdminMode) {
-                openAdminLoginModal();
+                window.location.href = '../admin/index.html';
                 return;
             }
             if (uploadModalBackdrop) {
@@ -1594,7 +1594,7 @@ public:
         adminUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!isAdminMode) {
-                openAdminLoginModal();
+                window.location.href = '../admin/index.html';
                 return;
             }
 
@@ -1717,6 +1717,10 @@ public:
     renderChapterNav();
     updateAdminUI();
 });
+
+
+
+
 
 
 

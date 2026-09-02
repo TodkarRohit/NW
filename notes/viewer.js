@@ -81,12 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabAssLink = document.getElementById('tabAssLink');
 
     if (tabNotesLink) {
-        tabNotesLink.href = `../notes/viewer.html?subject=${subjectKey}&type=notes`;
+        tabNotesLink.href = `viewer.html?subject=${subjectKey}&type=notes`;
         if (!isQB) tabNotesLink.classList.add('active');
         else tabNotesLink.classList.remove('active');
     }
     if (tabQbLink) {
-        tabQbLink.href = `viewer.html?subject=${subjectKey}&type=qb`;
+        tabQbLink.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
         if (isQB) tabQbLink.classList.add('active');
         else tabQbLink.classList.remove('active');
     }
