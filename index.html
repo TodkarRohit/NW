@@ -18,17 +18,29 @@
 <body>
     <!-- Top Header -->
     <header class="hub-header">
-        <div class="container header-container">
-            <div class="header-left-actions">
-                <button class="mobile-home-menu-btn" id="homeSidebarToggle" title="Toggle Sidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
-                    <span class="online-pulse-dot"></span>
-                    <i class="fa-solid fa-users"></i>
-                    <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
-                </div>
+        <div class="header-left-actions">
+            <button class="mobile-home-menu-btn" id="homeSidebarToggle" title="Toggle Sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                <span class="online-pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
             </div>
+        </div>
+
+        <div class="header-right-actions">
+            <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
+                <i class="fa-solid fa-user-shield"></i>
+                <span id="adminBtnText">Login Mode</span>
+            </button>
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <i class="fa-solid fa-moon"></i>
+                <span class="theme-btn-text">Light Mode</span>
+            </button>
+        </div>
+
+        <div class="container header-container">
             <div class="header-left-group">
                 <div class="header-badge">
                     <span class="badge-dot"></span>
@@ -37,16 +49,6 @@
                 <h1>Engineering Notes Hub</h1>
                 <p>NMIET Study Materials, Question Banks, and Assignments</p>
             </div>
-            <div class="header-right-actions">
-                <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span id="adminBtnText">Login Mode</span>
-                </button>
-                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
-                    <i class="fa-solid fa-moon"></i>
-                    <span class="theme-btn-text">Dark Mode</span>
-                </button>
-            </div>
         </div>
     </header>
 
@@ -54,12 +56,12 @@
         <!-- Sidebar for Branch Selection -->
         <aside class="home-sidebar" id="homeSidebar">
             <h3 class="home-sidebar-title">Branch</h3>
-            <ul class="branch-list">
-                <li><a href="#" class="branch-item active" onclick="event.preventDefault()">CE</a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">CSE <span class="coming-soon-badge">Soon</span></a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">IT <span class="coming-soon-badge">Soon</span></a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">ECE <span class="coming-soon-badge">Soon</span></a></li>
-                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">AI DS <span class="coming-soon-badge">Soon</span></a></li>
+            <ul class="branch-list" id="homeBranchList">
+                <li><a href="#" class="branch-item active" data-branch="CE">CE</a></li>
+                <li><a href="#" class="branch-item" data-branch="CSE">CSE</a></li>
+                <li><a href="#" class="branch-item" data-branch="IT">IT</a></li>
+                <li><a href="#" class="branch-item" data-branch="ECE">ECE</a></li>
+                <li><a href="#" class="branch-item" data-branch="AIDS">AI DS</a></li>
             </ul>
         </aside>
 
@@ -163,8 +165,16 @@
                             class="fa-solid fa-folder-open"></i> Assignments</a>
                 </div>
             </div>
-
         </section>
+
+        <!-- Branch Unavailable Message -->
+        <div id="branchUnavailableMessage" class="no-results-box" style="display: none; padding: 40px; text-align: center;">
+            <div class="no-results-icon">
+                <i class="fa-solid fa-person-digging" style="font-size: 3rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 15px;"></i>
+            </div>
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 10px;">Branch Content Unavailable</h3>
+            <p style="color: rgba(255, 255, 255, 0.7);">Study materials for this branch are currently being prepared and will be available soon.</p>
+        </div>
 
         <!-- No Results Feedback Message -->
         <div id="noResultsMessage" class="no-results-box" style="display: none;">
@@ -216,6 +226,17 @@
                 <div class="auth-input-helper" style="font-size: 0.75rem; color: #ffb5b5; display: flex; justify-content: space-between; margin-top: -0.5rem; margin-bottom: 0.5rem; padding: 0 0.5rem;">
                     <span id="usernameRuleText">Username must be exactly 8 characters</span>
                     <span class="char-counter-badge" id="usernameCharBadge">0/8</span>
+                </div>
+
+                <div class="form-group custom-form-group" id="branchFormGroup" style="display:none;">
+                    <i class="fa-solid fa-code-branch"></i>
+                    <select id="userBranchSelect" class="custom-select">
+                        <option value="CE">Computer Engineering (CE)</option>
+                        <option value="CSE">Computer Science (CSE)</option>
+                        <option value="IT">Information Technology (IT)</option>
+                        <option value="ECE">Electronics (ECE)</option>
+                        <option value="AIDS">AI & DS</option>
+                    </select>
                 </div>
 
                 <div class="form-group custom-form-group">

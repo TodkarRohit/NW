@@ -134,17 +134,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function setAuthMode(mode) {
         currentAuthMode = mode;
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+        const branchFormGroup = document.getElementById('branchFormGroup');
 
         if (mode === 'register') {
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');
             if (tabModeLoginBtn) tabModeLoginBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Account';
             if (authModeHint) authModeHint.textContent = 'Create a new account. Username must be exactly 8 characters.';
+            if (nameFormGroup) nameFormGroup.style.display = 'flex';
+            if (branchFormGroup) branchFormGroup.style.display = 'flex';
         } else {
             if (tabModeLoginBtn) tabModeLoginBtn.classList.add('active');
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
             if (authModeHint) authModeHint.textContent = 'Enter your credentials to access study resources and upload privileges.';
+            if (nameFormGroup) nameFormGroup.style.display = 'none';
+            if (branchFormGroup) branchFormGroup.style.display = 'none';
         }
         updateCharBadge();
     }
@@ -227,18 +232,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error('Password must be at least 6 characters long.');
                     }
                     await window.authService.register(userVal, passVal);
+                    const branchSelect = document.getElementById('userBranchSelect');
+                    if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                     closeLoginModal();
                     showToast(`Registration successful! Welcome, ${userVal}!`);
                 } else {
                     // Try backend login first
                     try {
                         await window.authService.login(userVal, passVal);
+                        const branchSelect = document.getElementById('userBranchSelect');
+                        if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                         closeLoginModal();
                         showToast(`Welcome back, ${userVal}!`);
                     } catch (apiErr) {
                         // Fallback for offline admin compatibility if default admin credentials used
                         if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
                             window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'admin' });
+                            const branchSelect = document.getElementById('userBranchSelect');
+                            if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                             closeLoginModal();
                             showToast('Logged in as Admin (Local Mode).');
                         } else {
@@ -293,14 +304,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Live Online Users Counter Simulation
     const onlineUsersCountEl = document.getElementById('onlineUsersCount');
     if (onlineUsersCountEl) {
-        let baseCount = parseInt(sessionStorage.getItem('online_users_count')) || Math.floor(Math.random() * 12) + 16;
-        sessionStorage.setItem('online_users_count', baseCount);
+        let baseCount = parseInt(localStorage.getItem('online_users_count')) || Math.floor(Math.random() * 20) + 142; // Random between 142 and 162
+        localStorage.setItem('online_users_count', baseCount);
         onlineUsersCountEl.textContent = baseCount;
 
         setInterval(() => {
-            const delta = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
-            baseCount = Math.max(12, Math.min(36, baseCount + delta));
-            sessionStorage.setItem('online_users_count', baseCount);
+            const delta = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, +1, +2
+            baseCount = Math.max(125, Math.min(185, baseCount + delta));
+            localStorage.setItem('online_users_count', baseCount);
             onlineUsersCountEl.textContent = baseCount;
         }, 5000);
     }
@@ -325,7 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (homeSidebarToggle && homeSidebar) {
         homeSidebarToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            homeSidebar.classList.toggle('active');
+            homeSidebar.classList.toggle('active'); // For mobile
+            homeSidebar.classList.toggle('collapsed'); // For desktop
         });
         
         // Close sidebar when clicking outside on mobile
@@ -333,8 +345,64 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth <= 900 && homeSidebar.classList.contains('active')) {
                 if (!homeSidebar.contains(e.target) && e.target !== homeSidebarToggle) {
                     homeSidebar.classList.remove('active');
+                    homeSidebar.classList.add('collapsed'); // ensure desktop sync
                 }
             }
+        });
+    }
+
+    // Branch Selection Logic
+    const branchItems = document.querySelectorAll('.branch-item');
+    const subjectsContainer = document.getElementById('subjectsContainer');
+    const branchUnavailableMessage = document.getElementById('branchUnavailableMessage');
+    const searchSection = document.querySelector('.search-section');
+
+    function updateBranchDisplay(branchName) {
+        if (branchName === 'CE') {
+            if (subjectsContainer) subjectsContainer.style.display = 'grid'; // or 'flex' depending on CSS
+            if (searchSection) searchSection.style.display = 'block';
+            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'none';
+        } else {
+            if (subjectsContainer) subjectsContainer.style.display = 'none';
+            if (searchSection) searchSection.style.display = 'none';
+            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'block';
+            
+            // Also hide "no results" message from search if it was visible
+            const noResMsg = document.getElementById('noResultsMessage');
+            if (noResMsg) noResMsg.style.display = 'none';
+        }
+    }
+
+    if (branchItems.length > 0) {
+        // Initialize from localStorage if available
+        const savedBranch = localStorage.getItem('user_branch');
+        if (savedBranch && window.authService && window.authService.isLoggedIn()) {
+            branchItems.forEach(item => {
+                if (item.dataset.branch === savedBranch) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            updateBranchDisplay(savedBranch);
+        }
+
+        // Add click listener
+        branchItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                branchItems.forEach(b => b.classList.remove('active'));
+                item.classList.add('active');
+                const branchName = item.dataset.branch;
+                
+                showToast(`Switched to ${item.textContent.trim()} Branch`);
+                updateBranchDisplay(branchName);
+                
+                // Save selection if logged in
+                if (window.authService && window.authService.isLoggedIn()) {
+                    localStorage.setItem('user_branch', branchName);
+                }
+            });
         });
     }
 });

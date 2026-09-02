@@ -60,6 +60,7 @@ body {
     color: white;
     padding: 1.5rem 0 2rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
 }
 
 .header-grid {
@@ -70,10 +71,24 @@ body {
     margin-bottom: 1.25rem;
 }
 
-.header-left {
+.header-left-actions {
+    position: absolute;
+    top: 24px;
+    left: 24px;
     display: flex;
     align-items: center;
     gap: 12px;
+    z-index: 100;
+}
+
+.header-right-actions {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
 }
 
 .back-btn {

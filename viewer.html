@@ -18,34 +18,38 @@
     <!-- Top Header Navigation Bar -->
     <!-- Top Header Navigation Bar -->
     <header class="assignments-header">
-        <div class="container header-grid">
-            <div class="header-left">
-                <button class="mobile-toggle-btn" id="mobileSidebarToggle" aria-label="Toggle Chapter List" style="background:transparent; border:none; color:inherit; cursor:pointer;">
-                    <i class="fa-solid fa-bars" style="font-size:1.25rem;"></i>
-                </button>
-                <a href="index.html" class="back-btn" id="backToHome">
-                    <i class="fa-solid fa-arrow-left"></i> Back to Subjects
-                </a>
-                <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
-                    <span class="online-pulse-dot"></span>
-                    <i class="fa-solid fa-users"></i>
-                    <span id="onlineUsersCount">18</span> Online
-                </div>
-                <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span id="adminBtnText">Login Mode</span>
-                </button>
-                <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark/Light Mode">
-                    <i class="fa-solid fa-moon"></i>
-                    <span id="themeToggleText">Dark Mode</span>
-                </button>
+        <div class="header-left-actions">
+            <button class="mobile-toggle-btn" id="mobileSidebarToggle" aria-label="Toggle Chapter List" style="background:transparent; border:none; color:inherit; cursor:pointer;">
+                <i class="fa-solid fa-bars" style="font-size:1.25rem;"></i>
+            </button>
+            <a href="index.html" class="back-btn" id="backToHome">
+                <i class="fa-solid fa-arrow-left"></i> Back to Subjects
+            </a>
+            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                <span class="online-pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="onlineUsersCount">18</span> Online
             </div>
-            <div class="header-titles" style="text-align: left;">
-                <div style="display:flex; align-items:center; gap: 1rem; margin-bottom: 1rem;">
+        </div>
+        
+        <div class="header-right-actions">
+            <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Controls">
+                <i class="fa-solid fa-user-shield"></i>
+                <span id="adminBtnText">Login Mode</span>
+            </button>
+            <button class="theme-toggle-btn" id="themeToggle" title="Toggle Dark/Light Mode">
+                <i class="fa-solid fa-moon"></i>
+                <span id="themeToggleText">Dark Mode</span>
+            </button>
+        </div>
+
+        <div class="container header-grid">
+            <div class="header-titles" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <div style="display:flex; align-items:center; gap: 1rem; justify-content: center;">
                     <span id="resourceTypeBadge" style="background: rgba(255,255,255,0.9); color: #1e293b; font-weight: 700; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">STUDY NOTES</span>
                     <h1 id="subjectHeading" style="margin: 0; font-size: 1.5rem; font-weight: 700;">Subject Name</h1>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%;">
                     <!-- Resource Switcher Nav Pills -->
                     <nav class="resource-switcher-nav" style="margin: 0;">
                         <a href="viewer.html?subject=dsa&type=notes" class="res-tab-pill" id="tabNotesLink">
@@ -59,7 +63,7 @@
                         </a>
                     </nav>
                     
-                    <div class="header-actions" style="display: flex; gap: 0.5rem;">
+                    <div class="header-actions" style="display: flex; gap: 0.5rem; justify-content: center;">
                         <!-- Hidden File Input for uploading note/assignment -->
                         <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
                         <button class="action-btn upload-btn" id="uploadFileBtn" title="Upload PDF">

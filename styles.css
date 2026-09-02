@@ -144,7 +144,7 @@ body {
 }
 
 .mobile-home-menu-btn {
-    display: none;
+    display: block;
     background: transparent;
     border: none;
     color: white;
@@ -159,12 +159,13 @@ body {
     background: rgba(255,255,255,0.1);
 }
 
+.home-sidebar.collapsed {
+    display: none;
+}
+
 @media (max-width: 900px) {
-    .mobile-home-menu-btn {
-        display: block;
-    }
-    
     .home-sidebar {
+        display: block; /* override collapsed state if toggled */
         position: fixed;
         top: 0;
         left: 0;
@@ -172,6 +173,11 @@ body {
         z-index: 100;
         transform: translateX(-100%);
         box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .home-sidebar.collapsed {
+        display: block; /* don't use display none on mobile, rely on transform */
     }
     
     .home-sidebar.active {
@@ -783,7 +789,7 @@ footer {
 /* Header Actions Positioned */
 .header-left-actions {
     position: absolute;
-    top: 0;
+    top: 24px;
     left: 24px;
     display: flex;
     align-items: center;
@@ -793,7 +799,7 @@ footer {
 
 .header-right-actions {
     position: absolute;
-    top: 0;
+    top: 24px;
     right: 24px;
     display: flex;
     align-items: center;
@@ -1272,7 +1278,8 @@ footer {
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.7);
 }
-.custom-form-group input {
+.custom-form-group input,
+.custom-form-group select {
     width: 100%;
     padding: 12px 15px 12px 45px;
     background: rgba(255, 255, 255, 0.1) !important;
@@ -1283,10 +1290,23 @@ footer {
     outline: none;
     transition: border-color 0.2s, background 0.2s;
 }
+
+.custom-form-group select {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.custom-form-group select option {
+    color: #0f172a;
+    background: white;
+}
+
 .custom-form-group input::placeholder {
     color: rgba(255, 255, 255, 0.6);
 }
-.custom-form-group input:focus {
+.custom-form-group input:focus,
+.custom-form-group select:focus {
     background: rgba(255, 255, 255, 0.15) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
