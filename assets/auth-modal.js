@@ -33,14 +33,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="text" id="adminNameInput" placeholder="Full Name" autocomplete="name">
                 </div>
 
-                <div class="form-group custom-form-group" id="emailFormGroup" style="display:none;">
+                <div class="form-group custom-form-group" id="emailFormGroup">
                     <i class="fa-regular fa-envelope"></i>
                     <input type="email" id="adminEmailInput" placeholder="Email Address" autocomplete="email">
                 </div>
 
                 <div class="form-group custom-form-group">
                     <i class="fa-solid fa-user-tag"></i>
-                    <input type="text" id="adminUsernameInput" placeholder="Enter username" required autocomplete="username" maxlength="20">
+                    <input type="text" id="adminUsernameInput" placeholder="Enter username or email" autocomplete="username" maxlength="20">
                 </div>
                 <div class="auth-hint">
                     <span id="usernameRuleText"></span>
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
             if (authModeHint) authModeHint.textContent = 'Enter your credentials to access study resources and upload privileges.';
             if (nameFormGroup) nameFormGroup.style.display = 'none';
-            if (emailFormGroup) emailFormGroup.style.display = 'none';
+            // email visible on login
             if (branchFormGroup) branchFormGroup.style.display = 'none';
         }
         updateCharBadge();
@@ -236,11 +236,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!nameVal) {
                         throw new Error('Please enter your full name.');
                     }
-                    if (userVal.includes('@') || userVal.includes(' ')) {
-                        throw new Error('Username must not contain @ or spaces. Please enter a simple handle.');
+                    const loginId = userVal || emailVal;
+                    if (!loginId) {
+                        throw new Error('Please enter either your username or email address.');
                     }
-                    if (!emailVal) {
-                        throw new Error('Please enter your email address.');
+                    if (userVal && (userVal.includes('@') || userVal.includes(' '))) {
+                        throw new Error('Username must not contain @ or spaces. Please enter a simple handle.');
                     }
                     await window.authService.register(userVal, passVal, nameVal, emailVal);
                     const branchSelect = document.getElementById('userBranchSelect');
@@ -250,14 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // Try backend login first
                     try {
-                        await window.authService.login(userVal, passVal);
+                        const loginId = userVal || emailVal; await window.authService.login(loginId, passVal);
                         const branchSelect = document.getElementById('userBranchSelect');
                         if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                         closeLoginModal();
                         showToast(`Welcome back, ${userVal}!`);
                     } catch (apiErr) {
                         // Fallback for offline admin compatibility if default admin credentials used
-                        if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin') || (userVal === 'rohittodkar92@gmail.com' && passVal === 'Admin@123')) {
+                        const loginId2 = userVal || emailVal; if ((loginId2 === 'admin' && passVal === 'admin123') || (loginId2 === 'admin' && passVal === 'admin') || (loginId2 === 'rohittodkar92@gmail.com' && passVal === 'Admin@123')) {
                             window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'rohittodkar92@gmail.com' });
                             const branchSelect = document.getElementById('userBranchSelect');
                             if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
