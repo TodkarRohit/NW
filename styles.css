@@ -65,6 +65,121 @@ body {
 }
 
 /* ==========================================================================
+   Home Layout (Sidebar + Main)
+   ========================================================================== */
+.home-layout {
+    display: flex;
+    flex: 1;
+    position: relative;
+}
+
+.home-sidebar {
+    width: 250px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem 1rem;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.home-sidebar-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    padding: 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.branch-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.branch-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-radius: var(--radius-btn);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.branch-item.active {
+    background: var(--primary-subtle);
+    color: var(--primary-color);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
+.branch-item.active:hover {
+    background: var(--primary-light);
+}
+
+.branch-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.coming-soon-badge {
+    font-size: 0.65rem;
+    background: var(--border-color);
+    color: var(--text-muted);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.home-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.mobile-home-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    margin-right: 15px;
+}
+
+.mobile-home-menu-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+@media (max-width: 900px) {
+    .mobile-home-menu-btn {
+        display: block;
+    }
+    
+    .home-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    }
+    
+    .home-sidebar.active {
+        transform: translateX(0);
+    }
+}
+
+/* ==========================================================================
    Header Section
    ========================================================================== */
 .hub-header {

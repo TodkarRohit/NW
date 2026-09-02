@@ -317,4 +317,24 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.classList.remove('show');
         }, 3000);
     }
+    
+    // Home Sidebar Toggle
+    const homeSidebarToggle = document.getElementById('homeSidebarToggle');
+    const homeSidebar = document.getElementById('homeSidebar');
+    
+    if (homeSidebarToggle && homeSidebar) {
+        homeSidebarToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            homeSidebar.classList.toggle('active');
+        });
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 900 && homeSidebar.classList.contains('active')) {
+                if (!homeSidebar.contains(e.target) && e.target !== homeSidebarToggle) {
+                    homeSidebar.classList.remove('active');
+                }
+            }
+        });
+    }
 });

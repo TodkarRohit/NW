@@ -20,6 +20,9 @@
     <header class="hub-header">
         <div class="container header-container">
             <div class="header-left-actions">
+                <button class="mobile-home-menu-btn" id="homeSidebarToggle" title="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
                     <span class="online-pulse-dot"></span>
                     <i class="fa-solid fa-users"></i>
@@ -47,7 +50,22 @@
         </div>
     </header>
 
-    <main class="container main-content">
+    <div class="home-layout">
+        <!-- Sidebar for Branch Selection -->
+        <aside class="home-sidebar" id="homeSidebar">
+            <h3 class="home-sidebar-title">Branch</h3>
+            <ul class="branch-list">
+                <li><a href="#" class="branch-item active" onclick="event.preventDefault()">CE</a></li>
+                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">CSE <span class="coming-soon-badge">Soon</span></a></li>
+                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">IT <span class="coming-soon-badge">Soon</span></a></li>
+                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">ECE <span class="coming-soon-badge">Soon</span></a></li>
+                <li><a href="#" class="branch-item disabled" onclick="event.preventDefault()">AI DS <span class="coming-soon-badge">Soon</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="home-main">
+            <div class="container main-content">
         <!-- Search Bar -->
         <section class="search-section">
             <div class="search-box-wrapper">
@@ -157,7 +175,9 @@
             <p>Try searching for another topic like "Stack", "Sorting", "Trees", "Deadlock", "Fourier", or "Classes".
             </p>
         </div>
+        </div>
     </main>
+    </div>
 
     <!-- Auth / Admin Login & Register Modal -->
     <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
