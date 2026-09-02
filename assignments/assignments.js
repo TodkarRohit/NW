@@ -513,7 +513,7 @@ public:
         usernameInput.addEventListener('input', updateCharBadge);
     }
 
-    function window.location.href = "../admin/index.html" {
+    function openAdminLoginModal() {
         if (adminLoginModalBackdrop) {
             adminLoginModalBackdrop.classList.add('active');
             if (loginErrorMsg) loginErrorMsg.style.display = 'none';
@@ -1717,6 +1717,7 @@ public:
     renderChapterNav();
     updateAdminUI();
 });
+
 
 
 

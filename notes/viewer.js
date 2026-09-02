@@ -492,10 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="upload-action-pill">Choose File (PDF, DOCX, TXT, Images)</div>
                 </div>
                 ` : `
-                <div class="upload-dropzone" style="cursor: default; background: var(--bg-surface); border-style: solid;">
-                    <div class="upload-icon" style="color: var(--text-muted); background: var(--bg-page);">
-                        <i class="fa-solid fa-lock" style="font-size: 1.2rem;"></i>
-                    </div>
+                <div class="upload-dropzone" style="cursor: pointer; background: var(--bg-surface); border-style: dashed; padding: 20px;">
+                    <h3 style="color: var(--text-main); margin-bottom: 10px;"><i class="fa-regular fa-file-pdf" style="color: #ef4444;"></i> Unit 1 Full Notes.pdf</h3>
+                    <p style="color: var(--text-light);">Click to view or download</p>
+                </div>
                     <h3 style="color: var(--text-muted);">Admin Upload Only</h3>
                     <p style="color: var(--text-light);">Only authenticated admins can upload study materials here.</p>
                 </div>
@@ -941,6 +941,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderItemList();
     loadItemContent(0);
 });
+
+
 
 
 
