@@ -136,11 +136,15 @@
         },
 
         async register(username, password, fullName = '', email = '') {
-            const cleanUser = String(username || '').trim();
             const cleanName = String(fullName || '').trim();
             const cleanEmail = String(email || '').trim();
+            let cleanUser = String(username || '').trim();
+            
+            if (!cleanUser && cleanEmail) {
+                cleanUser = cleanEmail.split('@')[0];
+            }
             if (!cleanUser) {
-                throw new Error('Please enter a username.');
+                throw new Error('Please enter a username or email.');
             }
             if (!password || password.length < 6) {
                 throw new Error('Password must be at least 6 characters long.');
@@ -185,7 +189,7 @@
             const { data, error } = await window.supabaseClient
                 .from('users')
                 .select('*')
-                .eq('username', cleanUser)
+                .or(`username.eq.${cleanUser},email.eq.${cleanUser}`)
                 .eq('password_hash', password_hash);
 
             if (error) {
@@ -200,7 +204,7 @@
             await window.supabaseClient
                 .from('users')
                 .update({ login_count: newCount, last_login_at: new Date().toISOString() })
-                .eq('username', cleanUser);
+                .or(`username.eq.${cleanUser},email.eq.${cleanUser}`);
 
             this.saveSession('custom_token_' + cleanUser, { username: cleanUser });
 
@@ -292,5 +296,6 @@
         authService.updateHeaderUI();
     });
 })();
+
 
 
