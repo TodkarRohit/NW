@@ -40,12 +40,12 @@
                     <span id="themeToggleText">Dark Mode</span>
                 </button>
             </div>
-            <div class="header-titles" style="text-align: left;">
-                <div style="display:flex; align-items:center; gap: 1rem; margin-bottom: 1rem;">
+            <div class="header-titles" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <div style="display:flex; align-items:center; gap: 1rem; justify-content: center;">
                     <span id="resourceTypeBadge" style="background: rgba(255,255,255,0.9); color: #1e293b; font-weight: 700; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; letter-spacing: 0.5px; text-transform: uppercase;">STUDY NOTES</span>
                     <h1 id="subjectHeading" style="margin: 0; font-size: 1.5rem; font-weight: 700;">Subject Name</h1>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%;">
                     <!-- Resource Switcher Nav Pills -->
                     <nav class="resource-switcher-nav" style="margin: 0;">
                         <a href="viewer.html?subject=dsa&type=notes" class="res-tab-pill" id="tabNotesLink">
@@ -59,7 +59,7 @@
                         </a>
                     </nav>
                     
-                    <div class="header-actions" style="display: flex; gap: 0.5rem;">
+                    <div class="header-actions" style="display: flex; gap: 0.5rem; justify-content: center;">
                         <!-- Hidden File Input for uploading note/assignment -->
                         <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
                         <button class="action-btn upload-btn" id="uploadFileBtn" title="Upload PDF">

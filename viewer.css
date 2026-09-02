@@ -1089,7 +1089,7 @@ body {
 /* ==========================================================================
    THEME TOGGLE BUTTON (Viewer Header)
    ========================================================================== */
-.theme-toggle-btn {
+.theme-toggle-btn, .admin-toggle-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -1106,14 +1106,14 @@ body {
     white-space: nowrap;
 }
 
-.theme-toggle-btn:hover {
+.theme-toggle-btn:hover, .admin-toggle-btn:hover {
     transform: translateY(-1px);
     border-color: var(--primary-color);
     color: var(--primary-color);
     background: var(--primary-light);
 }
 
-.theme-toggle-btn i {
+.theme-toggle-btn i, .admin-toggle-btn i {
     font-size: 0.95rem;
 }
 

@@ -325,7 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (homeSidebarToggle && homeSidebar) {
         homeSidebarToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            homeSidebar.classList.toggle('active');
+            homeSidebar.classList.toggle('active'); // For mobile
+            homeSidebar.classList.toggle('collapsed'); // For desktop
         });
         
         // Close sidebar when clicking outside on mobile
@@ -333,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth <= 900 && homeSidebar.classList.contains('active')) {
                 if (!homeSidebar.contains(e.target) && e.target !== homeSidebarToggle) {
                     homeSidebar.classList.remove('active');
+                    homeSidebar.classList.add('collapsed'); // ensure desktop sync
                 }
             }
         });

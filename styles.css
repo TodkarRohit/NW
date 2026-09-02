@@ -144,7 +144,7 @@ body {
 }
 
 .mobile-home-menu-btn {
-    display: none;
+    display: block;
     background: transparent;
     border: none;
     color: white;
@@ -159,12 +159,13 @@ body {
     background: rgba(255,255,255,0.1);
 }
 
+.home-sidebar.collapsed {
+    display: none;
+}
+
 @media (max-width: 900px) {
-    .mobile-home-menu-btn {
-        display: block;
-    }
-    
     .home-sidebar {
+        display: block; /* override collapsed state if toggled */
         position: fixed;
         top: 0;
         left: 0;
@@ -172,6 +173,11 @@ body {
         z-index: 100;
         transform: translateX(-100%);
         box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .home-sidebar.collapsed {
+        display: block; /* don't use display none on mobile, rely on transform */
     }
     
     .home-sidebar.active {
