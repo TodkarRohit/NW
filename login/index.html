@@ -189,90 +189,6 @@
     </main>
     </div>
 
-    <!-- Auth / Admin Login & Register Modal -->
-    <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
-        <div class="admin-login-card custom-login-design">
-            <button class="close-modal-btn custom-close-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
-            <div class="custom-login-header">
-                <div class="custom-user-icon">
-                    <i class="fa-regular fa-user"></i>
-                </div>
-                <h2 id="authModalTitle">STUDENT LOGIN</h2>
-            </div>
-            
-            <div style="padding: 1.25rem 1.5rem 0 1.5rem;">
-                <div class="auth-mode-tabs" role="tablist">
-                    <button type="button" class="auth-tab-btn active" id="tabModeLoginBtn" role="tab">
-                        <i class="fa-solid fa-right-to-bracket"></i> Login
-                    </button>
-                    <button type="button" class="auth-tab-btn" id="tabModeRegisterBtn" role="tab">
-                        <i class="fa-solid fa-user-plus"></i> Register
-                    </button>
-                </div>
-            </div>
-
-            <form id="adminLoginForm" class="login-modal-body custom-login-body">
-                <p class="login-hint" id="authModeHint" style="font-size: 0.85rem; color: #fff; margin-bottom: 1rem; text-align: center;">Enter your credentials to access study resources and upload privileges. Browsing is always free and open without logging in.</p>
-                
-                <div class="form-group custom-form-group" id="nameFormGroup" style="display:none;">
-                    <i class="fa-solid fa-id-card"></i>
-                    <input type="text" id="adminNameInput" placeholder="Full Name" autocomplete="name">
-                </div>
-
-                <div class="form-group custom-form-group" id="emailFormGroup" style="display:none;">
-                    <i class="fa-regular fa-envelope"></i>
-                    <input type="email" id="adminEmailInput" placeholder="Email Address" autocomplete="email">
-                </div>
-
-                <div class="form-group custom-form-group">
-                    <i class="fa-solid fa-user-tag"></i>
-                    <input type="text" id="adminUsernameInput" placeholder="Enter username" required autocomplete="username" maxlength="20">
-                </div>
-                <div class="auth-hint">
-                    <span id="usernameRuleText"></span>
-                </div>
-                <div id="usernameSuggestionsContainer" class="username-suggestions"></div>
-
-                <div class="form-group custom-form-group" id="branchFormGroup" style="display:none;">
-                    <i class="fa-solid fa-code-branch"></i>
-                    <select id="userBranchSelect" class="custom-select">
-                        <option value="CE">Computer Engineering (CE)</option>
-                        <option value="CSE">Computer Science (CSE)</option>
-                        <option value="IT">Information Technology (IT)</option>
-                        <option value="ECE">Electronics (ECE)</option>
-                        <option value="AIDS">AI & DS</option>
-                    </select>
-                </div>
-
-                <div class="form-group custom-form-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="adminPasswordInput" placeholder="Enter password (min. 6 characters)" required autocomplete="current-password">
-                </div>
-
-                <div class="custom-login-options">
-                    <label class="custom-checkbox-label">
-                        <input type="checkbox" id="rememberMeCheckbox">
-                        <span class="custom-checkmark"></span>
-                        Remember me
-                    </label>
-                    <a href="#" class="custom-forgot-link">Forgot Password?</a>
-                </div>
-
-                <div id="loginErrorMsg" class="login-error-msg custom-error" style="display:none;">
-                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid username or password!</span>
-                </div>
-                
-                <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button type="button" class="cancel-btn custom-submit-btn" id="cancelAdminLoginBtn" style="background: rgba(255,255,255,0.2); flex: 1;">Cancel</button>
-                    <button type="submit" class="submit-login-btn custom-submit-btn auth-submit-btn" id="authSubmitBtn" style="flex: 1;">
-                        <span id="authSubmitBtnText">LOGIN</span>
-                    </button>
-                </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Toast Notification -->
     <div class="toast-notification" id="toast">
         <i class="fa-solid fa-circle-check"></i>
@@ -312,9 +228,12 @@
     <script src="../assets/auth.js"></script>
     <script src="../assets/data.js"></script>
     <script src="script.js"></script>
+<script src="../assets/auth-modal.js"></script>
 </body>
 
 </html>
+
+
 
 
 
