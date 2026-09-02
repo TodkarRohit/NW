@@ -17,7 +17,15 @@
  */
 
 (function () {
-    const API_BASE_URL = 'http://localhost:5000/api';
+    // SUPABASE CONFIGURATION - PASTE YOUR URL AND ANON KEY HERE
+    const SUPABASE_URL = 'https://qkasthiyysuussaxtkzi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrYXN0aGl5eXN1dXNzYXh0a3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjA2MDgsImV4cCI6MjEwMzkzNjYwOH0.Plte859APDo38ybU9vhCqxfHGpq4Idzxj7HCX5aXjvA';
+
+    // Initialize Supabase Client
+    // We attach it to window so other files (data.js, script.js) can use it
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const API_BASE_URL = 'http://localhost:5000/api'; // Old API (can be removed later)
     const TOKEN_KEY = 'enh_auth_token';
     const USER_KEY = 'enh_auth_user';
 
@@ -120,33 +128,49 @@
          * 1. Register a new user: POST /api/auth/register
          * Enforces strict 8-character username rule
          */
-        async register(username, password) {
-            const cleanUser = String(username || '').trim();
-            if (!cleanUser) {
-                throw new Error('Username is required.');
-            }
-            if (cleanUser.length !== 8) {
-                throw new Error(`Invalid username: Username must be exactly 8 characters long (currently ${cleanUser.length} chars).`);
-            }
-            if (!password || password.length < 6) {
-                throw new Error('Invalid password: Password must be at least 6 characters long.');
-            }
-
-            const data = await this.authFetch('/auth/register', {
-                method: 'POST',
-                body: JSON.stringify({ username: cleanUser, password })
-            });
-
-            if (data.token && data.user) {
-                this.saveSession(data.token, data.user);
-            }
-
-            return data;
+        async hashPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         },
 
-        /**
-         * 2. Login user: POST /api/auth/login
-         */
+        async register(username, password, fullName = '', email = '') {
+            const cleanUser = String(username || '').trim();
+            const cleanName = String(fullName || '').trim();
+            const cleanEmail = String(email || '').trim();
+            if (!cleanUser) {
+                throw new Error('Please enter a username.');
+            }
+            if (!password || password.length < 6) {
+                throw new Error('Password must be at least 6 characters long.');
+            }
+
+            const password_hash = await this.hashPassword(password);
+
+            const { data, error } = await window.supabaseClient
+                .from('users')
+                .insert([{ username: cleanUser, password_hash: password_hash, full_name: cleanName, email: cleanEmail }]);
+
+            if (error) {
+                if (error.code === '23505' || error.message.toLowerCase().includes('duplicate')) { 
+                    // Postgres unique constraint violation
+                    // Generate 3 random suggestions
+                    const r1 = Math.floor(Math.random() * 99) + 1;
+                    const r2 = Math.floor(Math.random() * 99) + 1;
+                    const r3 = Math.floor(Math.random() * 999) + 100;
+                    
+                    const suggestions = `${cleanUser}${r1}, ${cleanUser}_${r2}, ${cleanUser}${r3}`;
+                    throw new Error(`Username "${cleanUser}" is taken. Try: ${suggestions}`);
+                }
+                throw new Error(error.message);
+            }
+
+            this.saveSession('custom_token_' + cleanUser, { username: cleanUser });
+
+            return { user: { username: cleanUser } };
+        },
+
         async login(username, password) {
             const cleanUser = String(username || '').trim();
             if (!cleanUser) {
@@ -156,32 +180,47 @@
                 throw new Error('Please enter your password.');
             }
 
-            const data = await this.authFetch('/auth/login', {
-                method: 'POST',
-                body: JSON.stringify({ username: cleanUser, password })
-            });
+            const password_hash = await this.hashPassword(password);
 
-            if (data.token && data.user) {
-                this.saveSession(data.token, data.user);
+            const { data, error } = await window.supabaseClient
+                .from('users')
+                .select('*')
+                .eq('username', cleanUser)
+                .eq('password_hash', password_hash);
+
+            if (error) {
+                throw new Error(error.message);
             }
 
-            return data;
+            if (!data || data.length === 0) {
+                throw new Error('Invalid username or password. Please check your credentials.');
+            }
+
+            const newCount = (data[0].login_count || 0) + 1;
+            await window.supabaseClient
+                .from('users')
+                .update({ login_count: newCount, last_login_at: new Date().toISOString() })
+                .eq('username', cleanUser);
+
+            this.saveSession('custom_token_' + cleanUser, { username: cleanUser });
+
+            return { user: { username: cleanUser } };
         },
 
-        /**
-         * 3. Logout user: POST /api/auth/logout
-         */
         async logout() {
-            try {
-                if (this.getToken()) {
-                    await this.authFetch('/auth/logout', { method: 'POST' });
+            const user = this.getUser();
+            if (user && user.username) {
+                try {
+                    await window.supabaseClient
+                        .from('users')
+                        .update({ last_logout_at: new Date().toISOString() })
+                        .eq('username', user.username);
+                } catch (err) {
+                    console.error('Failed to update logout time:', err);
                 }
-            } catch (err) {
-                console.warn('Logout notification notice:', err.message);
-            } finally {
-                this.clearSession();
-                this.showToast('You have been logged out successfully.');
             }
+            this.clearSession();
+            this.showToast('You have been logged out successfully.');
         },
 
         /**
@@ -240,7 +279,7 @@
 
     function escapeHTML(str) {
         if (!str) return '';
-        return String(str).replace(/[&<>'"]/g, 
+        return String(str).replace(/[&<>'"]/g,
             tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
         );
     }

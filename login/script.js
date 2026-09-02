@@ -135,13 +135,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentAuthMode = mode;
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
         const branchFormGroup = document.getElementById('branchFormGroup');
+        const emailFormGroup = document.getElementById('emailFormGroup');
 
         if (mode === 'register') {
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');
             if (tabModeLoginBtn) tabModeLoginBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Account';
-            if (authModeHint) authModeHint.textContent = 'Create a new account. Username must be exactly 8 characters.';
+            if (authModeHint) authModeHint.textContent = 'Create a new account.';
             if (nameFormGroup) nameFormGroup.style.display = 'flex';
+            if (emailFormGroup) emailFormGroup.style.display = 'flex';
             if (branchFormGroup) branchFormGroup.style.display = 'flex';
         } else {
             if (tabModeLoginBtn) tabModeLoginBtn.classList.add('active');
@@ -149,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
             if (authModeHint) authModeHint.textContent = 'Enter your credentials to access study resources and upload privileges.';
             if (nameFormGroup) nameFormGroup.style.display = 'none';
+            if (emailFormGroup) emailFormGroup.style.display = 'none';
             if (branchFormGroup) branchFormGroup.style.display = 'none';
         }
         updateCharBadge();
@@ -214,8 +217,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminLoginForm) {
         adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const nameInput = document.getElementById('adminNameInput');
+            const emailInput = document.getElementById('adminEmailInput');
             const userVal = usernameInput ? usernameInput.value.trim() : '';
             const passVal = passwordInput ? passwordInput.value : '';
+            const nameVal = nameInput ? nameInput.value.trim() : '';
+            const emailVal = emailInput ? emailInput.value.trim() : '';
 
             if (loginErrorMsg) loginErrorMsg.style.display = 'none';
             if (authSubmitBtn) {
@@ -225,13 +232,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 if (currentAuthMode === 'register') {
-                    if (userVal.length !== 8) {
-                        throw new Error('Username must be exactly 8 characters long.');
-                    }
+
                     if (passVal.length < 6) {
                         throw new Error('Password must be at least 6 characters long.');
                     }
-                    await window.authService.register(userVal, passVal);
+                    if (!nameVal) {
+                        throw new Error('Please enter your full name.');
+                    }
+                    if (userVal.includes('@') || userVal.includes(' ')) {
+                        throw new Error('Username must not contain @ or spaces. Please enter a simple handle.');
+                    }
+                    if (!emailVal) {
+                        throw new Error('Please enter your email address.');
+                    }
+                    await window.authService.register(userVal, passVal, nameVal, emailVal);
                     const branchSelect = document.getElementById('userBranchSelect');
                     if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                     closeLoginModal();
@@ -258,9 +272,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             } catch (err) {
+                const suggestionContainer = document.getElementById('usernameSuggestionsContainer');
+                if (suggestionContainer) suggestionContainer.innerHTML = '';
+                
+                let errorMsgText = err.message || 'Authentication failed.';
+                
+                if (errorMsgText.includes('is taken. Try:')) {
+                    const parts = errorMsgText.split('Try:');
+                    const baseMsg = parts[0].trim();
+                    const suggestionsStr = parts[1].trim();
+                    const suggestions = suggestionsStr.split(',').map(s => s.trim());
+                    
+                    errorMsgText = baseMsg;
+                    
+                    if (suggestionContainer) {
+                        suggestionContainer.innerHTML = suggestions.map(s => 
+                            `<span class="username-suggestion-pill" onclick="document.getElementById('adminUsernameInput').value = '${s}'; document.getElementById('usernameSuggestionsContainer').innerHTML = '';">${s}</span>`
+                        ).join(' ');
+                    }
+                }
+                
                 if (loginErrorMsg) {
                     loginErrorMsg.style.display = 'flex';
-                    if (loginErrorText) loginErrorText.textContent = err.message || 'Authentication failed.';
+                    if (loginErrorText) loginErrorText.textContent = errorMsgText;
                 }
             } finally {
                 if (authSubmitBtn) {

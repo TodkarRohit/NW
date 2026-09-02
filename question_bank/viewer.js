@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else tabQbLink.classList.remove('active');
     }
     if (tabAssLink) {
-        tabAssLink.href = `assignments.html?subject=${subjectKey}`;
+        tabAssLink.href = `../assignments/assignments.html?subject=${subjectKey}`;
     }
 
     // 4. Update Header Meta
@@ -941,4 +941,5 @@ document.addEventListener('DOMContentLoaded', () => {
     renderItemList();
     loadItemContent(0);
 });
+
 

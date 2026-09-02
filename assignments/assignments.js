@@ -429,8 +429,8 @@ public:
 
     if (subjectTitleEl) subjectTitleEl.textContent = currentSubject.title;
     if (subjectSubtitleEl) subjectSubtitleEl.textContent = currentSubject.subtitle;
-    if (notesNavBtn) notesNavBtn.href = `viewer.html?subject=${subjectKey}&type=notes`;
-    if (qbNavBtn) qbNavBtn.href = `viewer.html?subject=${subjectKey}&type=qb`;
+    if (notesNavBtn) notesNavBtn.href = `../question_bank/viewer.html?subject=${subjectKey}&type=notes`;
+    if (qbNavBtn) qbNavBtn.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
     if (assNavBtn) assNavBtn.href = `assignments.html?subject=${subjectKey}`;
     if (totalChaptersBadge) totalChaptersBadge.textContent = `${subjectChapters.length} Units`;
     document.title = `${currentSubject.title} - Assignments | Engineering Notes Hub`;
@@ -472,17 +472,23 @@ public:
     function setAuthMode(mode) {
         currentAuthMode = mode;
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+        const nameFormGroup = document.getElementById('nameFormGroup');
+        const emailFormGroup = document.getElementById('emailFormGroup');
 
         if (mode === 'register') {
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');
             if (tabModeLoginBtn) tabModeLoginBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Create Account';
-            if (authModeHint) authModeHint.textContent = 'Create a new account. Username must be exactly 8 characters.';
+            if (authModeHint) authModeHint.textContent = 'Create a new account.';
+            if (nameFormGroup) nameFormGroup.style.display = 'flex';
+            if (emailFormGroup) emailFormGroup.style.display = 'flex';
         } else {
             if (tabModeLoginBtn) tabModeLoginBtn.classList.add('active');
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.remove('active');
             if (authSubmitBtnText) authSubmitBtnText.textContent = 'Login';
             if (authModeHint) authModeHint.textContent = 'Enter your credentials to enable assignment upload and management privileges.';
+            if (nameFormGroup) nameFormGroup.style.display = 'none';
+            if (emailFormGroup) emailFormGroup.style.display = 'none';
         }
         updateCharBadge();
     }
@@ -537,8 +543,12 @@ public:
     if (adminLoginForm) {
         adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const nameInput = document.getElementById('adminNameInput');
+            const emailInput = document.getElementById('adminEmailInput');
             const userVal = usernameInput ? usernameInput.value.trim() : '';
             const passVal = passwordInput ? passwordInput.value : '';
+            const nameVal = nameInput ? nameInput.value.trim() : '';
+            const emailVal = emailInput ? emailInput.value.trim() : '';
 
             if (loginErrorMsg) loginErrorMsg.style.display = 'none';
             if (authSubmitBtn) {
@@ -548,13 +558,20 @@ public:
 
             try {
                 if (currentAuthMode === 'register') {
-                    if (userVal.length !== 8) {
-                        throw new Error('Username must be exactly 8 characters long.');
-                    }
+
                     if (passVal.length < 6) {
                         throw new Error('Password must be at least 6 characters long.');
                     }
-                    await window.authService.register(userVal, passVal);
+                    if (!nameVal) {
+                        throw new Error('Please enter your full name.');
+                    }
+                    if (userVal.includes('@') || userVal.includes(' ')) {
+                        throw new Error('Username must not contain @ or spaces. Please enter a simple handle.');
+                    }
+                    if (!emailVal) {
+                        throw new Error('Please enter your email address.');
+                    }
+                    await window.authService.register(userVal, passVal, nameVal, emailVal);
                     isAdminMode = true;
                     updateAdminUI();
                     closeAdminLoginModal();
@@ -580,9 +597,29 @@ public:
                     }
                 }
             } catch (err) {
+                const suggestionContainer = document.getElementById('usernameSuggestionsContainer');
+                if (suggestionContainer) suggestionContainer.innerHTML = '';
+                
+                let errorMsgText = err.message || 'Authentication failed.';
+                
+                if (errorMsgText.includes('is taken. Try:')) {
+                    const parts = errorMsgText.split('Try:');
+                    const baseMsg = parts[0].trim();
+                    const suggestionsStr = parts[1].trim();
+                    const suggestions = suggestionsStr.split(',').map(s => s.trim());
+                    
+                    errorMsgText = baseMsg;
+                    
+                    if (suggestionContainer) {
+                        suggestionContainer.innerHTML = suggestions.map(s => 
+                            `<span class="username-suggestion-pill" onclick="document.getElementById('adminUsernameInput').value = '${s}'; document.getElementById('usernameSuggestionsContainer').innerHTML = '';">${s}</span>`
+                        ).join(' ');
+                    }
+                }
+                
                 if (loginErrorMsg) {
                     loginErrorMsg.style.display = 'flex';
-                    if (loginErrorText) loginErrorText.textContent = err.message || 'Authentication failed.';
+                    if (loginErrorText) loginErrorText.textContent = errorMsgText;
                 }
             } finally {
                 if (authSubmitBtn) {
@@ -1680,5 +1717,6 @@ public:
     renderChapterNav();
     updateAdminUI();
 });
+
 
 

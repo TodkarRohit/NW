@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Notes Hub - Study Materials, Question Banks & Assignments</title>
+    <link rel="icon" type="image/png" href="../images/engineering-notes.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/styles.css">
+</head>
+
+<body>
+    <!-- Top Header -->
+    <header class="hub-header">
+        <div class="header-left-actions">
+            <button class="mobile-home-menu-btn" id="homeSidebarToggle" title="Toggle Sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="online-users-badge" id="onlineUsersBadge" title="Live students currently active on portal">
+                <span class="online-pulse-dot"></span>
+                <i class="fa-solid fa-users"></i>
+                <span id="onlineUsersCount">18</span> <span class="hide-on-mobile">Online</span>
+            </div>
+        </div>
+
+        <div class="header-right-actions">
+            <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
+                <i class="fa-solid fa-user-shield"></i>
+                <span id="adminBtnText">Login Mode</span>
+            </button>
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle theme">
+                <i class="fa-solid fa-moon"></i>
+                <span class="theme-btn-text">Light Mode</span>
+            </button>
+        </div>
+
+        <div class="container header-container">
+            <div class="header-left-group">
+                <div class="header-badge">
+                    <span class="badge-dot"></span>
+                    Academic Portal
+                </div>
+                <h1>Engineering Notes Hub</h1>
+                <p>NMIET Study Materials, Question Banks, and Assignments</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="home-layout">
+        <!-- Sidebar for Branch Selection -->
+        <aside class="home-sidebar" id="homeSidebar">
+            <h3 class="home-sidebar-title">Branch</h3>
+            <ul class="branch-list" id="homeBranchList">
+                <li><a href="#" class="branch-item active" data-branch="CE">CE</a></li>
+                <li><a href="#" class="branch-item" data-branch="CSE">CSE</a></li>
+                <li><a href="#" class="branch-item" data-branch="IT">IT</a></li>
+                <li><a href="#" class="branch-item" data-branch="ECE">ECE</a></li>
+                <li><a href="#" class="branch-item" data-branch="AIDS">AI DS</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="home-main">
+            <div class="container main-content">
+        <!-- Search Bar -->
+        <section class="search-section">
+            <div class="search-box-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput"
+                    placeholder="Search by subject name, topic, or code (e.g. DSA, OOP, OS)..." autocomplete="off">
+                <button type="button" class="search-clear-btn" id="searchClearBtn" style="display:none;"
+                    title="Clear Search (Esc)">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+                <span class="search-kbd-badge" title="Press Ctrl+K to search"><kbd>Ctrl</kbd> <kbd>K</kbd></span>
+            </div>
+            <div id="searchCounter" class="search-counter-badge" style="display:none;"></div>
+        </section>
+
+        <!-- Subjects Grid (2 Columns Layout) -->
+        <section class="subjects-grid" id="subjectsContainer">
+
+            <!-- Subject Card 1: Data Structure and Algorithm(C++) -->
+            <div class="subject-card" data-subject="dsa">
+                <div class="card-header">
+                    <h2> [DS] Data Structure and Algorithm(C++)</h2>
+                    <span class="semester-tag">Semester 2</span>
+                </div>
+                <div class="resource-links">
+                    <a href="../question_bank/viewer.html?subject=dsa&type=notes" class="btn btn-notes"><i
+                            class="fa-solid fa-book-open"></i> Study Notes</a>
+                    <a href="../question_bank/viewer.html?subject=dsa&type=qb" class="btn btn-qb"><i
+                            class="fa-solid fa-circle-question"></i> Question Banks</a>
+                    <a href="../assignments/assignments.html?subject=dsa" class="btn btn-assignments"><i
+                            class="fa-solid fa-folder-open"></i> Assignments</a>
+                </div>
+            </div>
+
+            <!-- Subject Card 2: Object Oriented Programming (Using C++) -->
+            <div class="subject-card" data-subject="oop">
+                <div class="card-header">
+                    <h2>[OOP] Object Oriented Programming (Using C++)</h2>
+                    <span class="semester-tag">Semester 2</span>
+                </div>
+                <div class="resource-links">
+                    <a href="../question_bank/viewer.html?subject=oop&type=notes" class="btn btn-notes"><i
+                            class="fa-solid fa-book-open"></i> Study Notes</a>
+                    <a href="../question_bank/viewer.html?subject=oop&type=qb" class="btn btn-qb"><i
+                            class="fa-solid fa-circle-question"></i> Question Banks</a>
+                    <a href="../assignments/assignments.html?subject=oop" class="btn btn-assignments"><i
+                            class="fa-solid fa-folder-open"></i> Assignments</a>
+                </div>
+            </div>
+
+            <!-- Subject Card 3: Operating System -->
+            <div class="subject-card" data-subject="os">
+                <div class="card-header">
+                    <h2>[OS] Operating System</h2>
+                    <span class="semester-tag">Semester 2</span>
+                </div>
+                <div class="resource-links">
+                    <a href="../question_bank/viewer.html?subject=os&type=notes" class="btn btn-notes"><i
+                            class="fa-solid fa-book-open"></i> Study Notes</a>
+                    <a href="../question_bank/viewer.html?subject=os&type=qb" class="btn btn-qb"><i
+                            class="fa-solid fa-circle-question"></i> Question Banks</a>
+                    <a href="../assignments/assignments.html?subject=os" class="btn btn-assignments"><i
+                            class="fa-solid fa-folder-open"></i> Assignments</a>
+                </div>
+            </div>
+
+            <!-- Subject Card 4: Engineering Mathematics -->
+            <div class="subject-card" data-subject="math">
+                <div class="card-header">
+                    <h2>[OE] Engineering Mathematics</h2>
+                    <span class="semester-tag">Semester 2</span>
+                </div>
+                <div class="resource-links">
+                    <a href="../question_bank/viewer.html?subject=math&type=notes" class="btn btn-notes"><i
+                            class="fa-solid fa-book-open"></i> Study Notes</a>
+                    <a href="../question_bank/viewer.html?subject=math&type=qb" class="btn btn-qb"><i
+                            class="fa-solid fa-circle-question"></i> Question Banks</a>
+                    <a href="../assignments/assignments.html?subject=math" class="btn btn-assignments"><i
+                            class="fa-solid fa-folder-open"></i> Assignments</a>
+                </div>
+            </div>
+
+            <!-- Subject Card 5: Computer Hardware and its Organization -->
+            <div class="subject-card" data-subject="hardware">
+                <div class="card-header">
+                    <h2>[COA] Computer hardware and its organization</h2>
+                    <span class="semester-tag">Semester 2</span>
+                </div>
+                <div class="resource-links">
+                    <a href="../question_bank/viewer.html?subject=hardware&type=notes" class="btn btn-notes"><i
+                            class="fa-solid fa-book-open"></i> Study Notes</a>
+                    <a href="../question_bank/viewer.html?subject=hardware&type=qb" class="btn btn-qb"><i
+                            class="fa-solid fa-circle-question"></i> Question Banks</a>
+                    <a href="../assignments/assignments.html?subject=hardware" class="btn btn-assignments"><i
+                            class="fa-solid fa-folder-open"></i> Assignments</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Branch Unavailable Message -->
+        <div id="branchUnavailableMessage" class="no-results-box" style="display: none; padding: 40px; text-align: center;">
+            <div class="no-results-icon">
+                <i class="fa-solid fa-person-digging" style="font-size: 3rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 15px;"></i>
+            </div>
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 10px;">Branch Content Unavailable</h3>
+            <p style="color: rgba(255, 255, 255, 0.7);">Study materials for this branch are currently being prepared and will be available soon.</p>
+        </div>
+
+        <!-- No Results Feedback Message -->
+        <div id="noResultsMessage" class="no-results-box" style="display: none;">
+            <div class="no-results-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h3>No matching subjects or topics found</h3>
+            <p>Try searching for another topic like "Stack", "Sorting", "Trees", "Deadlock", "Fourier", or "Classes".
+            </p>
+        </div>
+        </div>
+    </main>
+    </div>
+
+    <!-- Auth / Admin Login & Register Modal -->
+    <div class="admin-login-backdrop" id="adminLoginModalBackdrop">
+        <div class="admin-login-card custom-login-design">
+            <button class="close-modal-btn custom-close-btn" id="closeAdminLoginModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="custom-login-header">
+                <div class="custom-user-icon">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <h2 id="authModalTitle">STUDENT LOGIN</h2>
+            </div>
+            
+            <div style="padding: 1.25rem 1.5rem 0 1.5rem;">
+                <div class="auth-mode-tabs" role="tablist">
+                    <button type="button" class="auth-tab-btn active" id="tabModeLoginBtn" role="tab">
+                        <i class="fa-solid fa-right-to-bracket"></i> Login
+                    </button>
+                    <button type="button" class="auth-tab-btn" id="tabModeRegisterBtn" role="tab">
+                        <i class="fa-solid fa-user-plus"></i> Register
+                    </button>
+                </div>
+            </div>
+
+            <form id="adminLoginForm" class="login-modal-body custom-login-body">
+                <p class="login-hint" id="authModeHint" style="font-size: 0.85rem; color: #fff; margin-bottom: 1rem; text-align: center;">Enter your credentials to access study resources and upload privileges. Browsing is always free and open without logging in.</p>
+                
+                <div class="form-group custom-form-group" id="nameFormGroup" style="display:none;">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="text" id="adminNameInput" placeholder="Full Name" autocomplete="name">
+                </div>
+
+                <div class="form-group custom-form-group" id="emailFormGroup" style="display:none;">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" id="adminEmailInput" placeholder="Email Address" autocomplete="email">
+                </div>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-user-tag"></i>
+                    <input type="text" id="adminUsernameInput" placeholder="Enter username" required autocomplete="username" maxlength="20">
+                </div>
+                <div class="auth-hint">
+                    <span id="usernameRuleText"></span>
+                </div>
+                <div id="usernameSuggestionsContainer" class="username-suggestions"></div>
+
+                <div class="form-group custom-form-group" id="branchFormGroup" style="display:none;">
+                    <i class="fa-solid fa-code-branch"></i>
+                    <select id="userBranchSelect" class="custom-select">
+                        <option value="CE">Computer Engineering (CE)</option>
+                        <option value="CSE">Computer Science (CSE)</option>
+                        <option value="IT">Information Technology (IT)</option>
+                        <option value="ECE">Electronics (ECE)</option>
+                        <option value="AIDS">AI & DS</option>
+                    </select>
+                </div>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="adminPasswordInput" placeholder="Enter password (min. 6 characters)" required autocomplete="current-password">
+                </div>
+
+                <div class="custom-login-options">
+                    <label class="custom-checkbox-label">
+                        <input type="checkbox" id="rememberMeCheckbox">
+                        <span class="custom-checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="custom-forgot-link">Forgot Password?</a>
+                </div>
+
+                <div id="loginErrorMsg" class="login-error-msg custom-error" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid username or password!</span>
+                </div>
+                
+                <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="cancel-btn custom-submit-btn" id="cancelAdminLoginBtn" style="background: rgba(255,255,255,0.2); flex: 1;">Cancel</button>
+                    <button type="submit" class="submit-login-btn custom-submit-btn auth-submit-btn" id="authSubmitBtn" style="flex: 1;">
+                        <span id="authSubmitBtnText">LOGIN</span>
+                    </button>
+                </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMessage">Action completed successfully!</span>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <h3>Engineering Notes Hub</h3>
+
+            <p>&copy; 2026 NMIET Students</p>
+
+            <p class="developed-by">Developed by:</p>
+
+            <div class="developers">
+                <a href="https://github.com/TodkarRohit" target="_blank" rel="noopener noreferrer">
+                    Rohit Todkar
+                </a>
+
+                <span>|</span>
+
+                <a href="PRATIK_GITHUB_URL" target="_blank" rel="noopener noreferrer">
+                    Pratik Shendge
+                </a>
+
+                <span>|</span>
+
+                <a href="https://github.com/onkarpawar158-coder" target="_blank" rel="noopener noreferrer">
+                    Onkar Pawar
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <div class="home-watermark" aria-hidden="true"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/auth.js"></script>
+    <script src="../assets/data.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
