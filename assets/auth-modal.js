@@ -256,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                         closeLoginModal();
                         showToast(`Welcome back, ${userVal}!`);
+                        setTimeout(() => window.location.reload(), 1000);
                     } catch (apiErr) {
                         // Fallback for offline admin compatibility if default admin credentials used
                         const loginId2 = userVal || emailVal; if ((loginId2 === 'admin' && passVal === 'admin123') || (loginId2 === 'admin' && passVal === 'admin') || (loginId2 === 'rohittodkar92@gmail.com' && passVal === 'Admin@123')) {
@@ -264,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                             closeLoginModal();
                             showToast('Logged in as Admin (Local Mode).');
+                            setTimeout(() => window.location.reload(), 1000);
                         } else {
                             throw apiErr;
                         }

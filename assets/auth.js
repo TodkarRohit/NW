@@ -225,6 +225,7 @@
             }
             this.clearSession();
             this.showToast('You have been logged out successfully.');
+            setTimeout(() => window.location.reload(), 1000);
         },
 
         /**
