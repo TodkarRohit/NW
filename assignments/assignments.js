@@ -461,9 +461,6 @@ public:
     let currentAuthMode = 'login'; // 'login' | 'register'
 
     function checkIsAdmin() {
-        if (window.authService && window.authService.isLoggedIn()) {
-            return true;
-        }
         return localStorage.getItem('isAdminMode') === 'true';
     }
 
@@ -572,7 +569,7 @@ public:
                         throw new Error('Please enter your email address.');
                     }
                     await window.authService.register(userVal, passVal, nameVal, emailVal);
-                    isAdminMode = true;
+                    isAdminMode = checkIsAdmin();
                     updateAdminUI();
                     closeAdminLoginModal();
                     showToast(`Registration successful! Welcome, ${userVal}!`);

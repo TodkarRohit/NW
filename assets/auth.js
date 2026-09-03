@@ -53,9 +53,19 @@
             if (token) localStorage.setItem(TOKEN_KEY, token);
             if (user) {
                 localStorage.setItem(USER_KEY, JSON.stringify(user));
-                // Set legacy flag for existing admin compatibility
-                if (user.username === 'admin' || user.email === 'rohittodkar92@gmail.com' || user.username === 'rohittodkar92@gmail.com') {
+                const isAdmin = 
+                    user.is_admin === true || 
+                    user.is_admin === 'true' || 
+                    user.role === 'admin' || 
+                    String(user.role || '').toLowerCase() === 'admin' ||
+                    user.username === 'admin' || 
+                    user.email === 'rohittodkar92@gmail.com' || 
+                    user.username === 'rohittodkar92@gmail.com';
+
+                if (isAdmin) {
                     localStorage.setItem('isAdminMode', 'true');
+                } else {
+                    localStorage.setItem('isAdminMode', 'false');
                 }
             }
             this.updateHeaderUI();
@@ -200,15 +210,16 @@
                 throw new Error('Invalid username or password. Please check your credentials.');
             }
 
-            const newCount = (data[0].login_count || 0) + 1;
+            const dbUser = data[0];
+            const newCount = (dbUser.login_count || 0) + 1;
             await window.supabaseClient
                 .from('users')
                 .update({ login_count: newCount, last_login_at: new Date().toISOString() })
                 .or(`username.eq.${cleanUser},email.eq.${cleanUser}`);
 
-            this.saveSession('custom_token_' + cleanUser, { username: cleanUser });
+            this.saveSession('custom_token_' + (dbUser.username || cleanUser), dbUser);
 
-            return { user: { username: cleanUser } };
+            return { user: dbUser };
         },
 
         async logout() {
