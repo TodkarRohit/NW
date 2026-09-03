@@ -628,17 +628,6 @@ public:
     }
 
     if (adminToggleBtn) {
-        adminToggleBtn.addEventListener('click', () => {
-            if (checkIsAdmin()) {
-                isAdminMode = false;
-                if (window.authService) window.authService.logout();
-                else localStorage.setItem('isAdminMode', 'false');
-                updateAdminUI();
-                showToast('Logged out.');
-            } else {
-                window.location.href = '../admin/index.html';
-            }
-        });
     }
 
     // ---------------------------------------------------------
@@ -745,7 +734,7 @@ public:
                 </div>
             `;
             const inlineBtn = document.getElementById('inlineAdminLoginBtn');
-            if (inlineBtn) inlineBtn.addEventListener('click', () => window.location.href = '../admin/index.html');
+            if (inlineBtn) inlineBtn.addEventListener('click', () => document.getElementById('adminToggleBtn').click());
         } else {
             adminUploadPortalSection.innerHTML = `
                 <div class="admin-upload-active-card">
@@ -862,7 +851,7 @@ public:
             inpageForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!isAdminMode) {
-                    window.location.href = '../admin/index.html';
+                    if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
                     return;
                 }
 
@@ -1283,7 +1272,7 @@ public:
         document.querySelectorAll('.admin-delete-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (!isAdminMode) {
-                    window.location.href = '../admin/index.html';
+                    if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
                     return;
                 }
                 const assId = btn.getAttribute('data-id');
@@ -1544,7 +1533,7 @@ public:
     if (openUploadModalBtn) {
         openUploadModalBtn.addEventListener('click', () => {
             if (!isAdminMode) {
-                window.location.href = '../admin/index.html';
+                if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
                 return;
             }
             if (uploadModalBackdrop) {
@@ -1591,7 +1580,7 @@ public:
         adminUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!isAdminMode) {
-                window.location.href = '../admin/index.html';
+                if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
                 return;
             }
 
