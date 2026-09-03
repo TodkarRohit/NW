@@ -14,12 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyTheme(theme) {
         if (theme === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
             localStorage.setItem('theme', 'dark');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i> <span class="theme-btn-text">Light Mode</span>';
             }
         } else {
             document.body.removeAttribute('data-theme');
+            document.documentElement.removeAttribute('data-theme');
             localStorage.setItem('theme', 'light');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i> <span class="theme-btn-text">Dark Mode</span>';

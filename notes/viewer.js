@@ -14,12 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyTheme(theme) {
         if (theme === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
             localStorage.setItem('theme', 'dark');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i> <span class="theme-btn-text">Light Mode</span>';
             }
         } else {
             document.body.removeAttribute('data-theme');
+            document.documentElement.removeAttribute('data-theme');
             localStorage.setItem('theme', 'light');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i> <span class="theme-btn-text">Dark Mode</span>';
@@ -495,8 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="upload-dropzone" style="cursor: pointer; background: var(--bg-surface); border-style: dashed; padding: 20px;">
                     <h3 style="color: var(--text-main); margin-bottom: 10px;"><i class="fa-regular fa-file-pdf" style="color: #ef4444;"></i> Unit 1 Full Notes.pdf</h3>
                     <p style="color: var(--text-light);">Click to view or download</p>
-                </div>
-                    <h3 style="color: var(--text-muted);">Admin Upload Only</h3>
+                    <h3 style="color: var(--text-muted); margin-top: 15px;">Admin Upload Only</h3>
                     <p style="color: var(--text-light);">Only authenticated admins can upload study materials here.</p>
                 </div>
                 `}

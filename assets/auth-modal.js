@@ -35,12 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div class="form-group custom-form-group" id="emailFormGroup">
                     <i class="fa-regular fa-envelope"></i>
-                    <input type="email" id="adminEmailInput" placeholder="Email Address" autocomplete="email">
+                    <input type="email" id="adminEmailInput" placeholder="Email Address (Optional if Username is provided)" autocomplete="email">
                 </div>
 
                 <div class="form-group custom-form-group">
                     <i class="fa-solid fa-user-tag"></i>
-                    <input type="text" id="adminUsernameInput" placeholder="Enter username or email" autocomplete="username" maxlength="20">
+                    <input type="text" id="adminUsernameInput" placeholder="Username (Optional if Email is provided)" autocomplete="username" maxlength="20">
                 </div>
                 <div class="auth-hint">
                     <span id="usernameRuleText"></span>

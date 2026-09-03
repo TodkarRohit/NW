@@ -899,23 +899,26 @@ footer {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: white;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 8px 18px;
     border-radius: 30px;
     font-size: 0.875rem;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
 }
 
 .admin-toggle-btn:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: #38bdf8;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.45);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .admin-toggle-btn.active {
@@ -1006,14 +1009,16 @@ footer {
 }
 
 .submit-login-btn {
-    background: linear-gradient(135deg, #e11d48, #be123c);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 10px 24px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
@@ -1021,7 +1026,8 @@ footer {
 }
 
 .submit-login-btn:hover {
-    background: linear-gradient(135deg, #be123c, #9f1239);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: #38bdf8;
     transform: translateY(-1px);
 }
 

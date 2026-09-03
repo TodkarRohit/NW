@@ -1966,3 +1966,15 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     pointer-events: auto;
     transform: translateY(0);
 }
+
+/* Dark mode overwrites for viewer.css */
+[data-theme="dark"] {
+    --bg-page: #0b1329;
+    --bg-surface: #1e293b;
+    --border-color: #334155;
+    --border-subtle: #475569;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-heading: #e2e8f0;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
