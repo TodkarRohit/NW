@@ -757,8 +757,9 @@ footer {
         max-width: 100%;
     }
 
-    .search-kbd-badge {
-        display: none;
+    .search-kbd-badge,
+    .hide-on-mobile {
+        display: none !important;
     }
 
     #searchInput {
@@ -781,9 +782,13 @@ footer {
     }
 
     .admin-toggle-btn,
-    .theme-toggle-btn,
-    .online-users-badge {
+    .theme-toggle-btn {
         padding: 6px 14px;
+        font-size: 0.8rem;
+    }
+
+    .online-users-badge {
+        padding: 6px 14px 6px 18px;
         font-size: 0.8rem;
     }
 
@@ -828,7 +833,7 @@ footer {
     background: rgba(15, 23, 42, 0.45);
     color: #ffffff;
     border: 1px solid rgba(34, 197, 94, 0.4);
-    padding: 7px 16px;
+    padding: 7px 16px 7px 20px;
     border-radius: 30px;
     font-size: 0.85rem;
     font-weight: 700;
