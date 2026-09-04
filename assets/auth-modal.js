@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loginErrorMsg) loginErrorMsg.style.display = 'none';
         const branchFormGroup = document.getElementById('branchFormGroup');
         const emailFormGroup = document.getElementById('emailFormGroup');
+        const nameFormGroup = document.getElementById('nameFormGroup');
 
         if (mode === 'register') {
             if (tabModeRegisterBtn) tabModeRegisterBtn.classList.add('active');

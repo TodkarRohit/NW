@@ -797,25 +797,27 @@ footer {
     }
 }
 
-/* Header Actions Positioned */
-.header-left-actions {
-    position: absolute;
-    top: 24px;
-    left: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 100;
-}
+/* Header Actions Positioned (Desktop) */
+@media (min-width: 821px) {
+    .header-left-actions {
+        position: absolute;
+        top: 24px;
+        left: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 100;
+    }
 
-.header-right-actions {
-    position: absolute;
-    top: 24px;
-    right: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 100;
+    .header-right-actions {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 100;
+    }
 }
 
 /* Online Active Users Badge */
@@ -1088,16 +1090,6 @@ footer {
 
     .hub-header h1 {
         font-size: 1.85rem;
-    }
-
-    .header-right-actions {
-        top: -12px;
-        right: 12px;
-    }
-
-    .header-left-actions {
-        top: -12px;
-        left: 12px;
     }
 }
 

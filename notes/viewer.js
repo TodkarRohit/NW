@@ -29,12 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
+    // Event delegation for theme toggle
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('#themeToggleBtn')) {
             const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
             applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        });
-    }
+        }
+    });
 
     initTheme();
 
@@ -638,6 +639,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (uploadFileBtn) {
         uploadFileBtn.addEventListener('click', () => {
+            if (localStorage.getItem('isAdminMode') !== 'true') {
+                alert("Only administrators can upload files.");
+                return;
+            }
             if (isQB) {
                 openQbUploadModal(currentQBView);
             } else {
@@ -696,31 +701,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function handleFileSelection(file) {
+    async function handleFileSelection(file) {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
+        try {
+            showToast(`Uploading "${file.name}" to cloud storage...`);
+            
+            // Upload to Supabase Storage
+            const fileName = `notes/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+            const { error: err } = await window.supabase.storage.from('academic-files').upload(fileName, file);
+            
+            if (err) throw err;
+            
+            const { data: urlData } = window.supabase.storage.from('academic-files').getPublicUrl(fileName);
+            
             const docData = {
                 name: file.name,
                 size: file.size,
                 type: file.type || 'application/pdf',
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                data: e.target.result
+                data: urlData.publicUrl
             };
 
-            try {
-                const storageKey = getStorageKey(activeIndex, isQB ? currentQBView : null);
-                localStorage.setItem(storageKey, JSON.stringify(docData));
-                renderItemList(chapterSearchInput.value);
-                loadItemContent(activeIndex);
-                showToast(`File "${file.name}" uploaded successfully!`);
-            } catch (err) {
-                alert("File size is large for browser local cache. Please select a smaller PDF, text, or document file.");
-            }
-        };
-
-        reader.readAsDataURL(file);
+            const storageKey = getStorageKey(activeIndex, isQB ? currentQBView : null);
+            localStorage.setItem(storageKey, JSON.stringify(docData));
+            renderItemList(chapterSearchInput.value);
+            loadItemContent(activeIndex);
+            showToast(`File "${file.name}" uploaded successfully!`);
+        } catch (err) {
+            console.error(err);
+            alert("Error uploading file to cloud storage. Please try again.");
+        }
     }
 
     // File Input Change Listener

@@ -28,12 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
+    // Event delegation for theme toggle
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('#themeToggleBtn')) {
             const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
             applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        });
-    }
+        }
+    });
 
     initTheme();
 
@@ -871,8 +872,19 @@ public:
 
                 try {
                     showToast('Uploading and publishing assignment...');
-                    const qDataUrl = await fileToDataUrl(qFile);
-                    const aDataUrl = await fileToDataUrl(aFile);
+                    // Upload to Supabase Storage
+                    const qFileName = `assignments/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                    const aFileName = `assignments/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+
+                    const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile);
+                    if (qErr) throw qErr;
+                    const { data: qUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(qFileName);
+                    const qDataUrl = qUrlData.publicUrl;
+
+                    const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile);
+                    if (aErr) throw aErr;
+                    const { data: aUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(aFileName);
+                    const aDataUrl = aUrlData.publicUrl;
 
                     const targetChObj = subjectChapters.find(c => c.id === targetChapterId) || subjectChapters[0];
 
@@ -1601,8 +1613,19 @@ public:
 
             try {
                 showToast('Processing & Uploading PDF Files...');
-                const qDataUrl = await fileToDataUrl(qFile);
-                const aDataUrl = await fileToDataUrl(aFile);
+                // Upload to Supabase Storage
+                const qFileName = \ssignments/\_\;
+                const aFileName = \ssignments/\_\;
+
+                const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile);
+                if (qErr) throw qErr;
+                const { data: qUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(qFileName);
+                const qDataUrl = qUrlData.publicUrl;
+
+                const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile);
+                if (aErr) throw aErr;
+                const { data: aUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(aFileName);
+                const aDataUrl = aUrlData.publicUrl;
 
                 const targetChObj = subjectChapters.find(c => c.id === targetChapterId) || subjectChapters[0];
 

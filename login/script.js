@@ -135,13 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applyTheme(currentTheme);
 
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
+    // Event delegation for theme toggle
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('#themeToggleBtn')) {
             const activeTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             localStorage.setItem('theme', activeTheme);
             applyTheme(activeTheme);
-        });
-    }
+        }
+    });
 
     // Live Online Users Counter Simulation
     const onlineUsersCountEl = document.getElementById('onlineUsersCount');
