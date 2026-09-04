@@ -1534,3 +1534,5 @@ footer {
 .username-suggestion-pill:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+.custom-form-group input { padding-left: 45px !important; }
