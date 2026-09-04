@@ -876,12 +876,12 @@ public:
                     const qFileName = `assignments/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
                     const aFileName = `assignments/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
-                    const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile);
+                    const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                     if (qErr) throw qErr;
                     const { data: qUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(qFileName);
                     const qDataUrl = qUrlData.publicUrl;
 
-                    const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile);
+                    const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                     if (aErr) throw aErr;
                     const { data: aUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(aFileName);
                     const aDataUrl = aUrlData.publicUrl;
@@ -1617,12 +1617,12 @@ public:
                 const qFileName = \ssignments/\_\;
                 const aFileName = \ssignments/\_\;
 
-                const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile);
+                const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (qErr) throw qErr;
                 const { data: qUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(qFileName);
                 const qDataUrl = qUrlData.publicUrl;
 
-                const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile);
+                const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (aErr) throw aErr;
                 const { data: aUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(aFileName);
                 const aDataUrl = aUrlData.publicUrl;

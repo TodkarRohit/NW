@@ -710,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Upload to Supabase Storage
             const fileName = `notes/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-            const { error: err } = await window.supabase.storage.from('academic-files').upload(fileName, file);
+            const { error: err } = await window.supabase.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
             
             if (err) throw err;
             
