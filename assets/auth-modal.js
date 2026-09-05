@@ -260,8 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         setTimeout(() => window.location.reload(), 1000);
                     } catch (apiErr) {
                         // Fallback for offline admin compatibility if default admin credentials used
-                        const loginId2 = userVal || emailVal; if ((loginId2 === 'admin' && passVal === 'admin123') || (loginId2 === 'admin' && passVal === 'admin') || (loginId2 === 'rohittodkar92@gmail.com' && passVal === 'Admin@123')) {
-                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'rohittodkar92@gmail.com' });
+                        const loginId2 = userVal || emailVal; if ((loginId2 === 'admin' && passVal === 'admin123') || (loginId2 === 'admin' && passVal === 'admin') || (loginId2 === 'rohittodkar92@gmail.com' && passVal === 'Admin@123') || (loginId2 === 'rohittodkar92S@gmail.com' && passVal === 'Admin@123')) {
+                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'rohittodkar92S@gmail.com' });
                             const branchSelect = document.getElementById('userBranchSelect');
                             if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                             closeLoginModal();

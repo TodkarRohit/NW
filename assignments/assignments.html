@@ -340,6 +340,28 @@
         </div>
     </footer>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" style="display:none; position:fixed; bottom:24px; right:24px; background:#0f172a; color:#fff; padding:12px 20px; border-radius:30px; z-index:9999; font-weight:600;">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Confirm Dialog Modal -->
+    <div class="modal-backdrop" id="confirmModalBackdrop" style="display:none; z-index: 2000; position:fixed; inset:0; background:rgba(15,23,42,0.6); align-items:center; justify-content:center;">
+        <div class="modal-content" style="background:var(--card-bg); max-width: 400px; padding:2rem; border-radius:18px; text-align: center; box-shadow:var(--shadow-hover);">
+            <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 style="margin-bottom: 1rem; color: var(--text-dark); font-size: 1.25rem; font-weight: 700;">Are you sure?</h3>
+            <p id="confirmModalMessage" style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;"></p>
+            <div class="modal-actions" style="display:flex; justify-content: center; gap:12px;">
+                <button type="button" class="cancel-btn" id="confirmCancelBtn" style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:transparent; cursor:pointer;">Cancel</button>
+                <button type="button" class="submit-upload-btn" id="confirmOkBtn" style="padding:10px 20px; border-radius:8px; border:none; color:#fff; font-weight:bold; cursor:pointer; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);">
+                    Yes, proceed
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Include Data & Script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../assets/auth.js"></script>

@@ -17,14 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.setAttribute('data-theme', 'dark');
             localStorage.setItem('theme', 'dark');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i> <span class="theme-btn-text">Light Mode</span>';
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text">Light Mode</span>';
             }
         } else {
             document.body.removeAttribute('data-theme');
             document.documentElement.removeAttribute('data-theme');
             localStorage.setItem('theme', 'light');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i> <span class="theme-btn-text">Dark Mode</span>';
+                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text">Dark Mode</span>';
             }
         }
     }
@@ -108,7 +108,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.title = `${subjectData.title} - ${typeLabel} | Engineering Notes Hub`;
 
-    const items = isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || []);
+    const items = JSON.parse(JSON.stringify(isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || [])));
+
+    // Load any custom items from localStorage on startup
+    const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+    const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+    let modifiedItems = {};
+    try {
+        const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+        if (customItems.length > 0) {
+            items.push(...customItems);
+        }
+        modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+    } catch (e) {}
+
+    items.forEach(item => {
+        if (modifiedItems[item.id]) {
+            item.title = modifiedItems[item.id].title;
+            item.name = modifiedItems[item.id].name;
+        }
+    });
+
     chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
     let activeIndex = 0;
@@ -158,8 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const hasDoc = uploadedFiles.length > 0;
 
-                const itemBtn = document.createElement('div');
-                itemBtn.className = `chapter-item-container`;
+                const itemBtn = document.createElement('li');
                 itemBtn.style.display = 'flex';
                 itemBtn.style.flexDirection = 'column';
                 itemBtn.style.gap = '0';
@@ -169,12 +188,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnInner.setAttribute('type', 'button');
                 btnInner.style.width = '100%';
                 
+                const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+                
                 btnInner.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-                        <span class="chapter-item-title">${item.title}</span>
-                        ${hasDoc ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; width: 100%;">
+                        <span class="chapter-item-title" style="flex:1; text-align:left;">${item.title}</span>
+                        <div style="display:flex; align-items:center; gap:4px;">
+                            ${hasDoc ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
+                            ${isAdminMode ? `
+                                <button type="button" class="edit-unit-btn" data-index="${index}" style="background:transparent; border:none; color:#0ea5e9; cursor:pointer; padding:2px;" title="Edit Unit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button type="button" class="delete-unit-btn" data-index="${index}" style="background:transparent; border:none; color:#ef4444; cursor:pointer; padding:2px;" title="Delete Unit"><i class="fa-solid fa-trash"></i></button>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
+
+                // Edit event listener
+                const editBtn = btnInner.querySelector('.edit-unit-btn');
+                if (editBtn) {
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openUnitModal(index);
+                    });
+                }
+
+                // Delete event listener
+                const deleteBtn = btnInner.querySelector('.delete-unit-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation(); // prevent selecting the item
+                        if (await customConfirm(`Are you sure you want to delete "${item.title}"?`)) {
+                            // Find and remove from customItems if it's a custom item
+                            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+                            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+                            const isCustom = customItems.some(ci => ci.id === item.id);
+                            
+                            if (isCustom) {
+                                customItems = customItems.filter(ci => ci.id !== item.id);
+                                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                            }
+                            
+                            items.splice(index, 1);
+                            
+                            localStorage.removeItem(getStorageKey(index, 'questions'));
+                            localStorage.removeItem(getStorageKey(index, 'answers'));
+                            localStorage.removeItem(getStorageKey(index, null));
+
+                            chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+                            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+                            
+                            if (activeIndex === index) activeIndex = 0;
+                            else if (activeIndex > index) activeIndex--;
+                            loadItemContent(activeIndex);
+                        }
+                    });
+                }
 
                 itemBtn.appendChild(btnInner);
 
@@ -362,13 +430,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Attach replace & delete events
             document.getElementById('reUploadBtn').addEventListener('click', () => fileUploadInput.click());
-            document.getElementById('deleteDocBtn').addEventListener('click', () => {
-                if (confirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
-                    localStorage.removeItem(storageKey);
-                    renderItemList(chapterSearchInput.value);
-                    loadItemContent(index);
-                }
-            });
+            const deleteFileBtn = document.getElementById('deleteDocBtn');
+            if (deleteFileBtn && currentItem) {
+                deleteFileBtn.onclick = async () => {
+                    if (await customConfirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
+                        localStorage.removeItem(storageKey);
+                        renderItemList(chapterSearchInput.value);
+                        loadItemContent(index);
+                    }
+                };
+            }
 
         } else if (isQB) {
             // Built-in Question Bank Questions vs Answers Paper View
@@ -581,8 +652,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadBtnText = document.getElementById('uploadBtnText');
 
     function updateUploadBtnUI() {
-        if (!uploadBtnText) return;
         const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+        
+        const addUnitBtn = document.getElementById('addUnitBtn');
+        if (addUnitBtn) {
+            addUnitBtn.style.display = isAdminMode ? 'inline-block' : 'none';
+        }
+
+        const publishBtn = document.getElementById('publishBtn');
+        if (publishBtn) {
+            publishBtn.style.display = isAdminMode ? 'flex' : 'none';
+        }
+
+        if (!uploadBtnText) return;
         if (!isAdminMode) {
             if (uploadFileBtn) uploadFileBtn.style.display = 'none';
         } else {
@@ -711,11 +793,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Upload to Supabase Storage
             const fileName = `question_bank/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-            const { error: err } = await window.supabase.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
+            const { error: err } = await window.supabaseClient.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
             
             if (err) throw err;
             
-            const { data: urlData } = window.supabase.storage.from('academic-files').getPublicUrl(fileName);
+            const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
             
             const docData = {
                 name: file.name,
@@ -864,16 +946,53 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadFileBtn.addEventListener('click', handleDownloadActiveFile);
     }
 
-    function showToast(message) {
+    function showToast(message, isError = false) {
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
         if (!toast || !toastMessage) return;
 
         toastMessage.textContent = message;
+        toast.style.background = isError ? '#ef4444' : '#0f172a';
         toast.classList.add('show');
         setTimeout(() => {
             toast.classList.remove('show');
         }, 3200);
+    }
+
+    function customConfirm(message) {
+        return new Promise((resolve) => {
+            const backdrop = document.getElementById('confirmModalBackdrop');
+            const messageEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmOkBtn');
+            const cancelBtn = document.getElementById('confirmCancelBtn');
+            
+            if (!backdrop || !messageEl || !okBtn || !cancelBtn) {
+                resolve(confirm(message));
+                return;
+            }
+            
+            messageEl.textContent = message;
+            backdrop.style.display = 'flex';
+            
+            const cleanup = () => {
+                backdrop.style.display = 'none';
+                okBtn.removeEventListener('click', onOk);
+                cancelBtn.removeEventListener('click', onCancel);
+            };
+            
+            const onOk = () => {
+                cleanup();
+                resolve(true);
+            };
+            
+            const onCancel = () => {
+                cleanup();
+                resolve(false);
+            };
+            
+            okBtn.addEventListener('click', onOk);
+            cancelBtn.addEventListener('click', onCancel);
+        });
     }
 
     // 8. Pagination (Prev / Next Item)
@@ -951,9 +1070,195 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
+    // 8. Add/Edit Unit/Topic functionality for Admins
+    const addUnitBtn = document.getElementById('addUnitBtn');
+    if (addUnitBtn) {
+        addUnitBtn.addEventListener('click', () => {
+            if (localStorage.getItem('isAdminMode') !== 'true') return;
+            openUnitModal(null);
+        });
+    }
+
+    const unitModalBackdrop = document.getElementById('unitModalBackdrop');
+    const closeUnitModalBtn = document.getElementById('closeUnitModalBtn');
+    const cancelUnitModalBtn = document.getElementById('cancelUnitModalBtn');
+    const unitForm = document.getElementById('unitForm');
+
+    function openUnitModal(index = null) {
+        if (!unitModalBackdrop) return;
+        const isEdit = index !== null;
+        document.getElementById('unitModalTitle').textContent = isEdit ? 'Edit Unit' : 'Add New Unit';
+        document.getElementById('unitModalIndex').value = isEdit ? index : '';
+        if (isEdit) {
+            document.getElementById('unitModalTitleInput').value = items[index].title || '';
+            document.getElementById('unitModalNameInput').value = items[index].name || '';
+        } else {
+            document.getElementById('unitModalTitleInput').value = '';
+            document.getElementById('unitModalNameInput').value = '';
+        }
+        unitModalBackdrop.classList.add('active');
+    }
+
+    function closeUnitModal() {
+        if (unitModalBackdrop) unitModalBackdrop.classList.remove('active');
+    }
+
+    if (closeUnitModalBtn) closeUnitModalBtn.addEventListener('click', closeUnitModal);
+    if (cancelUnitModalBtn) cancelUnitModalBtn.addEventListener('click', closeUnitModal);
+    if (unitModalBackdrop) {
+        unitModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === unitModalBackdrop) closeUnitModal();
+        });
+    }
+
+    if (unitForm) {
+        unitForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('unitModalTitleInput').value.trim();
+            const name = document.getElementById('unitModalNameInput').value.trim();
+            const indexVal = document.getElementById('unitModalIndex').value;
+            if (!title) return;
+
+            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+            const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+            let modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+
+            if (indexVal !== '') {
+                const idx = parseInt(indexVal, 10);
+                items[idx].title = title;
+                items[idx].name = name;
+                
+                const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
+                if (customIdx >= 0) {
+                    customItems[customIdx].title = title;
+                    customItems[customIdx].name = name;
+                    localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                } else {
+                    modifiedItems[items[idx].id] = { title, name };
+                    localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
+                }
+                if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
+            } else {
+                const newId = `${subjectKey}-${isQB ? 'qb' : 'u'}${items.length + 1}-${Date.now()}`;
+                const newItem = { id: newId, title: title, unit: `Unit ${items.length + 1}`, name: name };
+                items.push(newItem);
+                customItems.push(newItem);
+                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                if (typeof showToast === 'function') showToast(`New ${itemSingular} added successfully!`);
+                activeIndex = items.length - 1;
+            }
+
+            chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+            
+            if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
+                loadItemContent(activeIndex);
+            }
+            closeUnitModal();
+        });
+    }
+
+    const publishBtn = document.getElementById('publishBtn');
+    if (publishBtn) {
+        publishBtn.addEventListener('click', async () => {
+            if (localStorage.getItem('isAdminMode') !== 'true') return;
+            
+            publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Publishing...</span>`;
+            publishBtn.disabled = true;
+
+            const exportData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if ((isQB && key.includes(`_qb_`)) || (!isQB && key.includes(`_notes_`)) || key === `custom_items_${subjectKey}_${resourceType}` || key === `modified_items_${subjectKey}_${resourceType}`) {
+                    exportData[key] = localStorage.getItem(key);
+                }
+            }
+
+            try {
+                const jsonString = JSON.stringify(exportData);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
+                
+                const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
+                
+                if (error) throw error;
+                
+                if (typeof showToast === 'function') {
+                    showToast('Changes published successfully to all users!');
+                } else {
+                    alert('Changes published successfully!');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to publish changes: ' + err.message, true);
+            } finally {
+                publishBtn.innerHTML = `<i class="fa-solid fa-earth-americas"></i><span>Publish</span>`;
+                publishBtn.disabled = false;
+            }
+        });
+    }
+
     // Initial Load
-    renderItemList();
-    loadItemContent(0);
+    async function init() {
+        try {
+            const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
+            const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
+            const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
+            if (res.ok) {
+                const publishedData = await res.json();
+                
+                if (localStorage.getItem('isAdminMode') !== 'true') {
+                    // non-admin: clear and overwrite
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if ((isQB && key.includes(`_qb_`)) || (!isQB && key.includes(`_notes_`)) || key === `custom_items_${subjectKey}_${resourceType}` || key === `modified_items_${subjectKey}_${resourceType}`) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+                    for (const key in publishedData) {
+                        localStorage.setItem(key, publishedData[key]);
+                    }
+                } else {
+                    // admin: just merge
+                    for (const key in publishedData) {
+                        if (!localStorage.getItem(key)) {
+                            localStorage.setItem(key, publishedData[key]);
+                        }
+                    }
+                }
+
+                // Re-sync items from localStorage if custom items changed
+                const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+                const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+                const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+                const modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+                
+                // Clear and rebuild items
+                items.length = 0;
+                const defaultItems = JSON.parse(JSON.stringify(isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || [])));
+                items.push(...defaultItems);
+                if (customItems.length > 0) {
+                    items.push(...customItems);
+                }
+                
+                items.forEach(item => {
+                    if (modifiedItems[item.id]) {
+                        item.title = modifiedItems[item.id].title;
+                        item.name = modifiedItems[item.id].name;
+                    }
+                });
+                chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+            }
+        } catch(e) {}
+        
+        renderItemList();
+        loadItemContent(0);
+    }
+    
+    init();
 });
 
 

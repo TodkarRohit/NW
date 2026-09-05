@@ -59,7 +59,9 @@
                     user.role === 'admin' || 
                     String(user.role || '').toLowerCase() === 'admin' ||
                     user.username === 'admin' || 
+                    user.email === 'rohittodkar92S@gmail.com' || 
                     user.email === 'rohittodkar92@gmail.com' || 
+                    user.username === 'rohittodkar92S@gmail.com' ||
                     user.username === 'rohittodkar92@gmail.com';
 
                 if (isAdmin) {

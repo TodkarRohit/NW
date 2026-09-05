@@ -876,14 +876,14 @@ public:
                     const qFileName = `assignments/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
                     const aFileName = `assignments/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
-                    const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                    const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                     if (qErr) throw qErr;
-                    const { data: qUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(qFileName);
+                    const { data: qUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(qFileName);
                     const qDataUrl = qUrlData.publicUrl;
 
-                    const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                    const { error: aErr } = await window.supabaseClient.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                     if (aErr) throw aErr;
-                    const { data: aUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(aFileName);
+                    const { data: aUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aFileName);
                     const aDataUrl = aUrlData.publicUrl;
 
                     const targetChObj = subjectChapters.find(c => c.id === targetChapterId) || subjectChapters[0];
@@ -1282,13 +1282,13 @@ public:
 
         // Admin Delete Buttons
         document.querySelectorAll('.admin-delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 if (!isAdminMode) {
                     if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
                     return;
                 }
                 const assId = btn.getAttribute('data-id');
-                if (confirm('Are you sure you want to delete this assignment?')) {
+                if (await customConfirm('Are you sure you want to delete this assignment?')) {
                     deleteCustomAssignment(subjectKey, assId);
                 }
             });
@@ -1617,14 +1617,14 @@ public:
                 const qFileName = \ssignments/\_\;
                 const aFileName = \ssignments/\_\;
 
-                const { error: qErr } = await window.supabase.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (qErr) throw qErr;
-                const { data: qUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(qFileName);
+                const { data: qUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(qFileName);
                 const qDataUrl = qUrlData.publicUrl;
 
-                const { error: aErr } = await window.supabase.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                const { error: aErr } = await window.supabaseClient.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (aErr) throw aErr;
-                const { data: aUrlData } = window.supabase.storage.from('academic-files').getPublicUrl(aFileName);
+                const { data: aUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aFileName);
                 const aDataUrl = aUrlData.publicUrl;
 
                 const targetChObj = subjectChapters.find(c => c.id === targetChapterId) || subjectChapters[0];
@@ -1700,16 +1700,55 @@ public:
         }, 5000);
     }
 
-    function showToast(message) {
+    function showToast(message, isError = false) {
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
         if (!toast || !toastMessage) return;
 
         toastMessage.textContent = message;
+        toast.style.background = isError ? '#ef4444' : '#0f172a';
+        toast.style.display = 'flex';
         toast.classList.add('show');
         setTimeout(() => {
             toast.classList.remove('show');
+            setTimeout(() => { toast.style.display = 'none'; }, 300);
         }, 3200);
+    }
+
+    function customConfirm(message) {
+        return new Promise((resolve) => {
+            const backdrop = document.getElementById('confirmModalBackdrop');
+            const messageEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmOkBtn');
+            const cancelBtn = document.getElementById('confirmCancelBtn');
+            
+            if (!backdrop || !messageEl || !okBtn || !cancelBtn) {
+                resolve(confirm(message));
+                return;
+            }
+            
+            messageEl.textContent = message;
+            backdrop.style.display = 'flex';
+            
+            const cleanup = () => {
+                backdrop.style.display = 'none';
+                okBtn.removeEventListener('click', onOk);
+                cancelBtn.removeEventListener('click', onCancel);
+            };
+            
+            const onOk = () => {
+                cleanup();
+                resolve(true);
+            };
+            
+            const onCancel = () => {
+                cleanup();
+                resolve(false);
+            };
+            
+            okBtn.addEventListener('click', onOk);
+            cancelBtn.addEventListener('click', onCancel);
+        });
     }
 
     function escapeHtml(str) {

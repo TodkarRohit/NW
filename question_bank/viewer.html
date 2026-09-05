@@ -67,6 +67,10 @@
                     <div class="header-actions" style="display: flex; gap: 0.5rem; justify-content: center;">
                         <!-- Hidden File Input for uploading note/assignment -->
                         <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display: none;">
+                        <button class="action-btn" id="publishBtn" title="Publish changes to all users" style="display:none; background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-earth-americas"></i>
+                            <span>Publish</span>
+                        </button>
                         <button class="action-btn upload-btn" id="uploadFileBtn" title="Upload PDF">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <span id="uploadBtnText">Upload</span>
@@ -100,7 +104,10 @@
                         </svg>
                         <span id="sidebarSectionTitle">Chapter List</span>
                     </h2>
-                    <span class="chapter-count" id="chapterCount">0 Items</span>
+                    <div style="display:flex; align-items:center; gap: 8px;">
+                        <span class="chapter-count" id="chapterCount">0 Items</span>
+                        <button id="addUnitBtn" style="display:none; background: #059669; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Add New Unit"><i class="fa-solid fa-plus"></i></button>
+                    </div>
                 </div>
                 <div class="sidebar-search">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -229,10 +236,60 @@
         </div>
     </div>
 
+    <!-- Add/Edit Unit Modal -->
+    <div class="modal-backdrop" id="unitModalBackdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap: 8px;">
+                    <i class="fa-solid fa-folder-plus" style="font-size: 1.25rem; color: #0ea5e9;"></i>
+                    <h3 id="unitModalTitle">Add New Unit</h3>
+                </div>
+                <button class="close-modal-btn" id="closeUnitModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="unitForm" class="modal-form">
+                <input type="hidden" id="unitModalIndex" value="">
+                
+                <div class="form-group">
+                    <label for="unitModalTitleInput">Title</label>
+                    <input type="text" id="unitModalTitleInput" placeholder="e.g. Unit 5: Advanced Topics" required class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="unitModalNameInput">Short Description</label>
+                    <input type="text" id="unitModalNameInput" placeholder="Enter a short description/name" class="form-control">
+                </div>
+
+                <div class="modal-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="cancel-btn" id="cancelUnitModalBtn">Cancel</button>
+                    <button type="submit" class="submit-upload-btn" id="submitUnitBtn">
+                        <i class="fa-solid fa-save"></i> Save Unit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast">
         <i class="fa-solid fa-circle-check"></i>
         <span id="toastMessage">File uploaded successfully!</span>
+    </div>
+
+    <!-- Confirm Dialog Modal -->
+    <div class="modal-backdrop" id="confirmModalBackdrop" style="display:none; z-index: 2000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 style="margin-bottom: 1rem; color: var(--text-dark); font-size: 1.25rem; font-weight: 700;">Are you sure?</h3>
+            <p id="confirmModalMessage" style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;"></p>
+            <div class="modal-actions" style="justify-content: center; border-top: none; padding-top: 0;">
+                <button type="button" class="cancel-btn" id="confirmCancelBtn">Cancel</button>
+                <button type="button" class="submit-upload-btn" id="confirmOkBtn" style="background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);">
+                    Yes, proceed
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
