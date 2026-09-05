@@ -397,7 +397,15 @@ public:
     if (subjectKey === 'coa') subjectKey = 'hardware';
 
     if (!defaultSubjectAssignments[subjectKey]) {
-        subjectKey = 'dsa';
+        if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey]) {
+            defaultSubjectAssignments[subjectKey] = {
+                title: subjectsData[subjectKey].title,
+                subtitle: subjectsData[subjectKey].semester + ' • NMIET',
+                assignments: []
+            };
+        } else {
+            subjectKey = 'dsa';
+        }
     }
 
     const currentSubject = defaultSubjectAssignments[subjectKey];
@@ -636,8 +644,14 @@ public:
     // ---------------------------------------------------------
     function getCombinedAssignments(sKey) {
         const builtIn = defaultSubjectAssignments[sKey] ? defaultSubjectAssignments[sKey].assignments : [];
-        const customJSON = localStorage.getItem(`custom_assignments_${sKey}`);
-        const custom = customJSON ? JSON.parse(customJSON) : [];
+        let custom = [];
+        try {
+            const customJSON = localStorage.getItem(`custom_assignments_${sKey}`);
+            if (customJSON) custom = JSON.parse(customJSON);
+        } catch (e) {
+            console.error('Error parsing custom assignments from localStorage:', e);
+            custom = [];
+        }
         return [...custom, ...builtIn];
     }
 
@@ -671,7 +685,7 @@ public:
 
         // Individual Chapter Pills
         subjectChapters.forEach((ch, idx) => {
-            const count = allAssignments.filter(a => a.chapterId === ch.id || a.unit === ch.unit || a.chapterTitle === ch.title).length;
+            const count = allAssignments.filter(a => a && (a.chapterId === ch.id || a.unit === ch.unit || a.chapterTitle === ch.title)).length;
             const pill = document.createElement('button');
             pill.type = 'button';
             pill.className = `chapter-pill ${activeChapterId === ch.id ? 'active' : ''}`;
@@ -982,6 +996,7 @@ public:
 
         // Filter by Chapter AND Search Query
         const filteredList = allAssignments.filter(item => {
+            if (!item) return false;
             const matchesChapter = (activeChapterId === 'all') ||
                 (item.chapterId === activeChapterId) ||
                 (subjectChapters.find(ch => ch.id === activeChapterId && (item.unit === ch.unit || item.chapterTitle === ch.title)));
