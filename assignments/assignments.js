@@ -958,10 +958,32 @@ public:
                         `
                     };
 
-                    const existingCustomJSON = localStorage.getItem(`custom_assignments_${subjectKey}`);
-                    const existingCustom = existingCustomJSON ? JSON.parse(existingCustomJSON) : [];
-                    existingCustom.unshift(newAss);
-                    localStorage.setItem(`custom_assignments_${subjectKey}`, JSON.stringify(existingCustom));
+                    const { error: dbErr } = await window.supabaseClient.from('assignments').insert([{
+                        id: newAss.id,
+                        subject_key: subjectKey,
+                        chapter_id: targetChapterId,
+                        unit: targetChObj.unit || 'Unit 1',
+                        chapter_title: targetChObj.title,
+                        num: assNum,
+                        title: assTitle,
+                        question_file: qFile.name,
+                        answer_file: aFile.name,
+                        question_data_url: qDataUrl,
+                        answer_data_url: aDataUrl,
+                        question_preview: newAss.questionPreview,
+                        answer_preview: newAss.answerPreview,
+                        views: 1,
+                        downloads: 0,
+                        is_custom: true,
+                        comments: []
+                    }]);
+
+                    if (dbErr) {
+                        console.error('Database Error:', dbErr);
+                        throw new Error('Failed to save assignment to database.');
+                    }
+
+                    dbAssignments.unshift(newAss);
 
                     inpageForm.reset();
                     if (qNameDisplay) qNameDisplay.textContent = 'Choose Question PDF file...';
@@ -1672,8 +1694,8 @@ public:
             try {
                 showToast('Processing & Uploading PDF Files...');
                 // Upload to Supabase Storage
-                const qFileName = \ssignments/\_\;
-                const aFileName = \ssignments/\_\;
+                const qFileName = `assignments/${Date.now()}_q_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                const aFileName = `assignments/${Date.now()}_a_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
                 const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (qErr) throw qErr;

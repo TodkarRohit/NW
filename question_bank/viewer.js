@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (activeIndex === index) activeIndex = 0;
                             else if (activeIndex > index) activeIndex--;
                             loadItemContent(activeIndex);
+                            await autoPublishState();
                         }
                     });
                 }
@@ -447,6 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         localStorage.removeItem(storageKey);
                         renderItemList(chapterSearchInput.value);
                         loadItemContent(index);
+                        showToast("File removed successfully.");
+                        await autoPublishState();
                     }
                 };
             }
@@ -753,7 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (qbUploadForm) {
-        qbUploadForm.addEventListener('submit', (e) => {
+        qbUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const targetIndex = parseInt(qbModalItemSelect.value, 10);
             const selectedDocType = document.querySelector('input[name="qbUploadDocType"]:checked')?.value || 'questions';
@@ -764,45 +767,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function(evt) {
+            const submitBtn = qbUploadForm.querySelector('button[type="submit"]');
+            const origHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading to Cloud...';
+            }
+
+            try {
+                showToast(`Uploading "${file.name}" to cloud storage...`);
+                const subFolder = isQB ? 'question_bank' : 'notes';
+                const fileName = `${subFolder}/${Date.now()}_${selectedDocType}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                
+                const { error: err } = await window.supabaseClient.storage
+                    .from('academic-files')
+                    .upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
+
+                if (err) throw err;
+
+                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
+
                 const docData = {
                     name: file.name,
                     size: file.size,
                     type: file.type || 'application/pdf',
                     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                    data: evt.target.result
+                    data: urlData.publicUrl
                 };
 
-                try {
-                    const storageKey = getStorageKey(targetIndex, selectedDocType);
-                    localStorage.setItem(storageKey, JSON.stringify(docData));
-                    closeQbUploadModal();
-                    
-                    activeIndex = targetIndex;
-                    currentQBView = selectedDocType;
-                    renderItemList(chapterSearchInput.value);
-                    loadItemContent(activeIndex);
+                const storageKey = getStorageKey(targetIndex, selectedDocType);
+                localStorage.setItem(storageKey, JSON.stringify(docData));
+                closeQbUploadModal();
 
-                    const targetTitle = items[targetIndex] ? items[targetIndex].title : 'Question Bank';
-                    showToast(`${selectedDocType === 'questions' ? 'Question Paper' : 'Model Answer'} PDF attached to ${targetTitle}!`);
-                } catch (err) {
-                    alert("File size is too large for local storage. Please choose a smaller PDF file.");
+                activeIndex = targetIndex;
+                currentQBView = selectedDocType;
+                renderItemList(chapterSearchInput.value);
+                loadItemContent(activeIndex);
+
+                const targetTitle = items[targetIndex] ? items[targetIndex].title : (isQB ? 'Question Bank' : 'Unit Notes');
+                showToast(`${selectedDocType === 'questions' ? 'Question Paper' : 'Model Answer'} PDF uploaded to Cloud & attached to ${targetTitle}!`);
+
+                await autoPublishState();
+            } catch (err) {
+                console.error(err);
+                alert("Error uploading file to cloud storage: " + (err.message || err));
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origHtml;
                 }
-            };
-            reader.readAsDataURL(file);
+            }
         });
     }
 
     async function handleFileSelection(file) {
         if (!file) return;
 
-        const reader = new FileReader();
         try {
             showToast(`Uploading "${file.name}" to cloud storage...`);
             
             // Upload to Supabase Storage
-            const fileName = `question_bank/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+            const subFolder = isQB ? 'question_bank' : 'notes';
+            const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
             const { error: err } = await window.supabaseClient.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
             
             if (err) throw err;
@@ -821,7 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem(storageKey, JSON.stringify(docData));
             renderItemList(chapterSearchInput.value);
             loadItemContent(activeIndex);
-            showToast(`File "${file.name}" uploaded successfully!`);
+            showToast(`File "${file.name}" uploaded to Cloud successfully!`);
+
+            await autoPublishState();
         } catch (err) {
             console.error(err);
             alert("Error uploading file to cloud storage. Please try again.");
@@ -1171,7 +1199,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadItemContent(activeIndex);
             }
             closeUnitModal();
+            autoPublishState();
         });
+    }
+
+    async function autoPublishState() {
+        if (localStorage.getItem('isAdminMode') !== 'true') return;
+        const exportData = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if ((isQB && key.includes(`_qb_`)) || (!isQB && key.includes(`_notes_`)) || key === `custom_items_${subjectKey}_${resourceType}` || key === `modified_items_${subjectKey}_${resourceType}`) {
+                exportData[key] = localStorage.getItem(key);
+            }
+        }
+
+        try {
+            const jsonString = JSON.stringify(exportData);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
+            const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
+            if (error) console.warn("Auto-publish state notice:", error.message);
+        } catch (err) {
+            console.warn("Auto-publish state error:", err);
+        }
     }
 
     const publishBtn = document.getElementById('publishBtn');
@@ -1182,23 +1232,8 @@ document.addEventListener('DOMContentLoaded', () => {
             publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Publishing...</span>`;
             publishBtn.disabled = true;
 
-            const exportData = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if ((isQB && key.includes(`_qb_`)) || (!isQB && key.includes(`_notes_`)) || key === `custom_items_${subjectKey}_${resourceType}` || key === `modified_items_${subjectKey}_${resourceType}`) {
-                    exportData[key] = localStorage.getItem(key);
-                }
-            }
-
             try {
-                const jsonString = JSON.stringify(exportData);
-                const blob = new Blob([jsonString], { type: 'application/json' });
-                const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
-                
-                const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
-                
-                if (error) throw error;
-                
+                await autoPublishState();
                 if (typeof showToast === 'function') {
                     showToast('Changes published successfully to all users!');
                 } else {
@@ -1223,26 +1258,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 const publishedData = await res.json();
                 
-                if (localStorage.getItem('isAdminMode') !== 'true') {
-                    // non-admin: clear and overwrite
-                    const keysToRemove = [];
-                    for (let i = 0; i < localStorage.length; i++) {
-                        const key = localStorage.key(i);
-                        if ((isQB && key.includes(`_qb_`)) || (!isQB && key.includes(`_notes_`)) || key === `custom_items_${subjectKey}_${resourceType}` || key === `modified_items_${subjectKey}_${resourceType}`) {
-                            keysToRemove.push(key);
-                        }
-                    }
-                    keysToRemove.forEach(k => localStorage.removeItem(k));
-                    for (const key in publishedData) {
-                        localStorage.setItem(key, publishedData[key]);
-                    }
-                } else {
-                    // admin: just merge
-                    for (const key in publishedData) {
-                        if (!localStorage.getItem(key)) {
-                            localStorage.setItem(key, publishedData[key]);
-                        }
-                    }
+                // Always sync published state from Supabase so all users and admins have the latest cloud state
+                for (const key in publishedData) {
+                    localStorage.setItem(key, publishedData[key]);
                 }
 
                 // Re-sync items from localStorage if custom items changed
