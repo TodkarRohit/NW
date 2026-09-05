@@ -412,3 +412,13 @@ Developed with ❤️ by NMIET Students:
 ## 📄 License
 
 This project is created for educational and academic reference purposes for NMIET Engineering students.
+
+
+## Supabase Integration & Caching Fixes
+
+This project uses **Supabase** for database and storage.
+- **Assignments** use the Supabase Database to store assignment metadata and URLs.
+- **Notes and Question Banks** use Supabase Storage to store files and publish JSON state.
+
+### GitHub Pages Caching Issue
+GitHub Pages aggressively caches .js and .html files. If updates were not showing (or the app always redirected to Data Structures), it was because the browser was using an old cached version of the scripts. To fix this, cache-busting query parameters (?v=2.0) have been added to all script imports. Using a modern host like **Vercel** or **Netlify** can avoid these static caching issues altogether.

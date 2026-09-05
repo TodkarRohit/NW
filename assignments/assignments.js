@@ -1,7 +1,7 @@
 // Engineering Notes Hub - Assignments Section Script
 // Features: Chapter/Unit Navigation, Admin-Only File Upload, Side-by-Side Q&A, PDF Previews & Discussion
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // ---------------------------------------------------------
     // 1. Theme Management (Dark / Light Mode)
     // ---------------------------------------------------------
@@ -585,7 +585,7 @@ public:
                 } else {
                     try {
                         await window.authService.login(userVal, passVal);
-                        isAdminMode = true;
+                        isAdminMode = checkIsAdmin();
                         updateAdminUI();
                         closeAdminLoginModal();
                         showToast(`Welcome back, ${userVal}!`);
@@ -642,17 +642,42 @@ public:
     // ---------------------------------------------------------
     // 6. Combined Assignments Helper
     // ---------------------------------------------------------
+    let dbAssignments = [];
+
+    async function fetchAssignments() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('assignments')
+                .select('*')
+                .eq('subject_key', subjectKey);
+            if (error) throw error;
+            dbAssignments = data.map(row => ({
+                id: row.id,
+                chapterId: row.chapter_id,
+                unit: row.unit,
+                chapterTitle: row.chapter_title,
+                num: row.num,
+                title: row.title,
+                questionFile: row.question_file,
+                answerFile: row.answer_file,
+                questionDataUrl: row.question_data_url,
+                answerDataUrl: row.answer_data_url,
+                views: row.views,
+                downloads: row.downloads,
+                isCustom: row.is_custom,
+                comments: row.comments || [],
+                questionPreview: row.question_preview,
+                answerPreview: row.answer_preview
+            }));
+        } catch (e) {
+            console.error('Error fetching assignments from Supabase:', e);
+            dbAssignments = [];
+        }
+    }
+
     function getCombinedAssignments(sKey) {
         const builtIn = defaultSubjectAssignments[sKey] ? defaultSubjectAssignments[sKey].assignments : [];
-        let custom = [];
-        try {
-            const customJSON = localStorage.getItem(`custom_assignments_${sKey}`);
-            if (customJSON) custom = JSON.parse(customJSON);
-        } catch (e) {
-            console.error('Error parsing custom assignments from localStorage:', e);
-            custom = [];
-        }
-        return [...custom, ...builtIn];
+        return [...dbAssignments, ...builtIn];
     }
 
     // ---------------------------------------------------------
@@ -1437,17 +1462,23 @@ public:
         });
     }
 
-    function deleteCustomAssignment(sKey, assId) {
-        let customList = [];
-        const stored = localStorage.getItem(`custom_assignments_${sKey}`);
-        if (stored) {
-            customList = JSON.parse(stored);
+    async function deleteCustomAssignment(sKey, assId) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('assignments')
+                .delete()
+                .eq('id', assId);
+            
+            if (error) throw error;
+
+            dbAssignments = dbAssignments.filter(a => a.id !== assId);
+            showToast('Assignment deleted successfully.');
+            renderChapterNav();
+            renderAssignments(searchInput ? searchInput.value : '');
+        } catch (e) {
+            console.error('Error deleting assignment:', e);
+            showToast('Error deleting assignment', true);
         }
-        customList = customList.filter(a => a.id !== assId);
-        localStorage.setItem(`custom_assignments_${sKey}`, JSON.stringify(customList));
-        showToast('Assignment deleted successfully.');
-        renderChapterNav();
-        renderAssignments(searchInput ? searchInput.value : '');
     }
 
     // ---------------------------------------------------------
@@ -1513,7 +1544,7 @@ public:
     }
 
     if (commentForm) {
-        commentForm.addEventListener('submit', (e) => {
+        commentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!activeCommentAssId) return;
 
@@ -1527,7 +1558,7 @@ public:
 
             const allAss = getCombinedAssignments(subjectKey);
             const assObj = allAss.find(a => a.id === activeCommentAssId);
-            const defaultComments = assObj ? assObj.comments : [];
+            const defaultComments = assObj ? (assObj.comments || []) : [];
             const comments = getStoredComments(activeCommentAssId, defaultComments);
 
             comments.push({
@@ -1536,7 +1567,19 @@ public:
                 date: 'Just now'
             });
 
-            saveStoredComments(activeCommentAssId, comments);
+            if (assObj && assObj.isCustom) {
+                assObj.comments = comments;
+                try {
+                    await window.supabaseClient.from('assignments')
+                        .update({ comments: comments })
+                        .eq('id', activeCommentAssId);
+                } catch (err) {
+                    console.error('Error updating comments in Supabase:', err);
+                }
+            } else {
+                saveStoredComments(activeCommentAssId, comments);
+            }
+
             renderDrawerComments(activeCommentAssId);
             renderAssignments(searchInput ? searchInput.value : '');
 
@@ -1676,10 +1719,32 @@ public:
                     `
                 };
 
-                const existingCustomJSON = localStorage.getItem(`custom_assignments_${targetSubjectKey}`);
-                const existingCustom = existingCustomJSON ? JSON.parse(existingCustomJSON) : [];
-                existingCustom.unshift(newAssignment);
-                localStorage.setItem(`custom_assignments_${targetSubjectKey}`, JSON.stringify(existingCustom));
+                const { error: dbErr } = await window.supabaseClient.from('assignments').insert([{
+                    id: newAssId,
+                    subject_key: targetSubjectKey,
+                    chapter_id: targetChapterId,
+                    unit: targetChObj ? targetChObj.unit : 'Unit 1',
+                    chapter_title: targetChObj ? targetChObj.title : 'Unit 1',
+                    num: assNum,
+                    title: assTitle,
+                    question_file: qFile.name,
+                    answer_file: aFile.name,
+                    question_data_url: qDataUrl,
+                    answer_data_url: aDataUrl,
+                    question_preview: newAssignment.questionPreview,
+                    answer_preview: newAssignment.answerPreview,
+                    views: 1,
+                    downloads: 0,
+                    is_custom: true,
+                    comments: []
+                }]);
+
+                if (dbErr) {
+                    console.error('Database Error:', dbErr);
+                    throw new Error('Failed to save assignment metadata to database.');
+                }
+
+                dbAssignments.unshift(newAssignment);
 
                 closeUploadModal();
                 showToast('Assignment & PDF Files Published Successfully!');
@@ -1782,6 +1847,7 @@ public:
     }
 
     // Initial load
+    await fetchAssignments();
     renderChapterNav();
     updateAdminUI();
 });
