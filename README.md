@@ -1,3 +1,11 @@
+---
+
+## 🌐 Live Website
+
+Access the portal live at: **[https://todkarrohit.github.io/NW/](https://todkarrohit.github.io/NW/)**
+
+---
+
 # Engineering Notes Hub
 
 Academic resource and study portal for engineering students featuring study notes, question banks, assignments with model answers, and a secure backend powered by Node.js, Express, MongoDB, Mongoose, JWT authentication, and Google Drive Option A integration.

@@ -377,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (storedDocJSON) {
             const docData = JSON.parse(storedDocJSON);
             itemUploadStatus.className = "status-indicator uploaded";
+            const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
             statusText.textContent = isQB ? `${currentQBView === 'questions' ? 'Question' : 'Answer'} PDF Attached` : "Document Attached";
 
             notesDocument.innerHTML = `
@@ -397,8 +398,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <div class="doc-actions">
-                            <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
-                            <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
+                            ${isAdminMode ? `
+                                <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
+                                <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
+                            ` : ''}
                         </div>
                     </div>
 
@@ -429,10 +432,17 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             // Attach replace & delete events
-            document.getElementById('reUploadBtn').addEventListener('click', () => fileUploadInput.click());
+            const reUploadBtn = document.getElementById('reUploadBtn');
+            if (reUploadBtn) {
+                reUploadBtn.addEventListener('click', () => fileUploadInput.click());
+            }
             const deleteFileBtn = document.getElementById('deleteDocBtn');
             if (deleteFileBtn && currentItem) {
                 deleteFileBtn.onclick = async () => {
+                    if (localStorage.getItem('isAdminMode') !== 'true') {
+                        alert("Only administrators can delete files.");
+                        return;
+                    }        
                     if (await customConfirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
                         localStorage.removeItem(storageKey);
                         renderItemList(chapterSearchInput.value);
@@ -949,6 +959,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
         if (!toast || !toastMessage) return;
+
+        const icon = toast.querySelector('i');
+        if (icon) {
+            icon.className = isError ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check';
+        }
 
         toastMessage.textContent = message;
         toast.style.background = isError ? '#ef4444' : '#0f172a';

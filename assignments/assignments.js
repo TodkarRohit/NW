@@ -1705,6 +1705,11 @@ public:
         const toastMessage = document.getElementById('toastMessage');
         if (!toast || !toastMessage) return;
 
+        const icon = toast.querySelector('i');
+        if (icon) {
+            icon.className = isError ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check';
+        }
+
         toastMessage.textContent = message;
         toast.style.background = isError ? '#ef4444' : '#0f172a';
         toast.style.display = 'flex';
