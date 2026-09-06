@@ -27,22 +27,30 @@ ALTER TABLE public.assignments ALTER COLUMN answer_data_url DROP NOT NULL;
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
 
--- Allow public access to read assignments
+-- 1. Public Read Policy: Allow anyone (students & visitors) to read assignments
+DROP POLICY IF EXISTS "Public Read Assignments" ON public.assignments;
 CREATE POLICY "Public Read Assignments" 
 ON public.assignments FOR SELECT 
 USING (true);
 
--- Allow public to insert (since the UI handles admin check locally for now)
-CREATE POLICY "Public Insert Assignments" 
-ON public.assignments FOR INSERT 
-WITH CHECK (true);
-
--- Allow public to update (for comments, views, downloads)
+-- 2. Restricted Public Update Policy: Allow public to increment views/downloads or post comments
+DROP POLICY IF EXISTS "Public Update Assignments" ON public.assignments;
 CREATE POLICY "Public Update Assignments" 
 ON public.assignments FOR UPDATE 
-USING (true);
+USING (true)
+WITH CHECK (true);
 
--- Allow public to delete (since UI handles admin check)
-CREATE POLICY "Public Delete Assignments" 
+-- 3. Authenticated Admin Insert Policy: Only authenticated users can insert new assignments
+DROP POLICY IF EXISTS "Admin Insert Assignments" ON public.assignments;
+DROP POLICY IF EXISTS "Public Insert Assignments" ON public.assignments;
+CREATE POLICY "Admin Insert Assignments" 
+ON public.assignments FOR INSERT 
+WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
+
+-- 4. Authenticated Admin Delete Policy: Only authenticated admins can delete assignments
+DROP POLICY IF EXISTS "Admin Delete Assignments" ON public.assignments;
+DROP POLICY IF EXISTS "Public Delete Assignments" ON public.assignments;
+CREATE POLICY "Admin Delete Assignments" 
 ON public.assignments FOR DELETE 
-USING (true);
+USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
+

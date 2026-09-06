@@ -2205,3 +2205,64 @@ body.full-site-mode .floating-pdf-mode-switcher .pdf-mode-btn.active {
     height: 100% !important;
     border-radius: 0 !important;
 }
+
+/* ==========================================================================
+   Mobile Responsive Overrides for Question Bank Viewer (<640px)
+   ========================================================================== */
+@media (max-width: 640px) {
+    .viewer-header {
+        padding: 0.65rem 10px !important;
+        gap: 0.5rem !important;
+    }
+
+    .nav-title {
+        font-size: 1.1rem !important;
+        max-width: 180px !important;
+    }
+
+    .structure-header h1, .doc-title {
+        font-size: 1.25rem !important;
+        line-height: 1.3 !important;
+        text-align: center !important;
+    }
+
+    .pdf-mode-switcher {
+        display: flex !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 3px !important;
+        gap: 3px !important;
+        border-radius: 20px !important;
+    }
+
+    .pdf-mode-btn {
+        padding: 4px 8px !important;
+        font-size: 0.72rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .floating-pdf-mode-switcher {
+        top: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+        overflow-x: auto !important;
+        padding: 3px 6px !important;
+    }
+
+    .preview-panel {
+        padding: 10px !important;
+    }
+
+    .chapter-pagination {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: center !important;
+    }
+
+    .chapter-pagination button {
+        padding: 6px 12px !important;
+        font-size: 0.8rem !important;
+    }
+}
+

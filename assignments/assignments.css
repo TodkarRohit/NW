@@ -2308,4 +2308,56 @@ body {
         justify-content: center;
     }
 }
+
+@media (max-width: 640px) {
+    .assignments-header {
+        padding: 0.75rem 12px !important;
+    }
+
+    .header-titles h1 {
+        font-size: 1.25rem !important;
+    }
+
+    .header-titles p {
+        font-size: 0.78rem !important;
+    }
+
+    .assignments-main {
+        padding: 1rem 12px 3rem 12px !important;
+    }
+
+    .search-filter-section {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    .header-search-row .search-box input {
+        padding: 10px 14px 10px 38px !important;
+        font-size: 0.88rem !important;
+    }
+
+    .search-kbd-badge {
+        display: none !important;
+    }
+
+    .admin-upload-backdrop {
+        padding: 10px !important;
+    }
+
+    .admin-upload-card {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 88vh !important;
+        border-radius: 16px !important;
+    }
+
+    .upload-modal-header {
+        padding: 14px 16px !important;
+    }
+
+    .upload-modal-body {
+        padding: 14px 14px !important;
+    }
+}
+
 

@@ -1826,4 +1826,172 @@ footer {
     transform: translateY(0);
 }
 
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsive Design Overrides (<900px & <640px)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+    .home-layout {
+        flex-direction: column;
+        width: 100%;
+        position: relative;
+    }
+
+    .home-sidebar {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        z-index: 10000 !important;
+        background: var(--card-bg) !important;
+        border-right: 1px solid var(--border-color) !important;
+        transform: translateX(-100%) !important;
+        box-shadow: 4px 0 25px rgba(0, 0, 0, 0.4) !important;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        overflow-y: auto !important;
+    }
+
+    .home-sidebar.active {
+        transform: translateX(0) !important;
+    }
+
+    .home-main {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+    }
+
+    .subjects-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Header layout for mobile */
+    .hub-header {
+        padding: 0.75rem 12px !important;
+    }
+
+    .header-left-actions {
+        left: 12px !important;
+    }
+
+    .header-right-actions {
+        right: 12px !important;
+        gap: 6px !important;
+    }
+
+    .theme-toggle-btn, .admin-toggle-btn, .publish-state-btn {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        border-radius: 16px !important;
+        gap: 4px !important;
+    }
+
+    .hub-header h1 {
+        font-size: 1.2rem !important;
+        line-height: 1.25 !important;
+    }
+
+    .hub-header p {
+        font-size: 0.75rem !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Main search bar */
+    .main-content {
+        padding: 1.25rem 14px 3rem 14px !important;
+    }
+
+    .search-section {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .search-box-wrapper #searchInput {
+        padding: 12px 14px 12px 42px !important;
+        font-size: 0.88rem !important;
+        border-radius: 30px !important;
+    }
+
+    .search-kbd-badge {
+        display: none !important;
+    }
+
+    /* Modals (Auth & Upload Cards) */
+    .admin-login-backdrop, .admin-upload-backdrop {
+        padding: 10px !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .custom-login-design {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 0 auto !important;
+        max-height: 88vh !important;
+        overflow-y: auto !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+    }
+
+    .custom-login-body {
+        padding: 14px 16px 20px !important;
+    }
+
+    .custom-form-group input, 
+    .custom-form-group select {
+        padding: 10px 12px 10px 40px !important;
+        font-size: 0.88rem !important;
+    }
+
+    .custom-login-options {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        font-size: 0.78rem !important;
+        justify-content: space-between !important;
+    }
+
+    .custom-submit-btn {
+        padding: 11px !important;
+        font-size: 0.92rem !important;
+        min-height: 44px !important;
+    }
+
+    .admin-upload-card {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 88vh !important;
+        border-radius: 16px !important;
+    }
+
+    .upload-modal-header {
+        padding: 14px 16px !important;
+    }
+
+    .upload-modal-body {
+        padding: 16px 14px !important;
+    }
+
+    /* Toast notification position */
+    .toast, .toast-notification {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: 12px !important;
+        font-size: 0.8rem !important;
+        justify-content: center !important;
+    }
+}
+
+
 
