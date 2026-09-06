@@ -21,9 +21,21 @@
     const SUPABASE_URL = 'https://qkasthiyysuussaxtkzi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrYXN0aGl5eXN1dXNzYXh0a3ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjA2MDgsImV4cCI6MjEwMzkzNjYwOH0.Plte859APDo38ybU9vhCqxfHGpq4Idzxj7HCX5aXjvA';
 
-    // Initialize Supabase Client
-    // We attach it to window so other files (data.js, script.js) can use it
-    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase Client safely
+    function getSupabaseClient() {
+        if (window.supabaseClient) return window.supabaseClient;
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            try {
+                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return window.supabaseClient;
+            } catch (e) {
+                console.warn('Error initializing Supabase client:', e);
+            }
+        }
+        return null;
+    }
+
+    getSupabaseClient();
 
     const API_BASE_URL = 'http://localhost:5000/api'; // Old API (can be removed later)
     const TOKEN_KEY = 'enh_auth_token';
