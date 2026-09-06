@@ -47,14 +47,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const isQB = resourceType === 'qb';
     const isAss = resourceType === 'assignments';
 
+    // Helper function to check if logged in user is Admin
+    function checkIsAdmin() {
+        const user = window.authService ? window.authService.getUser() : null;
+        const uname = user ? String(user.username || '').toLowerCase() : '';
+        const uemail = user ? String(user.email || '').toLowerCase() : '';
+        return (
+            localStorage.getItem('isAdminMode') === 'true' ||
+            (user && (
+                user.is_admin === true ||
+                user.is_admin === 'true' ||
+                user.role === 'admin' ||
+                String(user.role || '').toLowerCase() === 'admin' ||
+                uname === 'rohittodkar92' ||
+                uname === 'admin' ||
+                uname.includes('rohittodkar') ||
+                uemail.includes('rohittodkar')
+            ))
+        );
+    }
+
     // Set data-resource on body for scoped theme styling (notes vs qb vs assignments)
     document.body.setAttribute('data-resource', resourceType);
 
+    // Ensure custom subjects are loaded from localStorage before lookup
+    if (typeof window.loadCustomSubjectsIntoData === 'function') {
+        window.loadCustomSubjectsIntoData();
+    }
+
     // 2. Load Subject Data with Fallback
     if (!subjectsData[subjectKey]) {
-        subjectKey = 'dsa';
+        const foundKey = Object.keys(subjectsData).find(k => k.toLowerCase() === subjectKey.toLowerCase());
+        if (foundKey) {
+            subjectKey = foundKey;
+        } else {
+            subjectKey = 'dsa';
+        }
     }
-    const subjectData = subjectsData[subjectKey];
+    const subjectData = subjectsData[subjectKey] || {
+        id: 'dsa',
+        title: 'Data Structure and Algorithm(C++)',
+        semester: 'Semester 2',
+        chapters: [
+            { id: "dsa-u1", title: "Unit 1: Introduction to Data Structures and Memory Representation", unit: "Unit 1", name: "Introduction to Data Structures and Memory Representation" },
+            { id: "dsa-u2", title: "Unit 2: Searching and Sorting Techniques", unit: "Unit 2", name: "Searching and Sorting Techniques" },
+            { id: "dsa-u3", title: "Unit 3: Stack", unit: "Unit 3", name: "Stack" },
+            { id: "dsa-u4", title: "Unit 4: Queue", unit: "Unit 4", name: "Queue" }
+        ]
+    };
 
     // 3. DOM Elements
     const subjectHeading = document.getElementById('subjectHeading');
@@ -227,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnInner.setAttribute('type', 'button');
                 btnInner.style.width = '100%';
                 
-                const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+                const isAdminMode = checkIsAdmin();
                 
                 btnInner.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; width: 100%;">
@@ -422,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (storedDocJSON) {
             const docData = JSON.parse(storedDocJSON);
             itemUploadStatus.className = "status-indicator uploaded";
-            const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+            const isAdminMode = checkIsAdmin();
             statusText.textContent = isQB ? `${currentQBView === 'questions' ? 'Question' : 'Answer'} PDF Attached` : "Document Attached";
 
             notesDocument.innerHTML = `
@@ -484,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const deleteFileBtn = document.getElementById('deleteDocBtn');
             if (deleteFileBtn && currentItem) {
                 deleteFileBtn.onclick = async () => {
-                    if (localStorage.getItem('isAdminMode') !== 'true') {
+                    if (!checkIsAdmin()) {
                         alert("Only administrators can delete files.");
                         return;
                     }        
@@ -527,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
             itemUploadStatus.className = "status-indicator";
             statusText.textContent = currentQBView === 'questions' ? "No Question Paper PDF" : "No Answer Key PDF";
 
-            const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+            const isAdminMode = checkIsAdmin();
             
             const paperViewHTML = `
                 <div class="qb-paper-view ${currentQBView === 'questions' ? 'question-paper' : 'answer-paper'}">
@@ -575,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clean Upload / Outline Blueprint Structure for Study Notes
             itemUploadStatus.className = "status-indicator";
             statusText.textContent = "No Notes PDF";
-            const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+            const isAdminMode = checkIsAdmin();
 
             notesDocument.innerHTML = `
                 <div class="structure-header">
@@ -681,13 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadBtnText = document.getElementById('uploadBtnText');
 
     function updateUploadBtnUI() {
-        const user = window.authService ? window.authService.getUser() : null;
-        const uname = user ? String(user.username || '').toLowerCase() : '';
-        const uemail = user ? String(user.email || '').toLowerCase() : '';
-        const isAdminMode = (
-            localStorage.getItem('isAdminMode') === 'true' ||
-            (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
-        );
+        const isAdminMode = checkIsAdmin();
 
         const addUnitBtn = document.getElementById('addUnitBtn');
         if (addUnitBtn) {
@@ -760,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (uploadFileBtn) {
         uploadFileBtn.addEventListener('click', () => {
-            if (localStorage.getItem('isAdminMode') !== 'true') {
+            if (!checkIsAdmin()) {
                 alert("Only administrators can upload files.");
                 return;
             }
@@ -1149,7 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addUnitBtn = document.getElementById('addUnitBtn');
     if (addUnitBtn) {
         addUnitBtn.addEventListener('click', () => {
-            if (localStorage.getItem('isAdminMode') !== 'true') {
+            if (!checkIsAdmin()) {
                 if (document.getElementById('adminToggleBtn')) {
                     document.getElementById('adminToggleBtn').click();
                 } else {
@@ -1268,13 +1302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const publishBtn = document.getElementById('publishBtn');
     if (publishBtn) {
         publishBtn.addEventListener('click', async () => {
-            const user = window.authService ? window.authService.getUser() : null;
-            const uname = user ? String(user.username || '').toLowerCase() : '';
-            const uemail = user ? String(user.email || '').toLowerCase() : '';
-            const isAdmin = (
-                localStorage.getItem('isAdminMode') === 'true' ||
-                (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
-            );
+            const isAdmin = checkIsAdmin();
 
             if (!isAdmin) {
                 showToast('Please login as Admin to publish changes to all users!', true);
@@ -1304,38 +1332,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial Load
-    async function init() {
-        const fileNames = [
-            `published_state/${subjectKey}_${resourceType}_state.json`,
-            `published_state/app_data.json`
-        ];
+    // Initial Load & Synchronous UI Render
+    function refreshDataAndUI() {
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
 
-        for (const fileName of fileNames) {
-            try {
-                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
-                const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
-                if (res.ok) {
-                    const publishedData = await res.json();
-                    
-                    let cloudDeleted = [];
-                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch(e) {}
-                    let localDeleted = [];
-                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
-                    const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
-                    localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
-
-                    mergedDeleted.forEach(delKey => {
-                        localStorage.removeItem(delKey);
-                    });
-
-                    for (const key in publishedData) {
-                        if (!mergedDeleted.includes(key)) {
-                            localStorage.setItem(key, publishedData[key]);
-                        }
-                    }
-                }
-            } catch(e) {}
+        const currentSubject = subjectsData[subjectKey] || subjectData;
+        if (subjectHeading && currentSubject) {
+            subjectHeading.textContent = currentSubject.title;
         }
 
         // Re-sync items from localStorage if custom items changed
@@ -1348,11 +1353,11 @@ document.addEventListener('DOMContentLoaded', () => {
         items.length = 0;
         let rawDefaults = [];
         if (isQB) {
-            rawDefaults = subjectData.questionBanks || subjectData.chapters || [];
+            rawDefaults = currentSubject.questionBanks || currentSubject.chapters || [];
         } else if (isAss) {
-            rawDefaults = subjectData.assignments || subjectData.chapters || [];
+            rawDefaults = currentSubject.assignments || currentSubject.chapters || [];
         } else {
-            rawDefaults = subjectData.chapters || [];
+            rawDefaults = currentSubject.chapters || [];
         }
         items.push(...JSON.parse(JSON.stringify(rawDefaults)));
         if (customItems.length > 0) {
@@ -1376,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
-        let initialIndex = 0;
+        let initialIndex = activeIndex || 0;
         try {
             const savedIndex = parseInt(sessionStorage.getItem(`active_index_${subjectKey}_${resourceType}`), 10);
             if (!isNaN(savedIndex) && items[savedIndex]) {
@@ -1384,16 +1389,70 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {}
 
+        updateUploadBtnUI();
+        renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+        loadItemContent(initialIndex);
+    }
+
+    async function syncCloudState() {
+        if (!window.supabaseClient) return;
+        const fileNames = [
+            `published_state/${subjectKey}_${resourceType}_state.json`,
+            `published_state/app_data.json`
+        ];
+
+        let updated = false;
+        for (const fileName of fileNames) {
+            try {
+                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
+                const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
+                if (res.ok) {
+                    const publishedData = await res.json();
+                    
+                    let cloudDeleted = [];
+                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch(e) {}
+                    let localDeleted = [];
+                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
+                    const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
+                    localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
+
+                    mergedDeleted.forEach(delKey => {
+                        localStorage.removeItem(delKey);
+                    });
+
+                    for (const key in publishedData) {
+                        if (!mergedDeleted.includes(key)) {
+                            localStorage.setItem(key, publishedData[key]);
+                        }
+                    }
+                    updated = true;
+                }
+            } catch(e) {}
+        }
+
+        if (updated) {
+            refreshDataAndUI();
+        }
+    }
+
+    function init() {
+        // Synchronously render UI first
+        refreshDataAndUI();
+
         if (window.supabaseRealtime) {
             window.supabaseRealtime.subscribe(() => {
-                init();
+                refreshDataAndUI();
             });
         }
 
-        updateUploadBtnUI();
-        renderItemList();
-        loadItemContent(initialIndex);
+        // Asynchronously sync cloud state in background
+        syncCloudState();
     }
+
+    window.addEventListener('auth_state_changed', () => {
+        updateUploadBtnUI();
+        renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+    });
     
     init();
 });

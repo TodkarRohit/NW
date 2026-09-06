@@ -47,14 +47,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const isQB = resourceType === 'qb';
     const isAss = resourceType === 'assignments';
 
+    // Helper function to check if logged in user is Admin
+    function checkIsAdmin() {
+        const user = window.authService ? window.authService.getUser() : null;
+        const uname = user ? String(user.username || '').toLowerCase() : '';
+        const uemail = user ? String(user.email || '').toLowerCase() : '';
+        return (
+            localStorage.getItem('isAdminMode') === 'true' ||
+            (user && (
+                user.is_admin === true ||
+                user.is_admin === 'true' ||
+                user.role === 'admin' ||
+                String(user.role || '').toLowerCase() === 'admin' ||
+                uname === 'rohittodkar92' ||
+                uname === 'admin' ||
+                uname.includes('rohittodkar') ||
+                uemail.includes('rohittodkar')
+            ))
+        );
+    }
+
     // Set data-resource on body for scoped theme styling (notes vs qb vs assignments)
     document.body.setAttribute('data-resource', resourceType);
 
+    // Ensure custom subjects are loaded from localStorage before lookup
+    if (typeof window.loadCustomSubjectsIntoData === 'function') {
+        window.loadCustomSubjectsIntoData();
+    }
+
     // 2. Load Subject Data with Fallback
     if (!subjectsData[subjectKey]) {
-        subjectKey = 'dsa';
+        const foundKey = Object.keys(subjectsData).find(k => k.toLowerCase() === subjectKey.toLowerCase());
+        if (foundKey) {
+            subjectKey = foundKey;
+        } else {
+            subjectKey = 'dsa';
+        }
     }
-    const subjectData = subjectsData[subjectKey];
+    const subjectData = subjectsData[subjectKey] || {
+        id: 'dsa',
+        title: 'Data Structure and Algorithm(C++)',
+        semester: 'Semester 2',
+        chapters: [
+            { id: "dsa-u1", title: "Unit 1: Introduction to Data Structures and Memory Representation", unit: "Unit 1", name: "Introduction to Data Structures and Memory Representation" },
+            { id: "dsa-u2", title: "Unit 2: Searching and Sorting Techniques", unit: "Unit 2", name: "Searching and Sorting Techniques" },
+            { id: "dsa-u3", title: "Unit 3: Stack", unit: "Unit 3", name: "Stack" },
+            { id: "dsa-u4", title: "Unit 4: Queue", unit: "Unit 4", name: "Queue" }
+        ]
+    };
 
     // 3. DOM Elements
     const subjectHeading = document.getElementById('subjectHeading');
@@ -1239,13 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const publishBtn = document.getElementById('publishBtn');
     if (publishBtn) {
         publishBtn.addEventListener('click', async () => {
-            const user = window.authService ? window.authService.getUser() : null;
-            const uname = user ? String(user.username || '').toLowerCase() : '';
-            const uemail = user ? String(user.email || '').toLowerCase() : '';
-            const isAdmin = (
-                localStorage.getItem('isAdminMode') === 'true' ||
-                (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
-            );
+            const isAdmin = checkIsAdmin();
 
             if (!isAdmin) {
                 showToast('Please login as Admin to publish changes to all users!', true);
@@ -1275,10 +1309,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initial Load
-    async function init() {
-        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
-            await window.supabaseRealtime.pullLatest();
+    // Initial Load & Synchronous UI Render
+    function refreshDataAndUI() {
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
+
+        const currentSubject = subjectsData[subjectKey] || subjectData;
+        if (subjectHeading && currentSubject) {
+            subjectHeading.textContent = currentSubject.title;
         }
 
         // Re-sync items from localStorage if custom items changed
@@ -1291,11 +1330,11 @@ document.addEventListener('DOMContentLoaded', () => {
         items.length = 0;
         let rawDefaults = [];
         if (isQB) {
-            rawDefaults = subjectData.questionBanks || subjectData.chapters || [];
+            rawDefaults = currentSubject.questionBanks || currentSubject.chapters || [];
         } else if (isAss) {
-            rawDefaults = subjectData.assignments || subjectData.chapters || [];
+            rawDefaults = currentSubject.assignments || currentSubject.chapters || [];
         } else {
-            rawDefaults = subjectData.chapters || [];
+            rawDefaults = currentSubject.chapters || [];
         }
         items.push(...JSON.parse(JSON.stringify(rawDefaults)));
         if (customItems.length > 0) {
@@ -1319,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
-        let initialIndex = 0;
+        let initialIndex = activeIndex || 0;
         try {
             const savedIndex = parseInt(sessionStorage.getItem(`active_index_${subjectKey}_${resourceType}`), 10);
             if (!isNaN(savedIndex) && items[savedIndex]) {
@@ -1327,16 +1366,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {}
 
+        updateUploadBtnUI();
+        renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+        loadItemContent(initialIndex);
+    }
+
+    async function syncCloudState() {
+        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
+            await window.supabaseRealtime.pullLatest();
+            refreshDataAndUI();
+        }
+    }
+
+    function init() {
+        // Synchronously render UI first
+        refreshDataAndUI();
+
         if (window.supabaseRealtime) {
             window.supabaseRealtime.subscribe(() => {
-                init();
+                refreshDataAndUI();
             });
         }
 
-        updateUploadBtnUI();
-        renderItemList();
-        loadItemContent(initialIndex);
+        // Asynchronously sync cloud state in background
+        syncCloudState();
     }
+
+    window.addEventListener('auth_state_changed', () => {
+        updateUploadBtnUI();
+        renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+    });
     
     init();
 });

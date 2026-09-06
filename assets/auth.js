@@ -301,6 +301,10 @@
                     adminToggleBtn.title = 'Click to login or create a student account';
                 }
             }
+
+            try {
+                window.dispatchEvent(new CustomEvent('auth_state_changed'));
+            } catch (e) {}
         },
 
         showToast(message) {
