@@ -403,14 +403,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (res.qb !== false) {
                 resourceLinksHTML += `
-                    <a href="../question_bank/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
+                    <a href="../notes/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
                         <i class="fa-solid fa-circle-question"></i> Question Banks
                     </a>
                 `;
             }
             if (res.assignments !== false) {
                 resourceLinksHTML += `
-                    <a href="../assignments/assignments.html?subject=${subj.id}" class="btn btn-assignments">
+                    <a href="../notes/viewer.html?subject=${subj.id}&type=assignments" class="btn btn-assignments">
                         <i class="fa-solid fa-folder-open"></i> Assignments
                     </a>
                 `;

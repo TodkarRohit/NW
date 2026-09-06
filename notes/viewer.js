@@ -42,11 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Parse URL Parameters
     const urlParams = new URLSearchParams(window.location.search);
     let subjectKey = urlParams.get('subject') || 'dsa';
-    const resourceType = urlParams.get('type') === 'qb' ? 'qb' : 'notes';
+    const rawResType = (urlParams.get('type') || 'notes').toLowerCase();
+    const resourceType = (rawResType === 'qb' || rawResType === 'question_bank') ? 'qb' : (rawResType === 'assignments' || rawResType === 'assignment' ? 'assignments' : 'notes');
     const isQB = resourceType === 'qb';
+    const isAss = resourceType === 'assignments';
 
-    // Set data-resource on body for scoped theme styling (notes vs qb)
-    document.body.setAttribute('data-resource', isQB ? 'qb' : 'notes');
+    // Set data-resource on body for scoped theme styling (notes vs qb vs assignments)
+    document.body.setAttribute('data-resource', resourceType);
 
     // 2. Load Subject Data with Fallback
     if (!subjectsData[subjectKey]) {
@@ -85,30 +87,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (tabNotesLink) {
         tabNotesLink.href = `viewer.html?subject=${subjectKey}&type=notes`;
-        if (!isQB) tabNotesLink.classList.add('active');
+        if (resourceType === 'notes') tabNotesLink.classList.add('active');
         else tabNotesLink.classList.remove('active');
     }
     if (tabQbLink) {
-        tabQbLink.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
-        if (isQB) tabQbLink.classList.add('active');
+        tabQbLink.href = `viewer.html?subject=${subjectKey}&type=qb`;
+        if (resourceType === 'qb') tabQbLink.classList.add('active');
         else tabQbLink.classList.remove('active');
     }
     if (tabAssLink) {
-        tabAssLink.href = `../assignments/assignments.html?subject=${subjectKey}`;
+        tabAssLink.href = `viewer.html?subject=${subjectKey}&type=assignments`;
+        if (resourceType === 'assignments') tabAssLink.classList.add('active');
+        else tabAssLink.classList.remove('active');
     }
 
     // 4. Update Header Meta
-    const typeLabel = isQB ? "Question Banks" : "Study Notes";
-    const itemSingular = isQB ? "Question Bank" : "Chapter";
-    const itemPlural = isQB ? "Question Banks" : "Chapters";
+    let typeLabel = "Study Notes";
+    let itemSingular = "Chapter";
+    let itemPlural = "Chapters";
+
+    if (isQB) {
+        typeLabel = "Question Banks";
+        itemSingular = "Question Bank";
+        itemPlural = "Question Banks";
+    } else if (isAss) {
+        typeLabel = "Assignments";
+        itemSingular = "Assignment";
+        itemPlural = "Assignments";
+    }
 
     subjectHeading.textContent = subjectData.title;
     resourceTypeBadge.textContent = typeLabel;
-    sidebarSectionTitle.textContent = isQB ? "Question Banks" : "Chapter List";
+    sidebarSectionTitle.textContent = isQB ? "Question Banks" : (isAss ? "Assignments List" : "Chapter List");
 
     document.title = `${subjectData.title} - ${typeLabel} | Engineering Notes Hub`;
 
-    const items = JSON.parse(JSON.stringify(isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || [])));
+    let rawItems = [];
+    if (isQB) {
+        rawItems = subjectData.questionBanks || subjectData.chapters || [];
+    } else if (isAss) {
+        rawItems = subjectData.assignments || subjectData.chapters || [];
+    } else {
+        rawItems = subjectData.chapters || [];
+    }
+    const items = JSON.parse(JSON.stringify(rawItems));
+
+    // Ensure items is never empty (fallback default 4 units)
+    if (!items || items.length === 0) {
+        items.push(
+            { id: `${subjectKey}-u1`, title: "Unit 1: Fundamentals & Concepts", unit: "Unit 1", name: "Fundamentals & Concepts" },
+            { id: `${subjectKey}-u2`, title: "Unit 2: Core Architecture & Methods", unit: "Unit 2", name: "Core Architecture & Methods" },
+            { id: `${subjectKey}-u3`, title: "Unit 3: Advanced Operations", unit: "Unit 3", name: "Advanced Operations" },
+            { id: `${subjectKey}-u4`, title: "Unit 4: Applications & Implementation", unit: "Unit 4", name: "Applications & Implementation" }
+        );
+    }
 
     // Load any custom items from localStorage on startup
     const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
@@ -132,22 +164,25 @@ document.addEventListener('DOMContentLoaded', () => {
     chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
     let activeIndex = 0;
-    let currentQBView = 'questions'; // 'questions' or 'answers' for Question Banks
+    let currentQBView = 'questions'; // 'questions' or 'answers'/'solutions'
 
     // Helper: Local Storage Key for Persisted Uploads
     function getStorageKey(itemIndex, viewType = null) {
         if (!items[itemIndex]) return `doc_upload_${subjectKey}_${resourceType}_default`;
-        if (isQB) {
-            const targetView = viewType || currentQBView;
-            const qbKey = `doc_upload_${subjectKey}_qb_${items[itemIndex].id}_${targetView}`;
-            if (localStorage.getItem(qbKey)) return qbKey;
+        const item = items[itemIndex];
+        const itemId = item.id || `unit_${itemIndex}`;
+
+        if (isQB || isAss) {
+            const targetView = viewType || currentQBView || 'questions';
+            const key = `doc_upload_${subjectKey}_${resourceType}_${itemId}_${targetView}`;
+            if (localStorage.getItem(key)) return key;
             if (targetView === 'questions') {
-                const legacyKey = `doc_upload_${subjectKey}_qb_${items[itemIndex].id}`;
+                const legacyKey = `doc_upload_${subjectKey}_${resourceType}_${itemId}`;
                 if (localStorage.getItem(legacyKey)) return legacyKey;
             }
-            return qbKey;
+            return key;
         }
-        return `doc_upload_${subjectKey}_${resourceType}_${items[itemIndex].id}`;
+        return `doc_upload_${subjectKey}_${resourceType}_${itemId}`;
     }
 
     // 5. Render Sidebar Items List
@@ -344,13 +379,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentItem = items[index];
         currentChapterName.textContent = currentItem.title;
 
-        // Question Bank Tab Bar HTML
+        // Question Bank / Assignment Sub-Tab Bar HTML
         let qbTabBarHTML = '';
-        if (isQB) {
+        if (isQB || isAss) {
+            const isAnswerActive = currentQBView === 'answers' || currentQBView === 'solutions';
             qbTabBarHTML = `
                 <div class="qb-switcher-container">
                     <div class="qb-tab-bar">
-                        <button type="button" class="qb-tab-btn question-tab ${currentQBView === 'questions' ? 'active' : ''}" id="qbQuestionTabBtn">
+                        <button type="button" class="qb-tab-btn question-tab ${!isAnswerActive ? 'active' : ''}" id="qbQuestionTabBtn">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <circle cx="12" cy="13" r="1"></circle>
@@ -363,12 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </div>
-                        <button type="button" class="qb-tab-btn answer-tab ${currentQBView === 'answers' ? 'active' : ''}" id="qbAnswerTabBtn">
+                        <button type="button" class="qb-tab-btn answer-tab ${isAnswerActive ? 'active' : ''}" id="qbAnswerTabBtn">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
                             </svg>
-                            <span>ANSWERS</span>
+                            <span>${isAss ? 'SOLUTIONS' : 'ANSWERS'}</span>
                         </button>
                     </div>
                 </div>
@@ -599,8 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Attach event listeners for QB Questions vs Answers tab buttons if present
-        if (isQB) {
+        // Attach event listeners for QB / Assignment Questions vs Answers/Solutions tab buttons if present
+        if (isQB || isAss) {
             const qbQuestionTabBtn = document.getElementById('qbQuestionTabBtn');
             const qbAnswerTabBtn = document.getElementById('qbAnswerTabBtn');
 
@@ -612,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (qbAnswerTabBtn) {
                 qbAnswerTabBtn.addEventListener('click', () => {
-                    currentQBView = 'answers';
+                    currentQBView = isAss ? 'solutions' : 'answers';
                     loadItemContent(index);
                 });
             }

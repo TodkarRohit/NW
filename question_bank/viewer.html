@@ -13,6 +13,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="viewer.css">
     <link rel="stylesheet" href="../assets/styles.css">
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const sub = params.get('subject') || 'dsa';
+            const type = params.get('type') || 'qb';
+            window.location.replace(`../notes/viewer.html?subject=${encodeURIComponent(sub)}&type=${encodeURIComponent(type)}`);
+        })();
+    </script>
 </head>
 
 <body>
