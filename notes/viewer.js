@@ -514,11 +514,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="doc-meta">Uploaded on ${docData.date} &bull; ${(docData.size / 1024).toFixed(1)} KB</div>
                             </div>
                         </div>
-                        <div class="doc-actions">
-                            ${isAdminMode ? `
-                                <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
-                                <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
-                            ` : ''}
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div class="pdf-mode-switcher">
+                                <button class="pdf-mode-btn active" data-mode="normal" title="1st Mode: Normal View">
+                                    <i class="fa-solid fa-table-cells-large"></i> <span>1st Mode</span>
+                                </button>
+                                <button class="pdf-mode-btn" data-mode="fullsite" title="2nd Mode: Full Site View">
+                                    <i class="fa-solid fa-expand"></i> <span>2nd Mode</span>
+                                </button>
+                                <button class="pdf-mode-btn" data-mode="fullscreen" title="3rd Mode: Monitor Full Screen">
+                                    <i class="fa-solid fa-maximize"></i> <span>3rd Mode</span>
+                                </button>
+                            </div>
+                            <div class="doc-actions">
+                                ${isAdminMode ? `
+                                    <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
+                                    <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
