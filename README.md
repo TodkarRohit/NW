@@ -1,347 +1,156 @@
----
+# 🎓 Engineering Notes Hub (NW Portal)
 
-## 🌐 Live Website
+[![Live Demo](https://img.shields.io/badge/Live_Portal-GitHub_Pages-brightgreen?style=for-the-badge&logo=github)](https://todkarrohit.github.io/NW/)
+[![Documentation](https://img.shields.io/badge/SRS_Document-IEEE_Standard-blue?style=for-the-badge&logo=markdown)](./SRS_DOCUMENT.md)
+[![Database](https://img.shields.io/badge/Database-Supabase_PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![Frontend](https://img.shields.io/badge/Frontend-HTML5_CSS3_JS-E34F26?style=for-the-badge&logo=html5)](#)
+[![Backend](https://img.shields.io/badge/Backend-Node.js_Express_MongoDB-339933?style=for-the-badge&logo=nodedotjs)](#)
 
-Access the portal live at: **[https://todkarrohit.github.io/NW/](https://todkarrohit.github.io/NW/)**
-
----
-
-# Engineering Notes Hub
-
-Academic resource and study portal for engineering students featuring study notes, question banks, assignments with model answers, and a secure backend powered by Node.js, Express, MongoDB, Mongoose, JWT authentication, and Google Drive Option A integration.
+> A modern, interactive academic resource portal for engineering students featuring study notes, unit-level question banks, side-by-side assignment model answers, inline PDF rendering, and an admin content management system.
 
 ---
 
-## 🌟 Overview & Features
+## 🌐 Live Portal Access
 
-- **Public & Optional Login**: All primary study materials (Home, Notes, Question Banks, Assignments, and PDFs) are 100% accessible to anyone without requiring an account or login.
-- **Secure Authentication**:
-  - User registration & login with JWT tokens (`Authorization: Bearer <token>`).
-  - **Strict 8-character username requirement** (letters, numbers, and allowed characters).
-  - Password hashing with **bcrypt** (salt rounds: 10).
-  - Passwords and password hashes are never stored in plain text and **never exposed** in API responses.
-- **Google Drive — Option A Integration**:
-  - Fully decoupled from Google Drive API (no Google credentials, OAuth tokens, or passwords stored or required).
-  - Secure server-side validation of manually shared Google Drive URLs (`driveValidator.js`).
-  - Automatic generation of safe embed preview links for PDFs.
-- **Modern Responsive Frontend**:
-  - Fast search with instant keyboard shortcuts (`Ctrl + K`, `Esc`).
-  - Dark Mode and Light Mode with persistent preference.
-  - Interactive sidebar chapter navigator, side-by-side Q&A panels, and PDF viewers.
+🚀 Access the live deployed application: **[https://todkarrohit.github.io/NW/](https://todkarrohit.github.io/NW/)**  
+📄 View full technical specification: **[Software Requirements Specification (SRS Document)](./SRS_DOCUMENT.md)**
 
 ---
 
-## 📁 Project Architecture & Structure
+## 📐 System Architecture & Visual Diagrams
 
-```
-d:\project_hackethon\NW\
-├── index.html                  # Academic portal home page (Subjects grid & search)
-├── viewer.html                 # 2-panel study notes and question banks viewer
-├── viewer.css                  # Viewer layout and responsive styling
-├── viewer.js                   # Viewer navigation, search filter, and document tabs
-├── assignments.html            # Assignments portal (Side-by-side Q&A and PDF preview)
-├── assignments.css             # Assignments grid, comment drawer, and modal styling
-├── assignments.js              # Assignments state, unit filters, and discussion drawer
-├── auth.js                     # Frontend auth service & JWT session management
-├── data.js                     # Course syllabus, chapters, and question bank metadata
-├── styles.css                  # Core design tokens, global themes, and auth modal styles
-├── logo.png                    # Portal branding asset
-├── .gitignore                  # Root Git ignore rules (node_modules, .env)
-├── README.md                   # Complete documentation
-│
-└── server/                     # Modular Node.js Backend
-    ├── server.js               # Express application entry point & CORS configuration
-    ├── package.json            # Backend dependencies and npm scripts
-    ├── test_suite.js           # Automated backend verification test suite (43 test cases)
-    ├── .env                    # Local environment variables (Ignored by Git)
-    ├── .env.example            # Environment template with placeholders
-    ├── .gitignore              # Server Git ignore rules
-    │
-    ├── config/
-    │   └── db.js               # MongoDB Mongoose connection manager with reconnect handling
-    │
-    ├── models/
-    │   ├── User.js             # Mongoose User model (8-char username, bcrypt, safe toJSON)
-    │   └── Resource.js         # Mongoose Resource model (Google Drive metadata & links)
-    │
-    ├── middleware/
-    │   ├── authMiddleware.js   # JWT verification (protect) & optional authentication
-    │   ├── validationMiddleware.js # 8-character username, password & Drive link validation
-    │   └── errorMiddleware.js  # Centralized error handler returning consistent JSON
-    │
-    ├── controllers/
-    │   ├── authController.js   # Register, Login, Logout, and Current User endpoints
-    │   ├── userController.js   # Protected user listing controller
-    │   └── resourceController.js # Public resource browsing & protected resource management
-    │
-    ├── routes/
-    │   ├── authRoutes.js       # /api/auth routes
-    │   ├── userRoutes.js       # /api/users routes
-    │   └── resourceRoutes.js   # /api/resources routes
-    │
-    └── utils/
-        ├── driveValidator.js   # Google Drive URL validator & embed URL generator
-        └── tokenUtils.js       # JWT sign and verify helpers
+### 1. High-Level System Architecture
+The portal operates on a flexible hybrid architecture with a zero-friction client hosted on GitHub Pages, connected to Supabase serverless database/storage, and an optional modular Node.js/Express REST backend.
+
+```mermaid
+graph TD
+    subgraph Client ["Client Layer (Browser)"]
+        UI["Web Interface (HTML5/CSS3/ES6)"]
+        Search["Instant Search Engine"]
+        Theme["Theme Engine (Dark/Light)"]
+        PDF["Inline PDF Viewer"]
+    end
+
+    subgraph Hosting ["Static Hosting Layer"]
+        GHP["GitHub Pages CDN"]
+    end
+
+    subgraph Supabase ["Cloud Backend (Supabase)"]
+        DB[(PostgreSQL Database)]
+        Storage[(Academic Files Storage)]
+        RLS["Row Level Security Policies"]
+    end
+
+    subgraph NodeBackend ["Optional REST Backend"]
+        Express["Node.js / Express Server"]
+        MongoDB[(MongoDB Database)]
+        JWT["JWT Auth & Drive Validator"]
+    end
+
+    UI -->|Static Delivery| GHP
+    UI -->|Queries & Updates| DB
+    UI -->|Upload & Embed PDFs| Storage
+    DB --- RLS
+    Storage --- RLS
+    UI -.->|Optional REST API| Express
+    Express --- MongoDB
+    Express --- JWT
 ```
 
 ---
 
-## 🔒 Security Practices
+### 2. User & Admin Authorization Flow
+Guest users enjoy 100% unrestricted access to read and download study resources. Admin status is strictly validated prior to allowing content upload, editing, or deletion.
 
-1. **Password Protection**: Passwords are automatically hashed using bcrypt with salt rounds before being stored in MongoDB.
-2. **Safe Serialization**: The `User` Mongoose schema overrides `.toJSON()` to delete the `password` field from any serialization, preventing accidental leaks in JSON responses or console logs.
-3. **Strict 8-Character Username Rule**: The backend enforces `username.length === 8` at both the validation middleware level and the Mongoose model schema level.
-4. **JWT Authentication**: JWT tokens are signed using a server-side `JWT_SECRET`. Tokens are transmitted via standard HTTP header: `Authorization: Bearer <token>`.
-5. **No Credential Leaks**: Neither Google credentials, database passwords, nor JWT secrets are exposed to the frontend or checked into version control.
-6. **Centralized Error Handling**: Standardized JSON responses for all errors:
-   ```json
-   {
-     "success": false,
-     "message": "Clear user-friendly error description"
-   }
-   ```
+```mermaid
+flowchart TD
+    Start([User Opens Portal]) --> AccessPublic[Access Study Notes, Question Banks & Assignments]
+    AccessPublic --> ActionChoice{User Action?}
+    
+    ActionChoice -->|View / Search / Download| PublicView[Render Side-by-Side Viewers & Inline PDFs]
+    ActionChoice -->|Post Comment| SubmitComment[Save Comment to Assignment JSONB]
+    ActionChoice -->|Toggle Admin Mode| AdminModal[Open Admin Authentication Overlay]
 
----
+    AdminModal --> EnterCredentials[Enter Username / Email & Password]
+    EnterCredentials --> VerifyAuth{Authenticate against Supabase / Express}
+    
+    VerifyAuth -->|Success & Admin Role| GrantAdmin[Set Admin Mode = True in LocalStorage]
+    VerifyAuth -->|Failure or Regular User| DenyAdmin[Show Error Toast & Revert to Guest]
 
-## ⚠️ Google Drive Option A Safety & Limitations
-
-> [!IMPORTANT]
-> **Google Drive Option A Security Limitation**:
-> Because the website uses Google Drive Option A (manual share links without Google Drive API), access to the underlying file is determined by the sharing permissions configured in Google Drive.
-> 
-> **Best Practices**:
-> - Only create share links for files intended to be public for students.
-> - Use a dedicated Google account specifically for website materials.
-> - Never share personal Google Drive folders or private documents.
-> - The backend validates URLs to ensure they point only to legitimate `drive.google.com` or `docs.google.com` resources.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Node.js**: v18+ (tested on Node v24)
-- **MongoDB**: Local MongoDB instance (`mongodb://127.0.0.1:27017`) or a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster URI.
-
----
-
-### Step 1: Install Backend Dependencies
-
-Open PowerShell and navigate to the `server/` directory:
-
-```powershell
-cd d:\project_hackethon\NW\server
-npm install
-```
-
-Installed packages:
-- `express`: Fast web framework for API routes.
-- `mongoose`: MongoDB object modeling and validation.
-- `jsonwebtoken`: Secure JWT token creation and verification.
-- `bcryptjs`: Password hashing and comparison.
-- `dotenv`: Loads environment variables from `.env`.
-- `cors`: Cross-Origin Resource Sharing middleware.
-
----
-
-### Step 2: Configure Environment Variables
-
-Create or edit `server/.env` (a template is provided in `server/.env.example`):
-
-```env
-# Server Port
-PORT=5000
-
-# MongoDB Database URI (Local or MongoDB Atlas)
-MONGO_URI=mongodb://127.0.0.1:27017/engineering_notes_hub
-
-# JWT Secret Key (Use a strong random secret in production)
-JWT_SECRET=your_jwt_secret_key_change_in_production
-
-# CORS Allowed Origins
-CORS_ORIGIN=*
+    GrantAdmin --> EnableAdminUI[Display Upload Buttons & Delete Triggers]
+    EnableAdminUI --> AdminUpload[Upload Question & Solution PDFs to Supabase Storage]
 ```
 
 ---
 
-### Step 3: Start the Backend Server
+### 3. Entity Relationship Diagram (ERD)
 
-Run in PowerShell:
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+        string username UK
+        string email UK
+        string password_hash
+        boolean is_admin
+        string role
+        int login_count
+        timestamp created_at
+    }
 
-```powershell
-# Development mode with auto-reload
-node --watch server.js
+    ASSIGNMENTS {
+        string id PK
+        string subject_key
+        string chapter_id
+        string unit
+        string chapter_title
+        string title
+        string question_file
+        string answer_file
+        string question_data_url
+        string answer_data_url
+        int views
+        int downloads
+        boolean is_custom
+        jsonb comments
+        timestamp created_at
+    }
 
-# Or standard production start
-node server.js
-```
+    STORAGE_OBJECTS {
+        string id PK
+        string bucket_id FK
+        string name
+        string content_type
+        timestamp created_at
+    }
 
-You should see:
-```
-[Server] Engineering Notes Hub backend listening on port 5000
-[Server] Mode: development
-[Database] MongoDB Connected: 127.0.0.1/engineering_notes_hub
-```
-
----
-
-### Step 4: Run the Backend Test Suite
-
-To verify all 43 automated security and functionality tests:
-
-```powershell
-cd d:\project_hackethon\NW\server
-node test_suite.js
-```
-
----
-
-### Step 5: Launch the Frontend
-
-You can open `index.html` directly in any web browser, or serve it using any static server (e.g. VS Code Live Server, http-server, or Python):
-
-```powershell
-# Option A: Open directly in default browser
-start d:\project_hackethon\NW\index.html
-
-# Option B: Run a local static server (optional)
-npx serve d:\project_hackethon\NW
-```
-
----
-
-## 📡 API Reference
-
-### Authentication Endpoints
-
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | Public | Register with 8-char username & password. Returns JWT token & safe user info. |
-| `POST` | `/api/auth/login` | Public | Authenticate with username & password. Returns JWT token. |
-| `POST` | `/api/auth/logout` | Public | Clear session notification. |
-| `GET` | `/api/auth/me` | Private | Returns current authenticated user profile. |
-
-#### Registration Request Body:
-```json
-{
-  "username": "student1",
-  "password": "SecurePassword@123"
-}
-```
-
-#### Registration / Login Response:
-```json
-{
-  "success": true,
-  "message": "User registered successfully",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "67b5e4a8f9c1a2b3c4d5e6f7",
-    "username": "student1",
-    "createdAt": "2026-08-19T12:00:00.000Z"
-  }
-}
+    USERS ||--o{ ASSIGNMENTS : "manages"
+    ASSIGNMENTS ||--|{ STORAGE_OBJECTS : "links to uploaded PDFs"
 ```
 
 ---
 
-### User Endpoints
+## 🌟 Accomplishments & Completed Features Matrix
 
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| `GET` | `/api/users` | Private | Returns sanitized list of registered users (`_id`, `username`, `createdAt`). |
+Below is the verified summary of all completed features, UI fixes, and security enhancements in the platform:
 
-#### Header Required:
-```http
-Authorization: Bearer <token>
-```
-
----
-
-### Study Resource Endpoints (Google Drive Links)
-
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| `GET` | `/api/resources` | Public | Browse public study resources (Optional query filters: `?subject=dsa&type=notes`). |
-| `POST` | `/api/resources` | Private | Add a verified Google Drive study resource link. |
-| `DELETE` | `/api/resources/:id` | Private | Remove a study resource link. |
-
-#### Create Resource Request Body:
-```json
-{
-  "title": "Unit 1: Data Structures Overview",
-  "subject": "dsa",
-  "description": "Complete unit notes with memory representations",
-  "type": "notes",
-  "unit": "Unit 1",
-  "googleDriveUrl": "https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQrStUvWxYz012345/view?usp=sharing"
-}
-```
-
----
-
-### System Health Check
-
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| `GET` | `/api/health` | Public | Returns API uptime status and timestamp. |
-
----
-
-## 🚢 Deployment Guide
-
-1. **Deploy Backend (e.g. Render, Railway, DigitalOcean, AWS)**:
-   - Set Environment Variables: `MONGO_URI`, `JWT_SECRET`, `CORS_ORIGIN`, `PORT`.
-   - Build Command: `cd server && npm install`
-   - Start Command: `node server/server.js`
-2. **Deploy Frontend (e.g. GitHub Pages, Vercel, Netlify)**:
-   - In `auth.js`, update `API_BASE_URL` to point to your live backend domain (e.g. `https://api.yourdomain.com/api`).
-   - Push repository to GitHub Pages or your preferred static host.
-
----
-
-## 👥 Contributors
-
-- **Rohit Todkar** - [GitHub](https://github.com/TodkarRohit)
-- **Pratik Shendge**
-- **Onkar Pawar** - [GitHub](https://github.com/onkarpawar158-coder)
-
-*Engineering Notes Hub &copy; 2026. Built for NMIET Students.*
-=======
-# 🎓 Engineering Notes Hub (NMIET)
-
-> A modern, interactive web portal providing high-quality study materials, unit-wise question banks, and assignment solutions for engineering students.
-
-[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-brightgreen?style=for-the-badge&logo=github)](https://todkarrohit.github.io/NW/)
-[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](#)
-[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](#)
-[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](#)
-
----
-
-## 🌐 Live Website
-
-Access the portal live at: **[https://todkarrohit.github.io/NW/](https://todkarrohit.github.io/NW/)**
-
----
-
-## 🌟 Key Features
-
-- 📚 **Unit-Wise Study Notes**: Complete unit breakdown for Semester 2 subjects with interactive study notes.
-- ❓ **Question Banks**: Unit-level question sets curated for exam preparation.
-- 📝 **Assignments Portal**: Detailed assignment listings with side-by-side Q&A views and downloadable resources.
-- 🔍 **Instant Search & Shortcuts**: Search by subject name, topic, unit, or concept with instant keyboard shortcuts (`Ctrl + K` to search, `Esc` to clear).
-- 🌙 **Dark / Light Theme**: Built-in dynamic theme switcher with automatic preference persistence (`localStorage`).
-- 🔐 **Admin Management Mode**: Authenticated admin overlay to manage and upload study notes, question banks, and assignments.
-- 👥 **Live Online Indicator**: Simulated live active user counter for engagement.
-- 📱 **Fully Responsive Layout**: Built with modern CSS Flexbox and Grid, optimizing performance across desktop, tablet, and mobile browsers.
+| Feature / Fix | Category | Description / Resolution |
+| :--- | :--- | :--- |
+| **Strict Admin Role Guards** | Security | Content uploads and deletions are strictly guarded by verified `is_admin: true` database roles. |
+| **Dual PDF Upload Engine** | Uploads | Upload dual PDFs (Question + Answer) directly to Supabase `academic-files` storage bucket. |
+| **Inline PDF Viewer** | PDF Viewing | Ensured files upload with `contentType: application/pdf` to render directly inline in browser frames instead of triggering forced downloads. |
+| **Theme Switcher** | UI / UX | Dark & Light mode toggle with persistent preference stored across sessions in `localStorage`. |
+| **Interactive Discussion Drawer** | Discussion | Assignment-level comment drawer storing real-time feedback in Supabase JSONB arrays. |
+| **Instant Keyboard Search** | Navigation | Global search input supporting `Ctrl + K` focus and `Esc` clear shortcuts across subjects and units. |
+| **Active Online Counter** | Engagement | Real-time animated badge indicating online active students on the portal. |
+| **Mobile Drawer & Responsive Grid** | Layout | CSS Grid and Flexbox layout tuned for desktop, tablet, and mobile browsers. |
+| **Automated Backend Test Suite** | Testing | Modular Express backend verified with 43 automated unit and integration tests (`test_suite.js`). |
 
 ---
 
 ## 📖 Subjects Covered
 
-| Code | Subject Name | Units Included |
+| Subject Code | Full Name | Included Units |
 | :--- | :--- | :--- |
 | **DSA** | Data Structure & Algorithm (C++) | Unit 1 (DS & Memory), Unit 2 (Sorting & Searching), Unit 3 (Stack), Unit 4 (Queue) |
 | **OOP** | Object-Oriented Programming (C++) | Unit 1 (Fundamentals), Unit 2 (Inheritance & Polymorphism), Unit 3 (Exceptions), Unit 4 (File Handling) |
@@ -351,57 +160,97 @@ Access the portal live at: **[https://todkarrohit.github.io/NW/](https://todkarr
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Dependencies
 
-- **Frontend**: HTML5, Vanilla CSS3 (Custom Properties, Glassmorphism, Responsive Layouts)
-- **Scripting & Logic**: JavaScript (ES6+, DOM Manipulation, LocalStorage API, URLSearchParams)
-- **UI Components & Icons**: Font Awesome 6, Google Fonts (`Plus Jakarta Sans`)
-- **Hosting**: GitHub Pages
+- **Frontend**: HTML5, Vanilla CSS3 (Custom Design Tokens, Glassmorphism, CSS Variables), Modern ES6+ JavaScript.
+- **Iconography & Fonts**: Font Awesome 6, Google Fonts (`Plus Jakarta Sans`).
+- **Cloud Database & Storage**: Supabase PostgreSQL + Supabase S3 Object Storage.
+- **Backend (Optional)**: Node.js, Express, MongoDB (Mongoose), JWT (`jsonwebtoken`), `bcryptjs`.
+- **Hosting**: GitHub Pages CDN.
 
 ---
 
-## 📂 Project Structure
+## 📁 Repository Structure
 
 ```
 NW/
-├── index.html          # Main landing page with subject cards and search
-├── viewer.html         # Document viewer for Study Notes & Question Banks
-├── assignments.html    # Assignments portal page
-├── data.js             # Data structure containing subjects, units, and question banks
-├── script.js           # Main page logic (Search, Admin modal, Online counter)
-├── viewer.js           # Viewer functionality & resource tab routing
-├── assignments.js      # Assignment portal filtering & side-by-side preview logic
-├── styles.css          # Core styles & CSS custom property variables (Theme Engine)
-├── viewer.css          # Resource viewer styling
-├── assignments.css     # Assignment portal styling
-├── logo.png / logo1.png# Project branding images
-└── README.md           # Project documentation
+├── index.html                  # Portal entrance (Redirects to landing page)
+├── SRS_DOCUMENT.md             # IEEE Software Requirements Specification
+├── README.md                   # Visual project documentation
+├── setup_assignments_db.sql    # Supabase PostgreSQL table & RLS policies script
+├── setup_storage.sql           # Supabase Storage bucket & policies script
+│
+├── login/                      # Portal Main Landing Page
+│   ├── index.html              # Subject cards, branch filters, search & header
+│   └── script.js               # Landing page interactivity & search logic
+│
+├── notes/                      # Study Notes Module
+│   ├── viewer.html             # 2-Panel interactive study notes viewer
+│   ├── viewer.css              # Viewer styles
+│   └── viewer.js               # Chapter navigator & PDF preview loader
+│
+├── question_bank/              # Question Bank Module
+│   ├── viewer.html             # Unit-wise question bank viewer
+│   ├── viewer.css              # Question bank styling
+│   └── viewer.js               # Question bank interaction logic
+│
+├── assignments/                # Assignments Portal
+│   ├── assignments.html        # Assignments grid, modal previews & discussion drawer
+│   ├── assignments.css         # Assignment layout & modal styling
+│   └── assignments.js          # Dual PDF upload, comments & filter logic
+│
+├── assets/                     # Shared Assets & Libraries
+│   ├── auth.js                 # Authentication service & session manager
+│   ├── auth-modal.js           # Admin login modal overlay controller
+│   ├── data.js                 # Course syllabus & metadata definition
+│   └── styles.css              # Core design tokens & global themes
+│
+└── server/                     # Optional Node.js/Express REST Backend
+    ├── server.js               # Express application entry point
+    ├── package.json            # Node backend dependencies
+    ├── test_suite.js           # Automated test suite (43 test cases)
+    ├── config/db.js            # MongoDB connection configuration
+    ├── models/                 # Mongoose data schemas (User.js, Resource.js)
+    ├── middleware/             # Express middlewares (JWT auth, validation, errors)
+    ├── controllers/            # Route handler logic
+    └── utils/                  # Google Drive validator & JWT token helpers
 ```
 
 ---
 
-## 🚀 Quick Start & Local Usage
+## 🚀 Quick Start & Local Development
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/TodkarRohit/NW.git
-   cd NW
-   ```
+### 1. Run Static Frontend Immediately
+Simply clone the repository and open `login/index.html` in any browser:
+```bash
+git clone https://github.com/TodkarRohit/NW.git
+cd NW
+start login/index.html
+```
 
-2. **Run Locally**:
-   Simply open `index.html` in any web browser (no build steps or server setup required).
-   
-   *Or use Python Simple Server*:
-   ```bash
-   python -m http.server 8000
-   ```
-   Navigate to `http://localhost:8000`.
+Or spin up a lightweight local HTTP server:
+```bash
+npx serve .
+```
 
 ---
 
-## 👥 Developers & Credits
+### 2. Optional: Run Modular Node.js / Express Backend
+```bash
+cd server
+npm install
+node server.js
+```
+To run the automated backend test suite (43 tests):
+```bash
+node test_suite.js
+```
 
-Developed with ❤️ by NMIET Students:
+---
+
+## 👥 Authors & Contributors
+
+Developed with ❤️ for NMIET Engineering Students:
 
 - **Rohit Todkar** - [GitHub Profile](https://github.com/TodkarRohit)
 - **Pratik Shendge**
@@ -411,14 +260,4 @@ Developed with ❤️ by NMIET Students:
 
 ## 📄 License
 
-This project is created for educational and academic reference purposes for NMIET Engineering students.
-
-
-## Supabase Integration & Caching Fixes
-
-This project uses **Supabase** for database and storage.
-- **Assignments** use the Supabase Database to store assignment metadata and URLs.
-- **Notes and Question Banks** use Supabase Storage to store files and publish JSON state.
-
-### GitHub Pages Caching Issue
-GitHub Pages aggressively caches .js and .html files. If updates were not showing (or the app always redirected to Data Structures), it was because the browser was using an old cached version of the scripts. To fix this, cache-busting query parameters (?v=2.0) have been added to all script imports. Using a modern host like **Vercel** or **Netlify** can avoid these static caching issues altogether.
+This project is licensed for academic and educational reference for NMIET Engineering students.
