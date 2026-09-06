@@ -12,13 +12,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/styles.css">
     <link rel="stylesheet" href="assignments.css">
-    <script>
-        (function() {
-            const params = new URLSearchParams(window.location.search);
-            const sub = params.get('subject') || 'dsa';
-            window.location.replace(`../notes/viewer.html?subject=${encodeURIComponent(sub)}&type=assignments`);
-        })();
-    </script>
 </head>
 
 <body>
@@ -350,7 +343,7 @@
 
     <!-- Confirm Dialog Modal -->
     <div class="modal-backdrop" id="confirmModalBackdrop" style="display:none; z-index: 2000; position:fixed; inset:0; background:rgba(15,23,42,0.6); align-items:center; justify-content:center;">
-        <div class="modal-content" style="background:var(--card-bg); max-width: 400px; padding:2rem; border-radius:18px; text-align: center; box-shadow:var(--shadow-hover);">
+        <div class="modal-content" style="background:var(--card-bg); max-width: 400px; padding:2rem; border-radius:18px; text-align: center; box-shadow:var(--shadow-hover); border: 2px solid #cbd5e1;">
             <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>

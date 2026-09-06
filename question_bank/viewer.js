@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else tabQbLink.classList.remove('active');
     }
     if (tabAssLink) {
-        tabAssLink.href = `../notes/viewer.html?subject=${subjectKey}&type=assignments`;
+        tabAssLink.href = `../assignments/assignments.html?subject=${subjectKey}`;
         if (resourceType === 'assignments') tabAssLink.classList.add('active');
         else tabAssLink.classList.remove('active');
     }

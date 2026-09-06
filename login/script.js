@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (res.assignments !== false) {
                 resourceLinksHTML += `
-                    <a href="../notes/viewer.html?subject=${subj.id}&type=assignments" class="btn btn-assignments">
+                    <a href="../assignments/assignments.html?subject=${subj.id}" class="btn btn-assignments">
                         <i class="fa-solid fa-folder-open"></i> Assignments
                     </a>
                 `;

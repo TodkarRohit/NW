@@ -1660,9 +1660,26 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     display: flex;
 }
 
+.modal-content {
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 540px;
+    padding: 1.75rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .modal-content {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f8fafc;
+}
+
 .modal-card {
     background: #ffffff;
-    border: 1px solid #cbd5e1;
+    border: 2px solid #cbd5e1;
     border-radius: 16px;
     width: 100%;
     max-width: 540px;
