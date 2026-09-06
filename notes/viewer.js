@@ -1,43 +1,40 @@
 // Engineering Notes Hub - Resource Viewer & Upload Management Script
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------------------------------------------------------
-    // 0. Theme Management (Dark / Light Mode)
-    // ---------------------------------------------------------
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    class ThemeManager {
+        static init() {
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            ThemeManager.applyTheme(savedTheme, themeToggleBtn);
 
-    function initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        applyTheme(savedTheme);
-    }
+            document.body.addEventListener('click', (e) => {
+                if (e.target.closest('#themeToggleBtn')) {
+                    const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                    ThemeManager.applyTheme(currentTheme === 'dark' ? 'light' : 'dark', themeToggleBtn);
+                }
+            });
+        }
 
-    function applyTheme(theme) {
-        if (theme === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text">Light Mode</span>';
-            }
-        } else {
-            document.body.removeAttribute('data-theme');
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
-            if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text">Dark Mode</span>';
+        static applyTheme(theme, btn) {
+            if (theme === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-sun" style="color:#facc15"></i> <span class="theme-btn-text">Light Mode</span>';
+                }
+            } else {
+                document.body.removeAttribute('data-theme');
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-moon" style="color:#38bdf8"></i> <span class="theme-btn-text">Dark Mode</span>';
+                }
             }
         }
     }
 
-    // Event delegation for theme toggle
-    document.body.addEventListener('click', (e) => {
-        if (e.target.closest('#themeToggleBtn')) {
-            const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        }
-    });
-
-    initTheme();
+    ThemeManager.init();
 
     // 1. Parse URL Parameters
     const urlParams = new URLSearchParams(window.location.search);

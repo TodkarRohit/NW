@@ -29,12 +29,14 @@
     const TOKEN_KEY = 'enh_auth_token';
     const USER_KEY = 'enh_auth_user';
 
-    const authService = {
-        API_BASE_URL,
+    class AuthService {
+        constructor() {
+            this.API_BASE_URL = API_BASE_URL;
+        }
 
         getToken() {
             return localStorage.getItem(TOKEN_KEY);
-        },
+        }
 
         getUser() {
             try {
@@ -43,11 +45,11 @@
             } catch {
                 return null;
             }
-        },
+        }
 
         isLoggedIn() {
             return !!this.getToken();
-        },
+        }
 
         saveSession(token, user) {
             if (token) localStorage.setItem(TOKEN_KEY, token);
@@ -72,14 +74,14 @@
                 }
             }
             this.updateHeaderUI();
-        },
+        }
 
         clearSession() {
             localStorage.removeItem(TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
             localStorage.setItem('isAdminMode', 'false');
             this.updateHeaderUI();
-        },
+        }
 
         /**
          * Perform an HTTP fetch with optional or enforced JWT authorization header
@@ -106,12 +108,10 @@
                 const data = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
-                    // If token expired / unauthorized, handle session expiry
                     if (response.status === 401 && token) {
                         this.clearSession();
                     }
 
-                    // Format user-friendly error messages based on status and response
                     let friendlyMessage = data.message || `Request failed with status ${response.status}`;
                     if (response.status === 409) {
                         friendlyMessage = 'Duplicate username: An account with this 8-character username already exists.';
@@ -129,24 +129,19 @@
 
                 return data;
             } catch (err) {
-                // Catch fetch/network connection failures
                 if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
                     throw new Error('Server unavailable: Unable to reach backend on http://localhost:5000. Please ensure the server is running.');
                 }
                 throw err;
             }
-        },
+        }
 
-        /**
-         * 1. Register a new user: POST /api/auth/register
-         * Enforces strict 8-character username rule
-         */
         async hashPassword(password) {
             const msgBuffer = new TextEncoder().encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        },
+        }
 
         async register(username, password, fullName = '', email = '') {
             const cleanName = String(fullName || '').trim();
@@ -171,8 +166,6 @@
 
             if (error) {
                 if (error.code === '23505' || error.message.toLowerCase().includes('duplicate')) { 
-                    // Postgres unique constraint violation
-                    // Generate 3 random suggestions
                     const r1 = Math.floor(Math.random() * 99) + 1;
                     const r2 = Math.floor(Math.random() * 99) + 1;
                     const r3 = Math.floor(Math.random() * 999) + 100;
@@ -186,7 +179,7 @@
             this.saveSession('custom_token_' + cleanUser, { username: cleanUser });
 
             return { user: { username: cleanUser } };
-        },
+        }
 
         async login(username, password) {
             const cleanUser = String(username || '').trim();
@@ -223,7 +216,7 @@
             this.saveSession('custom_token_' + (dbUser.username || cleanUser), dbUser);
 
             return { user: dbUser };
-        },
+        }
 
         async logout() {
             const user = this.getUser();
@@ -240,29 +233,20 @@
             this.clearSession();
             this.showToast('You have been logged out successfully.');
             setTimeout(() => window.location.reload(), 1000);
-        },
+        }
 
-        /**
-         * 4. Get registered users list (Protected): GET /api/users
-         */
         async getUsers() {
             return await this.authFetch('/users', { method: 'GET' });
-        },
+        }
 
-        /**
-         * 5. Get public study resources (Public): GET /api/resources
-         */
         async getResources(subject = '', type = '') {
             const params = new URLSearchParams();
             if (subject) params.append('subject', subject);
             if (type) params.append('type', type);
             const query = params.toString() ? `?${params.toString()}` : '';
             return await this.authFetch(`/resources${query}`, { method: 'GET' });
-        },
+        }
 
-        /**
-         * Update the UI header across all pages
-         */
         updateHeaderUI() {
             const user = this.getUser();
             const token = this.getToken();
@@ -305,7 +289,7 @@
             try {
                 window.dispatchEvent(new CustomEvent('auth_state_changed'));
             } catch (e) {}
-        },
+        }
 
         showToast(message) {
             const toast = document.getElementById('toast');
@@ -320,7 +304,7 @@
                 toast.classList.remove('show');
             }, 3200);
         }
-    };
+    }
 
     function escapeHTML(str) {
         if (!str) return '';
@@ -329,8 +313,9 @@
         );
     }
 
-    // Expose authService globally
-    window.authService = authService;
+    // Expose AuthService class and singleton instance globally
+    window.AuthService = AuthService;
+    window.authService = new AuthService();
 
     // ---------------------------------------------------------
     // Supabase Realtime Synchronization Service

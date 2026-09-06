@@ -127,137 +127,172 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    class BranchManager {
+        getActiveBranch() {
+            const activeItem = document.querySelector('.branch-item.active');
+            return activeItem ? activeItem.dataset.branch : (localStorage.getItem('user_branch') || 'CE');
+        }
+
+        renderSidebar() {
+            if (!homeBranchList) return;
+
+            const isAdmin = checkAdminState();
+            const availableBranches = typeof window.getAvailableBranches === 'function' 
+                ? window.getAvailableBranches() 
+                : [{ code: 'CE', name: 'CE' }, { code: 'CSE', name: 'CSE' }, { code: 'IT', name: 'IT' }, { code: 'ECE', name: 'ECE' }, { code: 'AIDS', name: 'AI DS' }];
+
+            let activeBranch = localStorage.getItem('user_branch');
+            if (!activeBranch || !availableBranches.some(b => b.code === activeBranch)) {
+                activeBranch = availableBranches[0] ? availableBranches[0].code : 'CE';
+                localStorage.setItem('user_branch', activeBranch);
+            }
+
+            homeBranchList.innerHTML = availableBranches.map(b => `
+                <li style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+                    <a href="#" class="branch-item ${b.code === activeBranch ? 'active' : ''}" data-branch="${b.code}" style="flex: 1;">
+                        ${escapeHTML(b.name)}
+                    </a>
+                    ${isAdmin ? `
+                        <div class="branch-admin-actions" style="display: flex; gap: 4px; padding-right: 6px;">
+                            <button type="button" class="edit-branch-btn" data-code="${b.code}" style="background: transparent; border: none; color: #0ea5e9; cursor: pointer; padding: 4px;" title="Edit Branch">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="delete-branch-btn" data-code="${b.code}" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px;" title="Delete Branch">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    ` : ''}
+                </li>
+            `).join('');
+
+            document.querySelectorAll('.branch-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.branch-item').forEach(b => b.classList.remove('active'));
+                    item.classList.add('active');
+                    const branchName = item.dataset.branch;
+
+                    showToast(`Switched to ${item.textContent.trim()} Branch`);
+                    localStorage.setItem('user_branch', branchName);
+                    renderSubjectsGrid(searchInput ? searchInput.value : '');
+                });
+            });
+
+            if (isAdmin) {
+                document.querySelectorAll('.edit-branch-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        branchService.openModal(btn.dataset.code);
+                    });
+                });
+
+                document.querySelectorAll('.delete-branch-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const bCode = btn.dataset.code;
+                        const bObj = availableBranches.find(b => b.code === bCode);
+                        const bName = bObj ? bObj.name : bCode;
+
+                        if (await customConfirm(`Are you sure you want to delete branch "${bName}"?`)) {
+                            branchService.deleteBranch(bCode, bName);
+                        }
+                    });
+                });
+            }
+        }
+
+        openModal(editCode = null) {
+            if (!branchModalBackdrop) return;
+
+            branchModalEditCode.value = editCode || '';
+            const availableBranches = typeof window.getAvailableBranches === 'function' ? window.getAvailableBranches() : [];
+
+            if (editCode) {
+                const bObj = availableBranches.find(b => b.code === editCode);
+                branchModalTitle.textContent = 'Edit Branch';
+                branchCodeInput.value = editCode;
+                branchCodeInput.disabled = true;
+                branchNameInput.value = bObj ? bObj.name : editCode;
+            } else {
+                branchModalTitle.textContent = 'Add New Branch';
+                branchForm.reset();
+                branchCodeInput.disabled = false;
+            }
+
+            branchModalBackdrop.style.display = 'flex';
+        }
+
+        closeModal() {
+            if (branchModalBackdrop) branchModalBackdrop.style.display = 'none';
+        }
+
+        async deleteBranch(bCode, bName) {
+            let deletedBranches = [];
+            try {
+                deletedBranches = JSON.parse(localStorage.getItem('deleted_branches_list')) || [];
+            } catch (err) {}
+            if (!deletedBranches.includes(bCode)) {
+                deletedBranches.push(bCode);
+            }
+            localStorage.setItem('deleted_branches_list', JSON.stringify(deletedBranches));
+
+            let customBranches = [];
+            try {
+                customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
+                customBranches = customBranches.filter(b => b.code !== bCode);
+                localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
+            } catch (err) {}
+
+            if (this.getActiveBranch() === bCode) {
+                localStorage.setItem('user_branch', 'CE');
+            }
+
+            showToast(`Branch "${bName}" deleted.`);
+            this.renderSidebar();
+            renderSubjectsGrid(searchInput ? searchInput.value : '');
+            await autoPublishState();
+        }
+
+        async saveBranch(code, name, editCode) {
+            if (!editCode) {
+                let customBranches = [];
+                try {
+                    customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
+                } catch (err) {}
+
+                customBranches.push({ code, name });
+                localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
+            } else {
+                let modifiedBranches = {};
+                try {
+                    modifiedBranches = JSON.parse(localStorage.getItem('modified_branches_data')) || {};
+                } catch (err) {}
+
+                modifiedBranches[editCode] = { name };
+                localStorage.setItem('modified_branches_data', JSON.stringify(modifiedBranches));
+            }
+
+            this.closeModal();
+            showToast(`Branch "${name}" saved successfully!`);
+            this.renderSidebar();
+            renderSubjectsGrid(searchInput ? searchInput.value : '');
+            await autoPublishState();
+        }
+    }
+
+    const branchService = new BranchManager();
+
     function getActiveBranch() {
-        const activeItem = document.querySelector('.branch-item.active');
-        return activeItem ? activeItem.dataset.branch : (localStorage.getItem('user_branch') || 'CE');
+        return branchService.getActiveBranch();
     }
 
-    // ---------------------------------------------------------
-    // Dynamic Sidebar Branch Renderer & Branch Actions
-    // ---------------------------------------------------------
     function renderBranchesSidebar() {
-        if (!homeBranchList) return;
-
-        const isAdmin = checkAdminState();
-        const availableBranches = typeof window.getAvailableBranches === 'function' 
-            ? window.getAvailableBranches() 
-            : [{ code: 'CE', name: 'CE' }, { code: 'CSE', name: 'CSE' }, { code: 'IT', name: 'IT' }, { code: 'ECE', name: 'ECE' }, { code: 'AIDS', name: 'AI DS' }];
-
-        let activeBranch = localStorage.getItem('user_branch');
-        if (!activeBranch || !availableBranches.some(b => b.code === activeBranch)) {
-            activeBranch = availableBranches[0] ? availableBranches[0].code : 'CE';
-            localStorage.setItem('user_branch', activeBranch);
-        }
-
-        homeBranchList.innerHTML = availableBranches.map(b => `
-            <li style="position: relative; display: flex; align-items: center; justify-content: space-between;">
-                <a href="#" class="branch-item ${b.code === activeBranch ? 'active' : ''}" data-branch="${b.code}" style="flex: 1;">
-                    ${escapeHTML(b.name)}
-                </a>
-                ${isAdmin ? `
-                    <div class="branch-admin-actions" style="display: flex; gap: 4px; padding-right: 6px;">
-                        <button type="button" class="edit-branch-btn" data-code="${b.code}" style="background: transparent; border: none; color: #0ea5e9; cursor: pointer; padding: 4px;" title="Edit Branch">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                        <button type="button" class="delete-branch-btn" data-code="${b.code}" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px;" title="Delete Branch">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                ` : ''}
-            </li>
-        `).join('');
-
-        // Re-attach sidebar click listeners
-        document.querySelectorAll('.branch-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.branch-item').forEach(b => b.classList.remove('active'));
-                item.classList.add('active');
-                const branchName = item.dataset.branch;
-
-                showToast(`Switched to ${item.textContent.trim()} Branch`);
-                localStorage.setItem('user_branch', branchName);
-                renderSubjectsGrid(searchInput ? searchInput.value : '');
-            });
-        });
-
-        // Edit Branch Listener
-        if (isAdmin) {
-            document.querySelectorAll('.edit-branch-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openBranchModal(btn.dataset.code);
-                });
-            });
-
-            // Delete Branch Listener
-            document.querySelectorAll('.delete-branch-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const bCode = btn.dataset.code;
-                    const bObj = availableBranches.find(b => b.code === bCode);
-                    const bName = bObj ? bObj.name : bCode;
-
-                    if (await customConfirm(`Are you sure you want to delete branch "${bName}"?`)) {
-                        let deletedBranches = [];
-                        try {
-                            deletedBranches = JSON.parse(localStorage.getItem('deleted_branches_list')) || [];
-                        } catch (err) {}
-                        if (!deletedBranches.includes(bCode)) {
-                            deletedBranches.push(bCode);
-                        }
-                        localStorage.setItem('deleted_branches_list', JSON.stringify(deletedBranches));
-
-                        let customBranches = [];
-                        try {
-                            customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
-                            customBranches = customBranches.filter(b => b.code !== bCode);
-                            localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
-                        } catch (err) {}
-
-                        if (getActiveBranch() === bCode) {
-                            localStorage.setItem('user_branch', 'CE');
-                        }
-
-                        showToast(`Branch "${bName}" deleted.`);
-                        renderBranchesSidebar();
-                        renderSubjectsGrid(searchInput ? searchInput.value : '');
-                        await autoPublishState();
-                    }
-                });
-            });
-        }
+        branchService.renderSidebar();
     }
 
-    // Branch Modal Handlers
-    function openBranchModal(editCode = null) {
-        if (!branchModalBackdrop) return;
-
-        branchModalEditCode.value = editCode || '';
-        const availableBranches = typeof window.getAvailableBranches === 'function' ? window.getAvailableBranches() : [];
-
-        if (editCode) {
-            const bObj = availableBranches.find(b => b.code === editCode);
-            branchModalTitle.textContent = 'Edit Branch';
-            branchCodeInput.value = editCode;
-            branchCodeInput.disabled = true;
-            branchNameInput.value = bObj ? bObj.name : editCode;
-        } else {
-            branchModalTitle.textContent = 'Add New Branch';
-            branchForm.reset();
-            branchCodeInput.disabled = false;
-        }
-
-        branchModalBackdrop.style.display = 'flex';
-    }
-
-    function closeBranchModal() {
-        if (branchModalBackdrop) branchModalBackdrop.style.display = 'none';
-    }
-
-    if (addBranchBtn) addBranchBtn.addEventListener('click', () => openBranchModal(null));
-    if (closeBranchModalBtn) closeBranchModalBtn.addEventListener('click', closeBranchModal);
-    if (cancelBranchModalBtn) cancelBranchModalBtn.addEventListener('click', closeBranchModal);
+    if (addBranchBtn) addBranchBtn.addEventListener('click', () => branchService.openModal(null));
+    if (closeBranchModalBtn) closeBranchModalBtn.addEventListener('click', () => branchService.closeModal());
+    if (cancelBranchModalBtn) cancelBranchModalBtn.addEventListener('click', () => branchService.closeModal());
 
     if (branchForm) {
         branchForm.addEventListener('submit', async (e) => {
@@ -271,31 +306,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            if (!editCode) {
-                // Add brand new branch
-                let customBranches = [];
-                try {
-                    customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
-                } catch (err) {}
-
-                customBranches.push({ code, name });
-                localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
-            } else {
-                // Edit existing branch
-                let modifiedBranches = {};
-                try {
-                    modifiedBranches = JSON.parse(localStorage.getItem('modified_branches_data')) || {};
-                } catch (err) {}
-
-                modifiedBranches[editCode] = { name };
-                localStorage.setItem('modified_branches_data', JSON.stringify(modifiedBranches));
-            }
-
-            closeBranchModal();
-            showToast(`Branch "${name}" saved successfully!`);
-            renderBranchesSidebar();
-            renderSubjectsGrid(searchInput ? searchInput.value : '');
-            await autoPublishState();
+            await branchService.saveBranch(code, name, editCode);
         });
     }
 
