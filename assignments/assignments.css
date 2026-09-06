@@ -2074,6 +2074,222 @@ body {
     color: var(--text-dark);
 }
 
+/* Full View PDF Modal Styles */
+.full-view-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.full-view-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.full-view-card {
+    background: var(--card-bg, #1e293b);
+    color: var(--text-dark, #f8fafc);
+    border: 2px solid var(--card-border, #334155);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 920px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.full-view-backdrop.active .full-view-card {
+    transform: scale(1) translateY(0);
+}
+
+.full-view-header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 1.2rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #334155;
+}
+
+.full-view-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.full-view-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.download-modal-btn {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.download-modal-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.full-view-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+    background: var(--page-bg, #0f172a);
+}
+
+/* Discussion & Comment Drawer Modal Styles */
+.comment-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1800;
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.comment-modal-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.comment-drawer {
+    width: 100%;
+    max-width: 480px;
+    height: 100%;
+    background: var(--card-bg, #1e293b);
+    color: var(--text-dark, #f8fafc);
+    border-left: 2px solid var(--card-border, #334155);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.comment-modal-backdrop.active .comment-drawer {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #334155;
+}
+
+.drawer-title-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.close-drawer-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-drawer-btn:hover {
+    color: #ffffff;
+}
+
+.drawer-body {
+    flex: 1;
+    padding: 1.25rem;
+    overflow-y: auto;
+}
+
+.drawer-footer {
+    padding: 1.25rem;
+    background: #0f172a;
+    border-top: 1px solid #334155;
+}
+
+.drawer-footer .input-group {
+    margin-bottom: 0.75rem;
+}
+
+.drawer-footer input,
+.drawer-footer textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #ffffff;
+    font-size: 0.9rem;
+}
+
+.submit-comment-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.submit-comment-btn:hover {
+    background: #1d4ed8;
+}
+
 @media (max-width: 900px) {
     .form-grid-3,
     .form-grid-2 {
@@ -2089,4 +2305,5 @@ body {
         width: 100%;
         justify-content: center;
     }
-}
+}
+

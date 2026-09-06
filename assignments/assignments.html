@@ -318,7 +318,31 @@
         </div>
     </div>
 
+    <!-- Full PDF Preview Modal -->
+    <div class="full-view-backdrop" id="fullViewModal">
+        <div class="full-view-card">
+            <div class="full-view-header">
+                <div class="full-view-title-group">
+                    <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i>
+                    <h3 id="fullViewFileName">Document Preview</h3>
+                </div>
+                <div class="full-view-actions">
+                    <button class="download-modal-btn" id="fullViewDownloadBtn">
+                        <i class="fa-solid fa-download"></i> Download PDF
+                    </button>
+                    <button class="close-modal-btn" id="closeFullViewModal">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="full-view-body" id="fullViewContent">
+                <!-- PDF preview content rendered dynamically -->
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
+
     <div class="toast-notification" id="toast">
         <i class="fa-solid fa-circle-check"></i>
         <span id="toastMessage">Action completed successfully!</span>
