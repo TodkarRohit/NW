@@ -2004,6 +2004,116 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     --border-subtle: #475569;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
+    --text-heading: #ffffff;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   3-Mode PDF Reader Switcher (1st: Normal, 2nd: Full Site, 3rd: Full Screen)
+   ========================================================================== */
+.pdf-mode-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 3px;
+    border-radius: 20px;
+    gap: 2px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.pdf-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.pdf-mode-btn:hover {
+    color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.pdf-mode-btn.active {
+    background: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+/* 2nd Mode: Full Site View (Expanded in Page) */
+body.full-site-mode .assignments-header,
+body.full-site-mode .viewer-header {
+    display: none !important;
+}
+
+body.full-site-mode .sidebar-panel {
+    margin-left: calc(-1 * var(--sidebar-width)) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.full-site-mode .preview-panel {
+    padding: 0.5rem !important;
+}
+
+body.full-site-mode .notes-document {
+    padding: 0.5rem !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.full-site-mode .structure-header {
+    display: flex !important;
+    padding-bottom: 0.4rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+body.full-site-mode .chapter-pagination {
+    display: none !important;
+}
+
+body.full-site-mode .doc-preview-body iframe,
+body.full-site-mode .doc-preview-body embed {
+    height: calc(100vh - 110px) !important;
+    min-height: 550px !important;
+}
+
+/* 3rd Mode: Native Browser Full Screen */
+.uploaded-document-card:fullscreen,
+.uploaded-document-card:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #0f172a !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.uploaded-document-card:fullscreen .doc-preview-body,
+.uploaded-document-card:-webkit-full-screen .doc-preview-body {
+    flex: 1 !important;
+    height: calc(100vh - 50px) !important;
+    padding: 0 !important;
+    background: #000 !important;
+}
+
+.uploaded-document-card:fullscreen .doc-preview-body iframe,
+.uploaded-document-card:-webkit-full-screen .doc-preview-body iframe {
+    height: 100% !important;
+    border-radius: 0 !important;
+}
+    --text-muted: #94a3b8;
     --text-heading: #e2e8f0;
     --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }

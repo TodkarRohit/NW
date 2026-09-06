@@ -144,8 +144,8 @@
 
             <!-- Document Meta Bar -->
             <div class="preview-meta-bar">
-                <div class="meta-info" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <button id="toggleSidebarDesktopBtn" class="toggle-sidebar-btn" title="Toggle Chapter List Sidebar" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-heading); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                <div class="meta-info" style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <button id="toggleSidebarDesktopBtn" class="toggle-sidebar-btn" title="Toggle Chapter List Sidebar" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-heading); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                         <i class="fa-solid fa-bars-staggered" id="toggleSidebarIcon"></i>
                         <span id="toggleSidebarText">Hide Sidebar</span>
                     </button>
@@ -154,11 +154,25 @@
                         <strong class="current-chapter-title" id="currentChapterName">Loading...</strong>
                     </div>
                 </div>
-                <div class="status-indicator" id="itemUploadStatus">
-                    <span class="status-dot"></span>
-                    <span id="statusText">Ready for Upload</span>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <div class="pdf-mode-switcher" id="metaPdfModeSwitcher">
+                        <button class="pdf-mode-btn active" data-mode="normal" title="1st Mode: Normal View">
+                            <i class="fa-solid fa-table-cells-large"></i> <span>1st Mode</span>
+                        </button>
+                        <button class="pdf-mode-btn" data-mode="fullsite" title="2nd Mode: Full Site View">
+                            <i class="fa-solid fa-expand"></i> <span>2nd Mode</span>
+                        </button>
+                        <button class="pdf-mode-btn" data-mode="fullscreen" title="3rd Mode: Monitor Full Screen">
+                            <i class="fa-solid fa-maximize"></i> <span>3rd Mode</span>
+                        </button>
+                    </div>
+                    <div class="status-indicator" id="itemUploadStatus">
+                        <span class="status-dot"></span>
+                        <span id="statusText">Ready for Upload</span>
+                    </div>
                 </div>
-            </div>
+            </div>  </div>
 
             <!-- Notes Document / Assignment Preview Container -->
             <article class="notes-document" id="notesDocument">

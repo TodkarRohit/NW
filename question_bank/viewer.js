@@ -481,9 +481,22 @@ document.addEventListener('DOMContentLoaded', () => {
             notesDocument.innerHTML = `
                 ${qbTabBarHTML}
 
-                <div class="structure-header">
-                    <h2>${currentItem.title} ${isQB ? `(${currentQBView === 'questions' ? 'Question Paper' : 'Answer Key & Solutions'})` : ''}</h2>
-                    <p>${subjectData.title} &bull; ${typeLabel}</p>
+                <div class="structure-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h2>${currentItem.title} ${isQB ? `(${currentQBView === 'questions' ? 'Question Paper' : 'Answer Key & Solutions'})` : ''}</h2>
+                        <p>${subjectData.title} &bull; ${typeLabel}</p>
+                    </div>
+                    <div class="pdf-mode-switcher">
+                        <button class="pdf-mode-btn active" data-mode="normal" title="1st Mode: Normal View">
+                            <i class="fa-solid fa-table-cells-large"></i> <span>1st Mode</span>
+                        </button>
+                        <button class="pdf-mode-btn" data-mode="fullsite" title="2nd Mode: Full Site View">
+                            <i class="fa-solid fa-expand"></i> <span>2nd Mode</span>
+                        </button>
+                        <button class="pdf-mode-btn" data-mode="fullscreen" title="3rd Mode: Monitor Full Screen">
+                            <i class="fa-solid fa-maximize"></i> <span>3rd Mode</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="uploaded-document-card">
@@ -509,11 +522,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="doc-meta">Uploaded on ${docData.date} &bull; ${(docData.size / 1024).toFixed(1)} KB</div>
                             </div>
                         </div>
-                        <div class="doc-actions">
-                            ${isAdminMode ? `
-                                <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
-                                <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
-                            ` : ''}
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div class="pdf-mode-switcher">
+                                <button class="pdf-mode-btn active" data-mode="normal" title="1st Mode: Normal View">
+                                    <i class="fa-solid fa-table-cells-large"></i> <span>1st Mode</span>
+                                </button>
+                                <button class="pdf-mode-btn" data-mode="fullsite" title="2nd Mode: Full Site View">
+                                    <i class="fa-solid fa-expand"></i> <span>2nd Mode</span>
+                                </button>
+                                <button class="pdf-mode-btn" data-mode="fullscreen" title="3rd Mode: Monitor Full Screen">
+                                    <i class="fa-solid fa-maximize"></i> <span>3rd Mode</span>
+                                </button>
+                            </div>
+                            <div class="doc-actions">
+                                ${isAdminMode ? `
+                                    <button class="doc-action-btn" id="reUploadBtn">Replace ${isQB ? (currentQBView === 'questions' ? 'Question' : 'Answer') : ''} File</button>
+                                    <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1367,6 +1393,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let activePdfMode = 'normal';
+
+    function setPdfViewMode(mode) {
+        activePdfMode = mode;
+        const body = document.body;
+        const docCard = document.querySelector('.uploaded-document-card') || document.getElementById('notesDocument');
+
+        body.classList.remove('full-site-mode');
+
+        if (mode === 'normal') {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        } else if (mode === 'fullsite') {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+            body.classList.add('full-site-mode');
+        } else if (mode === 'fullscreen') {
+            if (docCard) {
+                if (docCard.requestFullscreen) {
+                    docCard.requestFullscreen().catch(() => {});
+                } else if (docCard.webkitRequestFullscreen) {
+                    docCard.webkitRequestFullscreen();
+                } else if (docCard.msRequestFullscreen) {
+                    docCard.msRequestFullscreen();
+                }
+            }
+        }
+
+        document.querySelectorAll('.pdf-mode-btn').forEach(btn => {
+            if (btn.dataset.mode === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        try { localStorage.setItem('pdfViewMode', mode); } catch (e) {}
+    }
+
+    function initPdfViewModeSwitcher() {
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.pdf-mode-btn');
+            if (btn && btn.dataset.mode) {
+                setPdfViewMode(btn.dataset.mode);
+            }
+        });
+
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (activePdfMode === 'fullscreen') {
+                    setPdfViewMode('normal');
+                }
+            }
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+        const savedMode = localStorage.getItem('pdfViewMode');
+        if (savedMode && ['normal', 'fullsite', 'fullscreen'].includes(savedMode)) {
+            if (savedMode !== 'fullscreen') {
+                setPdfViewMode(savedMode);
+            }
+        }
+    }
+
     function initSidebarToggle() {
         const sidebarPanel = document.getElementById('sidebarPanel');
         const toggleSidebarDesktopBtn = document.getElementById('toggleSidebarDesktopBtn');
@@ -1402,6 +1498,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function init() {
         initSidebarToggle();
+        initPdfViewModeSwitcher();
         // Synchronously render UI first
         refreshDataAndUI();
 
