@@ -82,6 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const publishStateBtn = document.getElementById('publishStateBtn');
+
     function checkAdminState() {
         const user = window.authService ? window.authService.getUser() : null;
         const uname = user ? String(user.username || '').toLowerCase() : '';
@@ -93,8 +95,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (addSubjectBtn) addSubjectBtn.style.display = isAdmin ? 'inline-flex' : 'none';
         if (addBranchBtn) addBranchBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        if (publishStateBtn) publishStateBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
         return isAdmin;
+    }
+
+    if (publishStateBtn) {
+        publishStateBtn.addEventListener('click', async () => {
+            publishStateBtn.disabled = true;
+            const originalHTML = publishStateBtn.innerHTML;
+            publishStateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Publishing...</span>';
+            showToast('Syncing changes & cleaning Cloud storage...');
+
+            try {
+                if (window.supabaseRealtime) {
+                    if (window.supabaseRealtime.cleanOrphans) {
+                        await window.supabaseRealtime.cleanOrphans();
+                    }
+                    if (window.supabaseRealtime.pushAndBroadcast) {
+                        await window.supabaseRealtime.pushAndBroadcast();
+                    }
+                }
+                showToast('Published all changes live to Supabase Cloud!');
+            } catch (err) {
+                console.error('Publish error:', err);
+                showToast('Failed to publish changes: ' + (err.message || 'Error'));
+            } finally {
+                publishStateBtn.disabled = false;
+                publishStateBtn.innerHTML = originalHTML;
+            }
+        });
     }
 
     function getActiveBranch() {

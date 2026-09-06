@@ -25,6 +25,10 @@
         </div>
 
         <div class="header-right-actions">
+            <button id="publishStateBtn" class="publish-state-btn" style="display: none;" title="Publish all changes live to Supabase Cloud">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span class="publish-btn-text">Publish Changes</span>
+            </button>
             <button id="adminToggleBtn" class="admin-toggle-btn" title="Toggle Admin Login">
                 <i class="fa-solid fa-user-shield"></i>
                 <span id="adminBtnText">Login Mode</span>
@@ -226,6 +230,7 @@
                 </button>
             </div>
         </div>
+    </div>
     <!-- Add/Edit Branch Modal for Admin -->
     <div class="admin-upload-backdrop" id="branchModalBackdrop" style="display: none;">
         <div class="admin-upload-card" style="max-width: 440px; width: 90%;">

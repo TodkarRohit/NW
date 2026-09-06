@@ -435,6 +435,9 @@
     async function pushAndBroadcastStateChange() {
         if (!window.supabaseClient) return;
 
+        // Automatically clean loose/orphaned files at root of storage bucket
+        await cleanOrphanedSupabaseStorage();
+
         const exportData = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -446,7 +449,10 @@
                 key.startsWith('deleted_keys_') ||
                 key.startsWith('custom_subjects_') ||
                 key.startsWith('modified_subjects_') ||
-                key.startsWith('deleted_subjects_')
+                key.startsWith('deleted_subjects_') ||
+                key.startsWith('custom_branches_') ||
+                key.startsWith('modified_branches_') ||
+                key.startsWith('deleted_branches_')
             ) {
                 exportData[key] = localStorage.getItem(key);
             }
@@ -475,18 +481,57 @@
     async function deleteSupabaseFolder(folderPath) {
         if (!window.supabaseClient || !folderPath) return;
         try {
-            const { data: files } = await window.supabaseClient.storage
-                .from('academic-files')
-                .list(folderPath);
+            const listAllFiles = async (path) => {
+                const { data: items } = await window.supabaseClient.storage
+                    .from('academic-files')
+                    .list(path);
+                if (!items || items.length === 0) return [];
+                let files = [];
+                for (const item of items) {
+                    const itemPath = path ? `${path}/${item.name}` : item.name;
+                    if (item.id) {
+                        files.push(itemPath);
+                    } else {
+                        const subFiles = await listAllFiles(itemPath);
+                        files = files.concat(subFiles);
+                    }
+                }
+                return files;
+            };
 
-            if (files && files.length > 0) {
-                const pathsToRemove = files.map(f => `${folderPath}/${f.name}`);
+            const filesToRemove = await listAllFiles(folderPath);
+            if (filesToRemove.length > 0) {
                 await window.supabaseClient.storage
                     .from('academic-files')
-                    .remove(pathsToRemove);
+                    .remove(filesToRemove);
             }
         } catch (err) {
             console.error(`Error deleting Supabase folder "${folderPath}":`, err);
+        }
+    }
+
+    async function cleanOrphanedSupabaseStorage() {
+        if (!window.supabaseClient) return;
+        try {
+            const { data: rootItems } = await window.supabaseClient.storage
+                .from('academic-files')
+                .list('');
+
+            if (rootItems && rootItems.length > 0) {
+                const allowedFolders = ['notes', 'assignments', 'question_bank', 'published_state'];
+                const looseFiles = rootItems
+                    .filter(item => item.id && !allowedFolders.includes(item.name))
+                    .map(item => item.name);
+
+                if (looseFiles.length > 0) {
+                    console.log('Cleaning loose root files from Supabase:', looseFiles);
+                    await window.supabaseClient.storage
+                        .from('academic-files')
+                        .remove(looseFiles);
+                }
+            }
+        } catch (err) {
+            console.warn('Error cleaning loose files from Supabase:', err);
         }
     }
 
@@ -498,7 +543,8 @@
         },
         pushAndBroadcast: pushAndBroadcastStateChange,
         pullLatest: pullLatestStateFromSupabase,
-        deleteFolder: deleteSupabaseFolder
+        deleteFolder: deleteSupabaseFolder,
+        cleanOrphans: cleanOrphanedSupabaseStorage
     };
 
     // Initialize once DOM is ready

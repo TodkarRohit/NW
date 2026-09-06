@@ -128,6 +128,7 @@ function loadCustomSubjectsIntoData() {
     } catch(e) {
         console.error("Error loading custom subjects into subjectsData:", e);
     }
+}
 loadCustomSubjectsIntoData();
 window.loadCustomSubjectsIntoData = loadCustomSubjectsIntoData;
 
