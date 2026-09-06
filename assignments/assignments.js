@@ -76,6 +76,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ---------------------------------------------------------
     // 3. Resolve Current Subject and Chapters
     // ---------------------------------------------------------
+    if (typeof window.loadCustomSubjectsIntoData === 'function') {
+        window.loadCustomSubjectsIntoData();
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     let subjectKey = urlParams.get('subject') || 'dsa';
 

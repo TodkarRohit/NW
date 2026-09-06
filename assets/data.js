@@ -288,20 +288,45 @@ class NavigationManager {
         const assLink = document.getElementById('tabAssLink') || document.getElementById('assNavBtn');
         const backBtn = document.getElementById('backToHome') || document.querySelector('.back-btn');
 
+        // Check configured subject resources
+        let res = { notes: true, qb: true, assignments: true };
+        let normKey = subjectKey ? subjectKey.toLowerCase() : '';
+        if (normKey === 'math') normKey = 'maths';
+        if (normKey === 'coa') normKey = 'hardware';
+
+        if (typeof subjectsData !== 'undefined' && subjectsData[normKey] && subjectsData[normKey].resources) {
+            res = subjectsData[normKey].resources;
+        }
+
         if (notesLink) {
-            notesLink.href = this.getNotesUrl(subjectKey);
-            if (activeTab === 'notes') notesLink.classList.add('active');
-            else notesLink.classList.remove('active');
+            if (res.notes !== false) {
+                notesLink.style.display = 'inline-flex';
+                notesLink.href = this.getNotesUrl(subjectKey);
+                if (activeTab === 'notes') notesLink.classList.add('active');
+                else notesLink.classList.remove('active');
+            } else {
+                notesLink.style.display = 'none';
+            }
         }
         if (qbLink) {
-            qbLink.href = this.getQuestionBankUrl(subjectKey);
-            if (activeTab === 'qb') qbLink.classList.add('active');
-            else qbLink.classList.remove('active');
+            if (res.qb !== false) {
+                qbLink.style.display = 'inline-flex';
+                qbLink.href = this.getQuestionBankUrl(subjectKey);
+                if (activeTab === 'qb') qbLink.classList.add('active');
+                else qbLink.classList.remove('active');
+            } else {
+                qbLink.style.display = 'none';
+            }
         }
         if (assLink) {
-            assLink.href = this.getAssignmentsUrl(subjectKey);
-            if (activeTab === 'assignments') assLink.classList.add('active');
-            else assLink.classList.remove('active');
+            if (res.assignments !== false) {
+                assLink.style.display = 'inline-flex';
+                assLink.href = this.getAssignmentsUrl(subjectKey);
+                if (activeTab === 'assignments') assLink.classList.add('active');
+                else assLink.classList.remove('active');
+            } else {
+                assLink.style.display = 'none';
+            }
         }
         if (backBtn && backBtn.tagName === 'A') {
             backBtn.href = this.getHomeUrl();
