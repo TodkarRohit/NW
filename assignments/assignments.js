@@ -1566,7 +1566,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, "&#039;");
     }
 
-    // Initial load
+    // Initial load & Realtime Sync
+    if (window.supabaseRealtime) {
+        window.supabaseRealtime.subscribe(async () => {
+            await fetchAssignments();
+            renderChapterNav();
+            renderAssignments(searchInput ? searchInput.value : '');
+        });
+    }
+
     await fetchAssignments();
     renderChapterNav();
     updateAdminUI();

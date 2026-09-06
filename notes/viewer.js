@@ -1211,45 +1211,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function autoPublishState() {
-        const user = window.authService ? window.authService.getUser() : null;
-        const uname = user ? String(user.username || '').toLowerCase() : '';
-        const uemail = user ? String(user.email || '').toLowerCase() : '';
-        const isAdmin = (
-            localStorage.getItem('isAdminMode') === 'true' ||
-            (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
-        );
-
-        if (!isAdmin) return;
-
-        const exportData = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (
-                key.startsWith('doc_upload_') ||
-                key.startsWith('custom_items_') ||
-                key.startsWith('modified_items_') ||
-                key.startsWith('custom_assignments_') ||
-                key.startsWith('deleted_keys_')
-            ) {
-                exportData[key] = localStorage.getItem(key);
-            }
-        }
-
-        const jsonString = JSON.stringify(exportData);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        
-        // Upload both subject-specific state file and global app_data.json backup
-        const fileNames = [
-            `published_state/${subjectKey}_${resourceType}_state.json`,
-            `published_state/app_data.json`
-        ];
-
-        for (const fileName of fileNames) {
-            const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
-            if (error) {
-                console.error(`Auto-publish error (${fileName}):`, error);
-                throw error;
-            }
+        if (window.supabaseRealtime && window.supabaseRealtime.pushAndBroadcast) {
+            await window.supabaseRealtime.pushAndBroadcast();
         }
     }
 
@@ -1355,6 +1318,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 initialIndex = savedIndex;
             }
         } catch (e) {}
+
+        if (window.supabaseRealtime) {
+            window.supabaseRealtime.subscribe(() => {
+                init();
+            });
+        }
 
         renderItemList();
         loadItemContent(initialIndex);

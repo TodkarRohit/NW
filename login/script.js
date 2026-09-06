@@ -276,6 +276,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         showToast(`Subject "${title}" deleted.`);
                         renderSubjectsGrid(searchInput ? searchInput.value : '');
+
+                        if (window.supabaseRealtime && window.supabaseRealtime.deleteFolder) {
+                            await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
+                            await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
+                            await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
+                        }
+
                         await autoPublishState();
                     }
                 });
@@ -482,30 +489,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isAdmin = checkAdminState();
         if (!isAdmin || !window.supabaseClient) return;
 
-        const exportData = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (
-                key.startsWith('doc_upload_') ||
-                key.startsWith('custom_items_') ||
-                key.startsWith('modified_items_') ||
-                key.startsWith('custom_assignments_') ||
-                key.startsWith('deleted_keys_') ||
-                key.startsWith('custom_subjects_') ||
-                key.startsWith('modified_subjects_') ||
-                key.startsWith('deleted_subjects_')
-            ) {
-                exportData[key] = localStorage.getItem(key);
-            }
-        }
-
-        const jsonString = JSON.stringify(exportData);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-
-        try {
-            await window.supabaseClient.storage.from('academic-files').upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true });
-        } catch (err) {
-            console.error('Auto publish error:', err);
+        if (window.supabaseRealtime && window.supabaseRealtime.pushAndBroadcast) {
+            await window.supabaseRealtime.pushAndBroadcast();
         }
     }
 
@@ -633,23 +618,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Subscribe to Realtime Supabase updates
+    if (window.supabaseRealtime) {
+        window.supabaseRealtime.subscribe(() => {
+            renderSubjectsGrid(searchInput ? searchInput.value : '');
+        });
+    }
+
     // Initial Load & Cloud Sync
     async function init() {
-        if (window.supabaseClient) {
-            try {
-                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl('published_state/app_data.json');
-                const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
-                if (res.ok) {
-                    const publishedData = await res.json();
-                    for (const key in publishedData) {
-                        localStorage.setItem(key, publishedData[key]);
-                    }
-                }
-            } catch (e) {
-                console.warn('Cloud sync error on home init:', e);
-            }
+        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
+            await window.supabaseRealtime.pullLatest();
         }
-
         renderSubjectsGrid();
     }
 

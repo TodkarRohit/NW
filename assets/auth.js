@@ -328,11 +328,186 @@
     // Expose authService globally
     window.authService = authService;
 
+    // ---------------------------------------------------------
+    // Supabase Realtime Synchronization Service
+    // Handles real-time folder/file additions, updates, deletions
+    // ---------------------------------------------------------
+    let realtimeChannel = null;
+    const registeredRealtimeCallbacks = [];
+
+    function initSupabaseRealtime() {
+        if (!window.supabaseClient) return;
+
+        try {
+            realtimeChannel = window.supabaseClient.channel('academic_hub_realtime', {
+                config: { broadcast: { self: true } }
+            });
+
+            realtimeChannel
+                .on('broadcast', { event: 'academic_state_updated' }, async (payload) => {
+                    await pullLatestStateFromSupabase();
+                    registeredRealtimeCallbacks.forEach(cb => {
+                        try { cb(payload); } catch (e) {}
+                    });
+                })
+                .subscribe();
+        } catch (e) {
+            console.warn('Realtime channel init warning:', e);
+        }
+
+        // Periodic Fallback Sync Check (every 6 seconds)
+        let lastSyncCheck = 0;
+        setInterval(async () => {
+            const now = Date.now();
+            if (now - lastSyncCheck > 5000) {
+                lastSyncCheck = now;
+                const updated = await checkStateUpdateTimestamp();
+                if (updated) {
+                    registeredRealtimeCallbacks.forEach(cb => {
+                        try { cb(); } catch (e) {}
+                    });
+                }
+            }
+        }, 6000);
+    }
+
+    async function pullLatestStateFromSupabase() {
+        if (!window.supabaseClient) return;
+        try {
+            const { data: urlData } = window.supabaseClient.storage
+                .from('academic-files')
+                .getPublicUrl('published_state/app_data.json');
+
+            const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
+            if (res.ok) {
+                const publishedData = await res.json();
+                
+                let cloudDeleted = [];
+                try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch (e) {}
+                let localDeleted = [];
+                try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch (e) {}
+                const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
+                localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
+
+                mergedDeleted.forEach(delKey => {
+                    localStorage.removeItem(delKey);
+                });
+
+                for (const key in publishedData) {
+                    if (!mergedDeleted.includes(key)) {
+                        localStorage.setItem(key, publishedData[key]);
+                    }
+                }
+
+                if (typeof loadCustomSubjectsIntoData === 'function') {
+                    loadCustomSubjectsIntoData();
+                }
+            }
+        } catch (e) {
+            console.warn('Error pulling state from Supabase:', e);
+        }
+    }
+
+    let lastKnownTimestamp = 0;
+    async function checkStateUpdateTimestamp() {
+        if (!window.supabaseClient) return false;
+        try {
+            const { data } = await window.supabaseClient.storage
+                .from('academic-files')
+                .list('published_state', { search: 'app_data.json' });
+
+            if (data && data.length > 0) {
+                const fileInfo = data[0];
+                const updatedTime = new Date(fileInfo.updated_at || fileInfo.created_at).getTime();
+                if (updatedTime > lastKnownTimestamp) {
+                    if (lastKnownTimestamp > 0) {
+                        lastKnownTimestamp = updatedTime;
+                        await pullLatestStateFromSupabase();
+                        return true;
+                    }
+                    lastKnownTimestamp = updatedTime;
+                }
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    async function pushAndBroadcastStateChange() {
+        if (!window.supabaseClient) return;
+
+        const exportData = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (
+                key.startsWith('doc_upload_') ||
+                key.startsWith('custom_items_') ||
+                key.startsWith('modified_items_') ||
+                key.startsWith('custom_assignments_') ||
+                key.startsWith('deleted_keys_') ||
+                key.startsWith('custom_subjects_') ||
+                key.startsWith('modified_subjects_') ||
+                key.startsWith('deleted_subjects_')
+            ) {
+                exportData[key] = localStorage.getItem(key);
+            }
+        }
+
+        const jsonString = JSON.stringify(exportData);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        try {
+            await window.supabaseClient.storage
+                .from('academic-files')
+                .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true });
+
+            if (realtimeChannel) {
+                await realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'academic_state_updated',
+                    payload: { timestamp: Date.now() }
+                });
+            }
+        } catch (e) {
+            console.error('Error broadcasting state change to Supabase:', e);
+        }
+    }
+
+    async function deleteSupabaseFolder(folderPath) {
+        if (!window.supabaseClient || !folderPath) return;
+        try {
+            const { data: files } = await window.supabaseClient.storage
+                .from('academic-files')
+                .list(folderPath);
+
+            if (files && files.length > 0) {
+                const pathsToRemove = files.map(f => `${folderPath}/${f.name}`);
+                await window.supabaseClient.storage
+                    .from('academic-files')
+                    .remove(pathsToRemove);
+            }
+        } catch (err) {
+            console.error(`Error deleting Supabase folder "${folderPath}":`, err);
+        }
+    }
+
+    window.supabaseRealtime = {
+        subscribe: function (callback) {
+            if (typeof callback === 'function' && !registeredRealtimeCallbacks.includes(callback)) {
+                registeredRealtimeCallbacks.push(callback);
+            }
+        },
+        pushAndBroadcast: pushAndBroadcastStateChange,
+        pullLatest: pullLatestStateFromSupabase,
+        deleteFolder: deleteSupabaseFolder
+    };
+
     // Initialize once DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
         authService.updateHeaderUI();
+        initSupabaseRealtime();
     });
 })();
+
 
 
 
