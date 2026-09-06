@@ -713,7 +713,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         adminUploadPortalSection.innerHTML = '';
     }
 
-    function updateUploadChapterDropdown(targetSubKey) {
+    function syncGetUnitMod(sKey, itemId, unitName, idx) {
+        if (!sKey) return null;
+        const norm = sKey.toLowerCase();
+        const alias = norm === 'math' ? 'maths' : (norm === 'coa' ? 'hardware' : norm);
+        const keysToCheck = [
+            `modified_units_${norm}`,
+            `modified_units_${alias}`,
+            `modified_items_${norm}_notes`,
+            `modified_items_${alias}_notes`,
+            `modified_items_${norm}_question_bank`,
+            `modified_items_${alias}_question_bank`,
+            `modified_items_${norm}_assignments`,
+            `modified_items_${alias}_assignments`
+        ];
+
+        for (const k of keysToCheck) {
+            try {
+                const data = JSON.parse(localStorage.getItem(k));
+                if (data && typeof data === 'object') {
+                    if (itemId && data[itemId]) return data[itemId];
+                    if (unitName && data[unitName]) return data[unitName];
+                    if (idx !== undefined && idx !== null && data[`unit_idx_${idx}`]) return data[`unit_idx_${idx}`];
+                }
+            } catch (e) {}
+        }
+        return null;
+    }
+
+    function updateUploadChapterDropdown(targetSubKey = null) {
         const modalSelect = document.getElementById('uploadChapterSelect');
         if (!modalSelect) return;
 
@@ -770,10 +798,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             chaptersToUse = fallbackMap[normKey] || fallbackMap['maths'];
         }
 
-        modalSelect.innerHTML = chaptersToUse.map(ch => {
+        modalSelect.innerHTML = chaptersToUse.map((ch, idx) => {
+            const syncMod = syncGetUnitMod(normKey, ch.id, ch.unit, idx);
             const val = ch.id || ch.unit || 'unit-1';
-            const label = (ch.unit ? `${ch.unit}: ` : '') + (ch.name || ch.title || 'Unit');
-            return `<option value="${escapeHtml(val)}">${escapeHtml(label)}</option>`;
+            const nameToUse = (syncMod && syncMod.name) ? syncMod.name : (ch.name || ch.title || 'Unit');
+            const titleToUse = (syncMod && syncMod.title) ? syncMod.title : ((ch.unit ? `${ch.unit}: ` : '') + nameToUse);
+            return `<option value="${escapeHtml(val)}">${escapeHtml(titleToUse)}</option>`;
         }).join('');
     }
 

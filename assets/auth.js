@@ -474,6 +474,7 @@
                 key.startsWith('doc_upload_') ||
                 key.startsWith('custom_items_') ||
                 key.startsWith('modified_items_') ||
+                key.startsWith('modified_units_') ||
                 key.startsWith('custom_assignments_') ||
                 key.startsWith('deleted_keys_') ||
                 key.startsWith('custom_subjects_') ||

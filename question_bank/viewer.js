@@ -196,8 +196,69 @@ document.addEventListener('DOMContentLoaded', () => {
         modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
     } catch (e) {}
 
-    items.forEach(item => {
-        if (modifiedItems[item.id]) {
+    function syncSaveUnitMod(sKey, idx, itemObj, newTitle, newName) {
+        if (!sKey) return;
+        const norm = sKey.toLowerCase();
+        const alias = norm === 'math' ? 'maths' : (norm === 'coa' ? 'hardware' : norm);
+        const modObj = { title: newTitle, name: newName };
+
+        [norm, alias].forEach(k => {
+            const gKey = `modified_units_${k}`;
+            try {
+                let gMods = JSON.parse(localStorage.getItem(gKey)) || {};
+                if (itemObj && itemObj.id) gMods[itemObj.id] = modObj;
+                if (itemObj && itemObj.unit) gMods[itemObj.unit] = modObj;
+                gMods[`unit_idx_${idx}`] = modObj;
+                localStorage.setItem(gKey, JSON.stringify(gMods));
+            } catch (e) {}
+
+            ['notes', 'question_bank', 'assignments'].forEach(rType => {
+                const rKey = `modified_items_${k}_${rType}`;
+                try {
+                    let rMods = JSON.parse(localStorage.getItem(rKey)) || {};
+                    if (itemObj && itemObj.id) rMods[itemObj.id] = modObj;
+                    if (itemObj && itemObj.unit) rMods[itemObj.unit] = modObj;
+                    rMods[`unit_idx_${idx}`] = modObj;
+                    localStorage.setItem(rKey, JSON.stringify(rMods));
+                } catch (e) {}
+            });
+        });
+    }
+
+    function syncGetUnitMod(sKey, itemId, unitName, idx) {
+        if (!sKey) return null;
+        const norm = sKey.toLowerCase();
+        const alias = norm === 'math' ? 'maths' : (norm === 'coa' ? 'hardware' : norm);
+        const keysToCheck = [
+            `modified_units_${norm}`,
+            `modified_units_${alias}`,
+            `modified_items_${norm}_notes`,
+            `modified_items_${alias}_notes`,
+            `modified_items_${norm}_question_bank`,
+            `modified_items_${alias}_question_bank`,
+            `modified_items_${norm}_assignments`,
+            `modified_items_${alias}_assignments`
+        ];
+
+        for (const k of keysToCheck) {
+            try {
+                const data = JSON.parse(localStorage.getItem(k));
+                if (data && typeof data === 'object') {
+                    if (itemId && data[itemId]) return data[itemId];
+                    if (unitName && data[unitName]) return data[unitName];
+                    if (idx !== undefined && idx !== null && data[`unit_idx_${idx}`]) return data[`unit_idx_${idx}`];
+                }
+            } catch (e) {}
+        }
+        return null;
+    }
+
+    items.forEach((item, idx) => {
+        const syncMod = syncGetUnitMod(subjectKey, item.id, item.unit, idx);
+        if (syncMod) {
+            if (syncMod.title) item.title = syncMod.title;
+            if (syncMod.name) item.name = syncMod.name;
+        } else if (modifiedItems[item.id]) {
             item.title = modifiedItems[item.id].title;
             item.name = modifiedItems[item.id].name;
         }
@@ -1247,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         modifiedItems[items[idx].id] = { title, name };
                         localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
                     }
+                    syncSaveUnitMod(subjectKey, idx, items[idx], title, name);
                     if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
                 }
             } else {
