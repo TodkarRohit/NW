@@ -98,3 +98,37 @@ const subjectsData = {
 subjectsData["math"] = subjectsData["maths"];
 subjectsData["coa"] = subjectsData["hardware"];
 
+function loadCustomSubjectsIntoData() {
+    try {
+        const deletedList = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+        deletedList.forEach(id => {
+            delete subjectsData[id];
+        });
+
+        const modifiedData = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+        for (const id in modifiedData) {
+            if (subjectsData[id]) {
+                Object.assign(subjectsData[id], modifiedData[id]);
+            }
+        }
+
+        const customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+        customList.forEach(subj => {
+            if (subj && subj.id) {
+                subjectsData[subj.id] = subj;
+            }
+        });
+
+        // Ensure all subjects have branches property
+        for (const key in subjectsData) {
+            if (!subjectsData[key].branches || !Array.isArray(subjectsData[key].branches) || subjectsData[key].branches.length === 0) {
+                subjectsData[key].branches = ["ALL"];
+            }
+        }
+    } catch(e) {
+        console.error("Error loading custom subjects into subjectsData:", e);
+    }
+}
+loadCustomSubjectsIntoData();
+
+
