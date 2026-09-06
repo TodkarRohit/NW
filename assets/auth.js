@@ -517,7 +517,3 @@
         initSupabaseRealtime();
     });
 })();
-
-
-
-

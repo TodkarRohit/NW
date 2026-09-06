@@ -1445,13 +1445,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     init();
 });
-
-
-
-
-
-
-
-
-
-

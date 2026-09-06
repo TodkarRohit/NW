@@ -1388,13 +1388,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     init();
 });
-
-
-
-
-
-
-
-
-
-

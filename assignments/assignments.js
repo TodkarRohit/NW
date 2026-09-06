@@ -1755,11 +1755,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-
-
-
-
-
-
-
-

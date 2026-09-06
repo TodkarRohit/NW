@@ -313,8 +313,3 @@ class NavigationManager {
     }
 }
 window.NavigationManager = NavigationManager;
-
-
-
-
-
