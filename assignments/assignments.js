@@ -457,6 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderAdminUploadSection();
         renderChapterNav();
         renderAssignments(searchInput ? searchInput.value : '');
+        updateUploadChapterDropdown();
     }
 
     function renderAdminUploadSection() {
@@ -464,27 +465,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         adminUploadPortalSection.innerHTML = '';
     }
 
-    function updateUploadChapterDropdown(targetSubKey = subjectKey) {
+    function updateUploadChapterDropdown(targetSubKey) {
         const modalSelect = document.getElementById('uploadChapterSelect');
+        if (!modalSelect) return;
 
-        let normKey = targetSubKey ? targetSubKey.toLowerCase() : 'maths';
+        const subSelect = document.getElementById('uploadSubjectSelect');
+        const rawKey = targetSubKey || (subSelect ? subSelect.value : subjectKey) || 'maths';
+
+        let normKey = rawKey ? rawKey.toLowerCase() : 'maths';
         if (normKey === 'math') normKey = 'maths';
         if (normKey === 'coa') normKey = 'hardware';
 
         let chaptersToUse = [];
-        if (typeof subjectsData !== 'undefined' && subjectsData[normKey] && subjectsData[normKey].chapters) {
+        if (typeof subjectsData !== 'undefined' && subjectsData[normKey] && subjectsData[normKey].chapters && subjectsData[normKey].chapters.length > 0) {
             chaptersToUse = subjectsData[normKey].chapters;
-        } else {
+        } else if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey] && subjectsData[subjectKey].chapters && subjectsData[subjectKey].chapters.length > 0) {
+            chaptersToUse = subjectsData[subjectKey].chapters;
+        } else if (subjectChapters && subjectChapters.length > 0) {
             chaptersToUse = subjectChapters;
+        } else {
+            // Built-in fallback chapters per subject so dropdown is NEVER empty
+            const fallbackMap = {
+                'maths': [
+                    { id: 'math-u1', unit: 'Unit 1', name: 'Logic, Proof Techniques & Sets' },
+                    { id: 'math-u2', unit: 'Unit 2', name: 'Relations, Recurrence & Combinatorics' },
+                    { id: 'math-u3', unit: 'Unit 3', name: 'Fourier and Z-Transforms' },
+                    { id: 'math-u4', unit: 'Unit 4', name: 'Statistics & Probability' },
+                    { id: 'math-u5', unit: 'Unit 5', name: 'Numerical Methods' }
+                ],
+                'dsa': [
+                    { id: 'dsa-u1', unit: 'Unit 1', name: 'Introduction to Data Structures & Memory' },
+                    { id: 'dsa-u2', unit: 'Unit 2', name: 'Searching and Sorting Techniques' },
+                    { id: 'dsa-u3', unit: 'Unit 3', name: 'Stack & Applications' },
+                    { id: 'dsa-u4', unit: 'Unit 4', name: 'Queue & Linked Lists' }
+                ],
+                'oop': [
+                    { id: 'oop-u1', unit: 'Unit 1', name: 'Fundamentals of OOP' },
+                    { id: 'oop-u2', unit: 'Unit 2', name: 'Inheritance and Polymorphism' },
+                    { id: 'oop-u3', unit: 'Unit 3', name: 'Exception Handling and Pointers' },
+                    { id: 'oop-u4', unit: 'Unit 4', name: 'File Handling & Streams' }
+                ],
+                'os': [
+                    { id: 'os-u1', unit: 'Unit 1', name: 'Introduction to OS & Process' },
+                    { id: 'os-u2', unit: 'Unit 2', name: 'IPC & Deadlocks' },
+                    { id: 'os-u3', unit: 'Unit 3', name: 'Memory Management' },
+                    { id: 'os-u4', unit: 'Unit 4', name: 'File Management & Administration' }
+                ],
+                'hardware': [
+                    { id: 'coa-u1', unit: 'Unit 1', name: 'Data Representation' },
+                    { id: 'coa-u2', unit: 'Unit 2', name: 'Basic Computer Organization & Design' },
+                    { id: 'coa-u3', unit: 'Unit 3', name: 'Pipelining & Vector Processing' },
+                    { id: 'coa-u4', unit: 'Unit 4', name: 'Input-Output Organization' }
+                ]
+            };
+
+            chaptersToUse = fallbackMap[normKey] || fallbackMap['maths'];
         }
 
-        const optionsHtml = chaptersToUse.map(ch => `
-            <option value="${ch.id}">
-                ${ch.unit ? `${ch.unit}: ` : ''}${ch.name || ch.title}
-            </option>
-        `).join('');
-
-        if (modalSelect) modalSelect.innerHTML = optionsHtml;
+        modalSelect.innerHTML = chaptersToUse.map(ch => {
+            const val = ch.id || ch.unit || 'unit-1';
+            const label = (ch.unit ? `${ch.unit}: ` : '') + (ch.name || ch.title || 'Unit');
+            return `<option value="${escapeHtml(val)}">${escapeHtml(label)}</option>`;
+        }).join('');
     }
 
     const uploadSubjectSelect = document.getElementById('uploadSubjectSelect');
@@ -493,6 +535,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateUploadChapterDropdown(e.target.value);
         });
     }
+
+    // Populate dropdown immediately on load
+    updateUploadChapterDropdown();
 
     function attachInPageUploadListeners() {
         const inpageForm = document.getElementById('inPageAdminUploadForm');
