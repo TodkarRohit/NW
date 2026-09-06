@@ -257,27 +257,42 @@ class NavigationManager {
 
     static getNotesUrl(subjectKey) {
         const path = window.location.pathname;
-        const isNotesDir = path.includes('/notes/');
-        const isLoginDir = path.includes('/login/');
-        const prefix = isNotesDir ? '' : (isLoginDir ? '../notes/' : 'notes/');
+        let prefix = '';
+        if (path.includes('/notes/')) {
+            prefix = '';
+        } else if (path.includes('/question_bank/') || path.includes('/assignments/') || path.includes('/login/')) {
+            prefix = '../notes/';
+        } else {
+            prefix = 'notes/';
+        }
         const base = `${prefix}viewer.html`;
         return subjectKey ? `${base}?subject=${encodeURIComponent(subjectKey)}&type=notes` : base;
     }
 
     static getQuestionBankUrl(subjectKey) {
         const path = window.location.pathname;
-        const isQbDir = path.includes('/question_bank/');
-        const isLoginDir = path.includes('/login/');
-        const prefix = isQbDir ? '' : (isLoginDir ? '../question_bank/' : 'question_bank/');
+        let prefix = '';
+        if (path.includes('/question_bank/')) {
+            prefix = '';
+        } else if (path.includes('/notes/') || path.includes('/assignments/') || path.includes('/login/')) {
+            prefix = '../question_bank/';
+        } else {
+            prefix = 'question_bank/';
+        }
         const base = `${prefix}viewer.html`;
         return subjectKey ? `${base}?subject=${encodeURIComponent(subjectKey)}&type=qb` : base;
     }
 
     static getAssignmentsUrl(subjectKey) {
         const path = window.location.pathname;
-        const isAssDir = path.includes('/assignments/');
-        const isLoginDir = path.includes('/login/');
-        const prefix = isAssDir ? '' : (isLoginDir ? '../assignments/' : 'assignments/');
+        let prefix = '';
+        if (path.includes('/assignments/')) {
+            prefix = '';
+        } else if (path.includes('/notes/') || path.includes('/question_bank/') || path.includes('/login/')) {
+            prefix = '../assignments/';
+        } else {
+            prefix = 'assignments/';
+        }
         const base = `${prefix}assignments.html`;
         return subjectKey ? `${base}?subject=${encodeURIComponent(subjectKey)}` : base;
     }
