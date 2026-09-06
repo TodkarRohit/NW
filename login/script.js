@@ -735,6 +735,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // Remove code from deleted_subjects_list if previously deleted
+            let deletedSubjects = [];
+            try {
+                deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+            } catch (e) {}
+            if (deletedSubjects.includes(code)) {
+                deletedSubjects = deletedSubjects.filter(id => id !== code);
+                localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+            }
+
             const resourcesObj = {
                 notes: resNotesCheckbox ? resNotesCheckbox.checked : true,
                 qb: resQbCheckbox ? resQbCheckbox.checked : true,
@@ -782,6 +792,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
                 } catch (err) {}
+                customSubjects = customSubjects.filter(s => s && s.id !== code);
                 customSubjects.push(subjObj);
                 localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
             } else {
@@ -922,15 +933,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    window.addEventListener('auth_state_changed', () => {
+        checkAdminState();
+        renderBranchesSidebar();
+        renderSubjectsGrid(searchInput ? searchInput.value : '');
+    });
+
     // Initial Load & Cloud Sync (Instant Paint + Async Background Sync)
     function init() {
         // 1. Render immediately from local cache (0ms latency paint)
+        checkAdminState();
         renderBranchesSidebar();
         renderSubjectsGrid();
 
         // 2. Sync latest cloud state in background without blocking load
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             window.supabaseRealtime.pullLatest().then(() => {
+                checkAdminState();
                 renderBranchesSidebar();
                 renderSubjectsGrid(searchInput ? searchInput.value : '');
             }).catch(e => console.warn('Background sync:', e));
