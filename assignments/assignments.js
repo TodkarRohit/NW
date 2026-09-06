@@ -920,9 +920,9 @@ public:
 
                 try {
                     showToast('Uploading and publishing assignment...');
-                    // Upload to Supabase Storage
-                    const qFileName = `assignments/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-                    const aFileName = `assignments/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                    // Upload to Unit-wise Supabase Storage Folder
+                    const qFileName = `assignments/${subjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                    const aFileName = `assignments/${subjectKey}/${targetChapterId}/solutions/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
                     const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                     if (qErr) throw qErr;
@@ -1705,9 +1705,9 @@ public:
 
             try {
                 showToast('Processing & Uploading PDF Files...');
-                // Upload to Supabase Storage
-                const qFileName = `assignments/${Date.now()}_q_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-                const aFileName = `assignments/${Date.now()}_a_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                // Upload to Unit-wise Supabase Storage Folder
+                const qFileName = `assignments/${subjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                const aFileName = `assignments/${subjectKey}/${targetChapterId}/solutions/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
 
                 const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (qErr) throw qErr;

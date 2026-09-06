@@ -449,10 +449,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }        
                     if (await customConfirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
+                        // 1. Remove from localStorage
                         localStorage.removeItem(storageKey);
+
+                        // 2. Track deleted key permanently in deleted_keys_global
+                        let deletedKeys = [];
+                        try {
+                            deletedKeys = JSON.parse(localStorage.getItem('deleted_keys_global')) || [];
+                        } catch (e) {}
+                        if (!deletedKeys.includes(storageKey)) {
+                            deletedKeys.push(storageKey);
+                        }
+                        localStorage.setItem('deleted_keys_global', JSON.stringify(deletedKeys));
+
+                        // 3. Delete physical binary file from Supabase Storage
+                        if (docData && docData.data && docData.data.includes('academic-files/')) {
+                            try {
+                                const relativePath = docData.data.split('academic-files/')[1];
+                                if (relativePath) {
+                                    await window.supabaseClient.storage.from('academic-files').remove([relativePath]);
+                                }
+                            } catch (err) {
+                                console.error("Storage delete warning:", err);
+                            }
+                        }
+
                         renderItemList(chapterSearchInput.value);
                         loadItemContent(index);
-                        showToast("File removed successfully.");
+                        showToast("File permanently deleted.");
                         await autoPublishState();
                     }
                 };
@@ -1232,7 +1256,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (
                 key.startsWith('doc_upload_') ||
                 key.startsWith('custom_items_') ||
-                key.startsWith('modified_items_')
+                key.startsWith('modified_items_') ||
+                key.startsWith('custom_assignments_') ||
+                key.startsWith('deleted_keys_')
             ) {
                 exportData[key] = localStorage.getItem(key);
             }
@@ -1308,8 +1334,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
                 if (res.ok) {
                     const publishedData = await res.json();
+                    
+                    let cloudDeleted = [];
+                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch(e) {}
+                    let localDeleted = [];
+                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
+                    const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
+                    localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
+
+                    mergedDeleted.forEach(delKey => {
+                        localStorage.removeItem(delKey);
+                    });
+
                     for (const key in publishedData) {
-                        localStorage.setItem(key, publishedData[key]);
+                        if (!mergedDeleted.includes(key)) {
+                            localStorage.setItem(key, publishedData[key]);
+                        }
                     }
                 }
             } catch(e) {}

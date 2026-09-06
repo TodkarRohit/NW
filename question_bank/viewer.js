@@ -1233,7 +1233,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (
                 key.startsWith('doc_upload_') ||
                 key.startsWith('custom_items_') ||
-                key.startsWith('modified_items_')
+                key.startsWith('modified_items_') ||
+                key.startsWith('custom_assignments_') ||
+                key.startsWith('deleted_keys_')
             ) {
                 exportData[key] = localStorage.getItem(key);
             }
@@ -1309,8 +1311,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
                 if (res.ok) {
                     const publishedData = await res.json();
+                    
+                    let cloudDeleted = [];
+                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch(e) {}
+                    let localDeleted = [];
+                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
+                    const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
+                    localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
+
+                    mergedDeleted.forEach(delKey => {
+                        localStorage.removeItem(delKey);
+                    });
+
                     for (const key in publishedData) {
-                        localStorage.setItem(key, publishedData[key]);
+                        if (!mergedDeleted.includes(key)) {
+                            localStorage.setItem(key, publishedData[key]);
+                        }
                     }
                 }
             } catch(e) {}
