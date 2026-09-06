@@ -405,27 +405,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let resourceLinksHTML = '';
 
+            const notesUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getNotesUrl(subj.id) : `../notes/viewer.html?subject=${subj.id}&type=notes`;
+            const qbUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getQuestionBankUrl(subj.id) : `../question_bank/viewer.html?subject=${subj.id}&type=qb`;
+            const assUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getAssignmentsUrl(subj.id) : `../assignments/assignments.html?subject=${subj.id}`;
+
             if (res.notes !== false) {
                 resourceLinksHTML += `
-                    <a href="../notes/viewer.html?subject=${subj.id}&type=notes" class="btn btn-notes">
+                    <a href="${notesUrl}" class="btn btn-notes">
                         <i class="fa-solid fa-book-open"></i> Study Notes
                     </a>
                 `;
             }
             if (res.qb !== false) {
                 resourceLinksHTML += `
-                    <a href="../question_bank/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
+                    <a href="${qbUrl}" class="btn btn-qb">
                         <i class="fa-solid fa-circle-question"></i> Question Banks
                     </a>
                 `;
             }
             if (res.assignments !== false) {
                 resourceLinksHTML += `
-                    <a href="../assignments/assignments.html?subject=${subj.id}" class="btn btn-assignments">
+                    <a href="${assUrl}" class="btn btn-assignments">
                         <i class="fa-solid fa-folder-open"></i> Assignments
                     </a>
                 `;
             }
+
 
             customLinks.forEach(link => {
                 if (link && link.title && link.url) {

@@ -171,6 +171,87 @@ function getAvailableBranches() {
 window.getAvailableBranches = getAvailableBranches;
 window.defaultBranchesList = defaultBranchesList;
 
+/**
+ * Engineering Notes Hub - Navigation & Link Connector Class
+ * Central OOP Class to build URLs and bind inter-page navigation links
+ */
+class NavigationManager {
+    static getRelativePrefix() {
+        const path = window.location.pathname;
+        if (path.includes('/notes/') || path.includes('/question_bank/') || path.includes('/assignments/')) {
+            return '../';
+        }
+        return '';
+    }
+
+    static getHomeUrl() {
+        const path = window.location.pathname;
+        if (path.includes('/login/')) {
+            return 'index.html';
+        }
+        return this.getRelativePrefix() + 'login/index.html';
+    }
+
+    static getNotesUrl(subjectKey) {
+        const path = window.location.pathname;
+        const isNotesDir = path.includes('/notes/');
+        const isLoginDir = path.includes('/login/');
+        const prefix = isNotesDir ? '' : (isLoginDir ? '../notes/' : 'notes/');
+        const base = `${prefix}viewer.html`;
+        return subjectKey ? `${base}?subject=${encodeURIComponent(subjectKey)}&type=notes` : base;
+    }
+
+    static getQuestionBankUrl(subjectKey) {
+        const path = window.location.pathname;
+        const isQbDir = path.includes('/question_bank/');
+        const isLoginDir = path.includes('/login/');
+        const prefix = isQbDir ? '' : (isLoginDir ? '../question_bank/' : 'question_bank/');
+        const base = `${prefix}viewer.html`;
+        return subjectKey ? `${base}?subject=${encodeURIComponent(subjectKey)}&type=qb` : base;
+    }
+
+    static getAssignmentsUrl(subjectKey) {
+        const path = window.location.pathname;
+        const isAssDir = path.includes('/assignments/');
+        const isLoginDir = path.includes('/login/');
+        const prefix = isAssDir ? '' : (isLoginDir ? '../assignments/' : 'assignments/');
+        const base = `${prefix}assignments.html`;
+        return subjectKey ? `${base}?subject=${encodeURIComponent(subjectKey)}` : base;
+    }
+
+    static connectHeaderTabs(subjectKey, activeTab = 'notes') {
+        const notesLink = document.getElementById('tabNotesLink') || document.getElementById('notesNavBtn');
+        const qbLink = document.getElementById('tabQbLink') || document.getElementById('qbNavBtn');
+        const assLink = document.getElementById('tabAssLink') || document.getElementById('assNavBtn');
+        const backBtn = document.getElementById('backToHome') || document.querySelector('.back-btn');
+
+        if (notesLink) {
+            notesLink.href = this.getNotesUrl(subjectKey);
+            if (activeTab === 'notes') notesLink.classList.add('active');
+            else notesLink.classList.remove('active');
+        }
+        if (qbLink) {
+            qbLink.href = this.getQuestionBankUrl(subjectKey);
+            if (activeTab === 'qb') qbLink.classList.add('active');
+            else qbLink.classList.remove('active');
+        }
+        if (assLink) {
+            assLink.href = this.getAssignmentsUrl(subjectKey);
+            if (activeTab === 'assignments') assLink.classList.add('active');
+            else assLink.classList.remove('active');
+        }
+        if (backBtn && backBtn.tagName === 'A') {
+            backBtn.href = this.getHomeUrl();
+        }
+    }
+
+    static navigateTo(url) {
+        window.location.href = url;
+    }
+}
+window.NavigationManager = NavigationManager;
+
+
 
 
 

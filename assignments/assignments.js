@@ -132,10 +132,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (subjectTitleEl) subjectTitleEl.textContent = currentSubject.title;
     if (subjectSubtitleEl) subjectSubtitleEl.textContent = currentSubject.subtitle;
-    if (notesNavBtn) notesNavBtn.href = `../notes/viewer.html?subject=${subjectKey}&type=notes`;
-    if (qbNavBtn) qbNavBtn.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
-    if (assNavBtn) assNavBtn.href = `assignments.html?subject=${subjectKey}`;
+    if (typeof NavigationManager !== 'undefined') {
+        NavigationManager.connectHeaderTabs(subjectKey, 'assignments');
+    } else {
+        if (notesNavBtn) notesNavBtn.href = `../notes/viewer.html?subject=${subjectKey}&type=notes`;
+        if (qbNavBtn) qbNavBtn.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
+        if (assNavBtn) assNavBtn.href = `assignments.html?subject=${subjectKey}`;
+    }
     if (totalChaptersBadge) totalChaptersBadge.textContent = `${subjectChapters.length} Units`;
+
     document.title = `${currentSubject.title} - Assignments | Engineering Notes Hub`;
 
     // ---------------------------------------------------------

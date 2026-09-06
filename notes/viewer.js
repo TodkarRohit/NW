@@ -137,26 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebarPanel = document.getElementById('sidebarPanel');
     const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 
-    // Quick Switcher Links
-    const tabNotesLink = document.getElementById('tabNotesLink');
-    const tabQbLink = document.getElementById('tabQbLink');
-    const tabAssLink = document.getElementById('tabAssLink');
+    // Quick Switcher Links via NavigationManager OOP Class
+    if (typeof NavigationManager !== 'undefined') {
+        NavigationManager.connectHeaderTabs(subjectKey, resourceType === 'qb' ? 'qb' : (resourceType === 'assignments' ? 'assignments' : 'notes'));
+    }
 
-    if (tabNotesLink) {
-        tabNotesLink.href = `viewer.html?subject=${subjectKey}&type=notes`;
-        if (resourceType === 'notes') tabNotesLink.classList.add('active');
-        else tabNotesLink.classList.remove('active');
-    }
-    if (tabQbLink) {
-        tabQbLink.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
-        if (resourceType === 'qb') tabQbLink.classList.add('active');
-        else tabQbLink.classList.remove('active');
-    }
-    if (tabAssLink) {
-        tabAssLink.href = `../assignments/assignments.html?subject=${subjectKey}`;
-        if (resourceType === 'assignments') tabAssLink.classList.add('active');
-        else tabAssLink.classList.remove('active');
-    }
 
     // 4. Update Header Meta
     let typeLabel = "Study Notes";
