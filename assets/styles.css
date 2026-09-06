@@ -1536,3 +1536,154 @@ footer {
 }
 
 .custom-form-group input { padding-left: 45px !important; }
+
+/* ==========================================================================
+   Admin Backdrop Modals (Add/Edit Subject, Confirmation)
+   ========================================================================== */
+.admin-upload-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    animation: fadeInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.admin-upload-card {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 100%;
+    color: var(--text-dark, #0f172a);
+    position: relative;
+}
+
+[data-theme="dark"] .admin-upload-card {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+.upload-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-surface, rgba(248, 250, 252, 0.6));
+}
+
+[data-theme="dark"] .upload-modal-header {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: #334155;
+}
+
+.modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-dark, #0f172a);
+}
+
+[data-theme="dark"] .modal-title-group {
+    color: #f8fafc;
+}
+
+.modal-title-group i {
+    color: var(--primary-color, #0ea5e9);
+}
+
+.close-modal-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-muted, #64748b);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.close-modal-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text-dark);
+}
+
+[data-theme="dark"] .close-modal-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.upload-modal-body {
+    padding: 24px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark, #0f172a);
+    margin-bottom: 6px;
+    display: block;
+}
+
+[data-theme="dark"] .form-group label {
+    color: #f8fafc;
+}
+
+.custom-link-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.custom-link-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--card-bg, #ffffff);
+    color: var(--text-dark, #0f172a);
+    font-size: 0.85rem;
+}
+[data-theme="dark"] .custom-link-row input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+.remove-link-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.remove-link-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+

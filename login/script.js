@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const noResultsMessage = document.getElementById('noResultsMessage');
     const addSubjectBtn = document.getElementById('addSubjectBtn');
 
+    // Admin Empty Branch Box Elements
+    const adminAddBranchSubjectBox = document.getElementById('adminAddBranchSubjectBox');
+    const emptyBranchAddSubjectBtn = document.getElementById('emptyBranchAddSubjectBtn');
+    const emptyBranchName = document.getElementById('emptyBranchName');
+
     // Modals
     const subjectModalBackdrop = document.getElementById('subjectModalBackdrop');
     const closeSubjectModalBtn = document.getElementById('closeSubjectModalBtn');
@@ -20,6 +25,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const subjectCodeInput = document.getElementById('subjectCodeInput');
     const subjectSemSelect = document.getElementById('subjectSemSelect');
     const branchCheckboxes = document.querySelectorAll('.branch-checkbox');
+
+    // Resource Modules & Custom Links Elements
+    const resNotesCheckbox = document.getElementById('resNotesCheckbox');
+    const resQbCheckbox = document.getElementById('resQbCheckbox');
+    const resAssCheckbox = document.getElementById('resAssCheckbox');
+    const addCustomLinkBtn = document.getElementById('addCustomLinkBtn');
+    const customLinksContainer = document.getElementById('customLinksContainer');
 
     // Confirm Modal
     const confirmModalBackdrop = document.getElementById('confirmModalBackdrop');
@@ -132,10 +144,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             searchClearBtn.style.display = searchLower.length > 0 ? 'flex' : 'none';
         }
 
-        // Handle empty branch or empty search results
+        // Handle empty branch view
         if (branchSubjects.length === 0) {
             subjectsContainer.style.display = 'none';
-            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'block';
+            if (branchUnavailableMessage) {
+                branchUnavailableMessage.style.display = 'block';
+                if (adminAddBranchSubjectBox) {
+                    adminAddBranchSubjectBox.style.display = isAdmin ? 'block' : 'none';
+                    if (emptyBranchName) emptyBranchName.textContent = `${activeBranch} Branch`;
+                }
+            }
             if (noResultsMessage) noResultsMessage.style.display = 'none';
             return;
         } else {
@@ -154,6 +172,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Render HTML for matching subjects
         subjectsContainer.innerHTML = visibleSubjects.map(subj => {
             const branchesDisplay = (subj.branches || ['ALL']).join(', ');
+            const res = subj.resources || { notes: true, qb: true, assignments: true };
+            const customLinks = subj.customLinks || [];
+
+            let resourceLinksHTML = '';
+
+            if (res.notes !== false) {
+                resourceLinksHTML += `
+                    <a href="../notes/viewer.html?subject=${subj.id}&type=notes" class="btn btn-notes">
+                        <i class="fa-solid fa-book-open"></i> Study Notes
+                    </a>
+                `;
+            }
+            if (res.qb !== false) {
+                resourceLinksHTML += `
+                    <a href="../question_bank/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
+                        <i class="fa-solid fa-circle-question"></i> Question Banks
+                    </a>
+                `;
+            }
+            if (res.assignments !== false) {
+                resourceLinksHTML += `
+                    <a href="../assignments/assignments.html?subject=${subj.id}" class="btn btn-assignments">
+                        <i class="fa-solid fa-folder-open"></i> Assignments
+                    </a>
+                `;
+            }
+
+            // Custom Extra Links
+            customLinks.forEach(link => {
+                if (link && link.title && link.url) {
+                    resourceLinksHTML += `
+                        <a href="${escapeHTML(link.url)}" target="_blank" class="btn btn-notes" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3);">
+                            <i class="${escapeHTML(link.icon || 'fa-solid fa-link')}"></i> ${escapeHTML(link.title)}
+                        </a>
+                    `;
+                }
+            });
+
             return `
                 <div class="subject-card" data-subject="${subj.id}">
                     <div class="card-header" style="position: relative; padding-right: 70px;">
@@ -174,15 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ` : ''}
                     </div>
                     <div class="resource-links">
-                        <a href="../notes/viewer.html?subject=${subj.id}&type=notes" class="btn btn-notes">
-                            <i class="fa-solid fa-book-open"></i> Study Notes
-                        </a>
-                        <a href="../question_bank/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
-                            <i class="fa-solid fa-circle-question"></i> Question Banks
-                        </a>
-                        <a href="../assignments/assignments.html?subject=${subj.id}" class="btn btn-assignments">
-                            <i class="fa-solid fa-folder-open"></i> Assignments
-                        </a>
+                        ${resourceLinksHTML}
                     </div>
                 </div>
             `;
@@ -235,30 +283,78 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Helper: Dynamic Custom Link Rows
+    function renderCustomLinkRow(title = '', url = '') {
+        if (!customLinksContainer) return;
+        const row = document.createElement('div');
+        row.className = 'custom-link-row';
+        row.innerHTML = `
+            <input type="text" class="custom-link-title" placeholder="Link Title (e.g. Reference Book)" value="${escapeHTML(title)}">
+            <input type="text" class="custom-link-url" placeholder="URL (e.g. https://...)" value="${escapeHTML(url)}">
+            <button type="button" class="remove-link-btn" title="Remove Link"><i class="fa-solid fa-trash"></i></button>
+        `;
+
+        row.querySelector('.remove-link-btn').addEventListener('click', () => {
+            row.remove();
+        });
+
+        customLinksContainer.appendChild(row);
+    }
+
+    if (addCustomLinkBtn) {
+        addCustomLinkBtn.addEventListener('click', () => {
+            renderCustomLinkRow('', '');
+        });
+    }
+
     // Subject Modal Handlers
-    function openSubjectModal(editId = null) {
+    function openSubjectModal(editId = null, targetBranch = null) {
         if (!subjectModalBackdrop) return;
 
+        if (customLinksContainer) customLinksContainer.innerHTML = '';
+
         subjectModalEditId.value = editId || '';
+
         if (editId && subjectsData[editId]) {
             const subj = subjectsData[editId];
             subjectModalTitle.textContent = 'Edit Subject';
             subjectTitleInput.value = subj.title || '';
             subjectCodeInput.value = subj.id || '';
-            subjectCodeInput.disabled = true; // Code key is fixed for edits
+            subjectCodeInput.disabled = true;
             subjectSemSelect.value = subj.semester || 'Semester 2';
 
             const selectedBranches = subj.branches || ['ALL'];
             branchCheckboxes.forEach(cb => {
                 cb.checked = selectedBranches.includes(cb.value);
             });
+
+            const res = subj.resources || { notes: true, qb: true, assignments: true };
+            if (resNotesCheckbox) resNotesCheckbox.checked = (res.notes !== false);
+            if (resQbCheckbox) resQbCheckbox.checked = (res.qb !== false);
+            if (resAssCheckbox) resAssCheckbox.checked = (res.assignments !== false);
+
+            if (subj.customLinks && Array.isArray(subj.customLinks)) {
+                subj.customLinks.forEach(link => {
+                    renderCustomLinkRow(link.title, link.url);
+                });
+            }
         } else {
             subjectModalTitle.textContent = 'Add New Subject';
             subjectForm.reset();
             subjectCodeInput.disabled = false;
+
+            const activeBranch = targetBranch || getActiveBranch();
             branchCheckboxes.forEach(cb => {
-                cb.checked = (cb.value === 'ALL');
+                if (activeBranch === 'CE' || activeBranch === 'ALL') {
+                    cb.checked = (cb.value === 'ALL');
+                } else {
+                    cb.checked = (cb.value === activeBranch || cb.value === 'ALL');
+                }
             });
+
+            if (resNotesCheckbox) resNotesCheckbox.checked = true;
+            if (resQbCheckbox) resQbCheckbox.checked = true;
+            if (resAssCheckbox) resAssCheckbox.checked = true;
         }
 
         subjectModalBackdrop.style.display = 'flex';
@@ -273,6 +369,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (addSubjectBtn) {
         addSubjectBtn.addEventListener('click', () => openSubjectModal(null));
     }
+    if (emptyBranchAddSubjectBtn) {
+        emptyBranchAddSubjectBtn.addEventListener('click', () => openSubjectModal(null, getActiveBranch()));
+    }
+
     if (closeSubjectModalBtn) closeSubjectModalBtn.addEventListener('click', closeSubjectModal);
     if (cancelSubjectModalBtn) cancelSubjectModalBtn.addEventListener('click', closeSubjectModal);
 
@@ -300,6 +400,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // Resources Enabled
+            const resourcesObj = {
+                notes: resNotesCheckbox ? resNotesCheckbox.checked : true,
+                qb: resQbCheckbox ? resQbCheckbox.checked : true,
+                assignments: resAssCheckbox ? resAssCheckbox.checked : true
+            };
+
+            // Custom Extra Links
+            const customLinksArr = [];
+            if (customLinksContainer) {
+                const rows = customLinksContainer.querySelectorAll('.custom-link-row');
+                rows.forEach(row => {
+                    const lTitle = row.querySelector('.custom-link-title').value.trim();
+                    const lUrl = row.querySelector('.custom-link-url').value.trim();
+                    if (lTitle && lUrl) {
+                        customLinksArr.push({ title: lTitle, url: lUrl, icon: 'fa-solid fa-link' });
+                    }
+                });
+            }
+
             let subjObj = editId ? subjectsData[editId] : null;
 
             if (!subjObj) {
@@ -309,6 +429,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     title: title,
                     semester: semester,
                     branches: selectedBranches,
+                    resources: resourcesObj,
+                    customLinks: customLinksArr,
                     typeName: "Study Notes",
                     chapters: [
                         { id: `${code}-u1`, title: "Unit 1: Fundamentals & Core Concepts", unit: "Unit 1", name: "Fundamentals & Core Concepts" },
@@ -335,12 +457,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 subjObj.title = title;
                 subjObj.semester = semester;
                 subjObj.branches = selectedBranches;
+                subjObj.resources = resourcesObj;
+                subjObj.customLinks = customLinksArr;
 
                 let modifiedSubjects = {};
                 try {
                     modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
                 } catch (e) {}
-                modifiedSubjects[editId] = { title, semester, branches: selectedBranches };
+                modifiedSubjects[editId] = { title, semester, branches: selectedBranches, resources: resourcesObj, customLinks: customLinksArr };
                 localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
             }
 

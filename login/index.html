@@ -92,10 +92,16 @@
         <!-- Branch Unavailable Message -->
         <div id="branchUnavailableMessage" class="no-results-box" style="display: none; padding: 40px; text-align: center;">
             <div class="no-results-icon">
-                <i class="fa-solid fa-person-digging" style="font-size: 3rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 15px;"></i>
+                <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 15px;"></i>
             </div>
-            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 10px;">Branch Content Unavailable</h3>
-            <p style="color: rgba(255, 255, 255, 0.7);">Study materials for this branch are currently being prepared and will be available soon.</p>
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 10px;">Branch Content Currently Unavailable</h3>
+            <p style="color: rgba(255, 255, 255, 0.7); max-width: 500px; margin: 0 auto 15px;">Study materials for this branch are currently being prepared and will be available soon.</p>
+            <div id="adminAddBranchSubjectBox" style="display: none; margin-top: 15px;">
+                <p style="color: #38bdf8; font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">Admin Mode: Add the first subject for this branch</p>
+                <button type="button" id="emptyBranchAddSubjectBtn" class="btn btn-notes" style="display: inline-flex; padding: 10px 20px; font-size: 0.95rem; border-radius: 8px; cursor: pointer; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-plus"></i> Add Subject to <span id="emptyBranchName">this Branch</span>
+                </button>
+            </div>
         </div>
 
         <!-- No Results Feedback Message -->
@@ -113,7 +119,7 @@
 
     <!-- Add/Edit Subject Modal for Admin -->
     <div class="admin-upload-backdrop" id="subjectModalBackdrop" style="display: none;">
-        <div class="admin-upload-card" style="max-width: 520px; width: 90%;">
+        <div class="admin-upload-card" style="max-width: 540px; width: 90%;">
             <div class="upload-modal-header">
                 <div class="modal-title-group">
                     <i class="fa-solid fa-book-bookmark"></i>
@@ -125,18 +131,18 @@
                 <input type="hidden" id="subjectModalEditId" value="">
                 
                 <div class="form-group">
-                    <label for="subjectTitleInput" style="font-weight: 600; margin-bottom: 6px; display: block;">Subject Name / Title</label>
-                    <input type="text" id="subjectTitleInput" placeholder="e.g. Database Management System" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main);">
+                    <label for="subjectTitleInput">Subject Name / Title</label>
+                    <input type="text" id="subjectTitleInput" placeholder="e.g. Database Management System" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark);">
                 </div>
 
                 <div class="form-row-2" style="display: flex; gap: 12px;">
                     <div class="form-group" style="flex: 1;">
-                        <label for="subjectCodeInput" style="font-weight: 600; margin-bottom: 6px; display: block;">Subject Code / ID</label>
-                        <input type="text" id="subjectCodeInput" placeholder="e.g. dbms" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main);">
+                        <label for="subjectCodeInput">Subject Code / ID</label>
+                        <input type="text" id="subjectCodeInput" placeholder="e.g. dbms" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark);">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label for="subjectSemSelect" style="font-weight: 600; margin-bottom: 6px; display: block;">Semester</label>
-                        <select id="subjectSemSelect" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-main);">
+                        <label for="subjectSemSelect">Semester</label>
+                        <select id="subjectSemSelect" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark);">
                             <option value="Semester 1">Semester 1</option>
                             <option value="Semester 2" selected>Semester 2</option>
                             <option value="Semester 3">Semester 3</option>
@@ -150,8 +156,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label style="font-weight: 600; margin-bottom: 6px; display: block;">Applicable Branches</label>
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px;">
+                    <label>Applicable Branches</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px;">
                         <label style="display: flex; align-items: center; gap: 4px; font-weight: 600; color: #0ea5e9; cursor: pointer;">
                             <input type="checkbox" class="branch-checkbox" value="ALL" checked> ALL Branches
                         </label>
@@ -171,6 +177,33 @@
                             <input type="checkbox" class="branch-checkbox" value="AIDS"> AI DS
                         </label>
                     </div>
+                </div>
+
+                <!-- Enabled Resource Modules -->
+                <div class="form-group">
+                    <label>Enabled Resource Modules</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 14px; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; color: #0284c7;">
+                            <input type="checkbox" id="resNotesCheckbox" checked> <i class="fa-solid fa-book-open"></i> Study Notes
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; color: #16a34a;">
+                            <input type="checkbox" id="resQbCheckbox" checked> <i class="fa-solid fa-circle-question"></i> Question Banks
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; color: #9333ea;">
+                            <input type="checkbox" id="resAssCheckbox" checked> <i class="fa-solid fa-folder-open"></i> Assignments
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Custom Links Section -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="margin: 0;">Custom Extra Links / Resources</label>
+                        <button type="button" id="addCustomLinkBtn" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+                            <i class="fa-solid fa-plus"></i> Add Link
+                        </button>
+                    </div>
+                    <div id="customLinksContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
                 </div>
 
                 <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
