@@ -128,7 +128,44 @@ function loadCustomSubjectsIntoData() {
     } catch(e) {
         console.error("Error loading custom subjects into subjectsData:", e);
     }
-}
 loadCustomSubjectsIntoData();
+window.loadCustomSubjectsIntoData = loadCustomSubjectsIntoData;
+
+const defaultBranchesList = [
+    { code: "CE", name: "CE" },
+    { code: "CSE", name: "CSE" },
+    { code: "IT", name: "IT" },
+    { code: "ECE", name: "ECE" },
+    { code: "AIDS", name: "AI DS" }
+];
+
+function getAvailableBranches() {
+    let list = JSON.parse(JSON.stringify(defaultBranchesList));
+    try {
+        const deletedBranches = JSON.parse(localStorage.getItem('deleted_branches_list')) || [];
+        list = list.filter(b => !deletedBranches.includes(b.code));
+
+        const modifiedBranches = JSON.parse(localStorage.getItem('modified_branches_data')) || {};
+        list.forEach(b => {
+            if (modifiedBranches[b.code]) {
+                b.name = modifiedBranches[b.code].name || b.name;
+            }
+        });
+
+        const customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
+        customBranches.forEach(cb => {
+            if (cb && cb.code && !list.some(b => b.code === cb.code)) {
+                list.push(cb);
+            }
+        });
+    } catch (e) {
+        console.error("Error getting available branches:", e);
+    }
+    return list;
+}
+window.getAvailableBranches = getAvailableBranches;
+window.defaultBranchesList = defaultBranchesList;
+
+
 
 

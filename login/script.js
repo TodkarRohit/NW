@@ -9,12 +9,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const noResultsMessage = document.getElementById('noResultsMessage');
     const addSubjectBtn = document.getElementById('addSubjectBtn');
 
+    // Sidebar & Branch Management Elements
+    const homeBranchList = document.getElementById('homeBranchList');
+    const addBranchBtn = document.getElementById('addBranchBtn');
+    const branchModalBackdrop = document.getElementById('branchModalBackdrop');
+    const closeBranchModalBtn = document.getElementById('closeBranchModalBtn');
+    const cancelBranchModalBtn = document.getElementById('cancelBranchModalBtn');
+    const branchForm = document.getElementById('branchForm');
+    const branchModalTitle = document.getElementById('branchModalTitle');
+    const branchModalEditCode = document.getElementById('branchModalEditCode');
+    const branchCodeInput = document.getElementById('branchCodeInput');
+    const branchNameInput = document.getElementById('branchNameInput');
+
     // Admin Empty Branch Box Elements
     const adminAddBranchSubjectBox = document.getElementById('adminAddBranchSubjectBox');
     const emptyBranchAddSubjectBtn = document.getElementById('emptyBranchAddSubjectBtn');
     const emptyBranchName = document.getElementById('emptyBranchName');
 
-    // Modals
+    // Subject Modal Elements
     const subjectModalBackdrop = document.getElementById('subjectModalBackdrop');
     const closeSubjectModalBtn = document.getElementById('closeSubjectModalBtn');
     const cancelSubjectModalBtn = document.getElementById('cancelSubjectModalBtn');
@@ -24,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const subjectTitleInput = document.getElementById('subjectTitleInput');
     const subjectCodeInput = document.getElementById('subjectCodeInput');
     const subjectSemSelect = document.getElementById('subjectSemSelect');
-    const branchCheckboxes = document.querySelectorAll('.branch-checkbox');
+    const branchCheckboxesContainer = document.querySelector('.branch-checkbox')?.closest('div');
 
     // Resource Modules & Custom Links Elements
     const resNotesCheckbox = document.getElementById('resNotesCheckbox');
@@ -33,11 +45,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addCustomLinkBtn = document.getElementById('addCustomLinkBtn');
     const customLinksContainer = document.getElementById('customLinksContainer');
 
-    // Confirm Modal
+    // General Confirm Modal
     const confirmModalBackdrop = document.getElementById('confirmModalBackdrop');
     const confirmModalMessage = document.getElementById('confirmModalMessage');
     const confirmOkBtn = document.getElementById('confirmOkBtn');
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+    // Subject Delete Options Modal
+    const subjectDeleteOptionsModal = document.getElementById('subjectDeleteOptionsModal');
+    const subjectDeleteModalSubtext = document.getElementById('subjectDeleteModalSubtext');
+    const deleteActiveBranchName = document.getElementById('deleteActiveBranchName');
+    const deleteCurrentBranchOnlyBtn = document.getElementById('deleteCurrentBranchOnlyBtn');
+    const deleteGlobalSubjectBtn = document.getElementById('deleteGlobalSubjectBtn');
+    const cancelDeleteOptionsBtn = document.getElementById('cancelDeleteOptionsBtn');
 
     function customConfirm(message) {
         return new Promise((resolve) => {
@@ -71,15 +91,182 @@ document.addEventListener('DOMContentLoaded', async () => {
             (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
         );
 
-        if (addSubjectBtn) {
-            addSubjectBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-        }
+        if (addSubjectBtn) addSubjectBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        if (addBranchBtn) addBranchBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+
         return isAdmin;
     }
 
     function getActiveBranch() {
         const activeItem = document.querySelector('.branch-item.active');
         return activeItem ? activeItem.dataset.branch : (localStorage.getItem('user_branch') || 'CE');
+    }
+
+    // ---------------------------------------------------------
+    // Dynamic Sidebar Branch Renderer & Branch Actions
+    // ---------------------------------------------------------
+    function renderBranchesSidebar() {
+        if (!homeBranchList) return;
+
+        const isAdmin = checkAdminState();
+        const availableBranches = typeof window.getAvailableBranches === 'function' 
+            ? window.getAvailableBranches() 
+            : [{ code: 'CE', name: 'CE' }, { code: 'CSE', name: 'CSE' }, { code: 'IT', name: 'IT' }, { code: 'ECE', name: 'ECE' }, { code: 'AIDS', name: 'AI DS' }];
+
+        let activeBranch = localStorage.getItem('user_branch');
+        if (!activeBranch || !availableBranches.some(b => b.code === activeBranch)) {
+            activeBranch = availableBranches[0] ? availableBranches[0].code : 'CE';
+            localStorage.setItem('user_branch', activeBranch);
+        }
+
+        homeBranchList.innerHTML = availableBranches.map(b => `
+            <li style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+                <a href="#" class="branch-item ${b.code === activeBranch ? 'active' : ''}" data-branch="${b.code}" style="flex: 1;">
+                    ${escapeHTML(b.name)}
+                </a>
+                ${isAdmin ? `
+                    <div class="branch-admin-actions" style="display: flex; gap: 4px; padding-right: 6px;">
+                        <button type="button" class="edit-branch-btn" data-code="${b.code}" style="background: transparent; border: none; color: #0ea5e9; cursor: pointer; padding: 4px;" title="Edit Branch">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button type="button" class="delete-branch-btn" data-code="${b.code}" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px;" title="Delete Branch">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                ` : ''}
+            </li>
+        `).join('');
+
+        // Re-attach sidebar click listeners
+        document.querySelectorAll('.branch-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.branch-item').forEach(b => b.classList.remove('active'));
+                item.classList.add('active');
+                const branchName = item.dataset.branch;
+
+                showToast(`Switched to ${item.textContent.trim()} Branch`);
+                localStorage.setItem('user_branch', branchName);
+                renderSubjectsGrid(searchInput ? searchInput.value : '');
+            });
+        });
+
+        // Edit Branch Listener
+        if (isAdmin) {
+            document.querySelectorAll('.edit-branch-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openBranchModal(btn.dataset.code);
+                });
+            });
+
+            // Delete Branch Listener
+            document.querySelectorAll('.delete-branch-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const bCode = btn.dataset.code;
+                    const bObj = availableBranches.find(b => b.code === bCode);
+                    const bName = bObj ? bObj.name : bCode;
+
+                    if (await customConfirm(`Are you sure you want to delete branch "${bName}"?`)) {
+                        let deletedBranches = [];
+                        try {
+                            deletedBranches = JSON.parse(localStorage.getItem('deleted_branches_list')) || [];
+                        } catch (err) {}
+                        if (!deletedBranches.includes(bCode)) {
+                            deletedBranches.push(bCode);
+                        }
+                        localStorage.setItem('deleted_branches_list', JSON.stringify(deletedBranches));
+
+                        let customBranches = [];
+                        try {
+                            customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
+                            customBranches = customBranches.filter(b => b.code !== bCode);
+                            localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
+                        } catch (err) {}
+
+                        if (getActiveBranch() === bCode) {
+                            localStorage.setItem('user_branch', 'CE');
+                        }
+
+                        showToast(`Branch "${bName}" deleted.`);
+                        renderBranchesSidebar();
+                        renderSubjectsGrid(searchInput ? searchInput.value : '');
+                        await autoPublishState();
+                    }
+                });
+            });
+        }
+    }
+
+    // Branch Modal Handlers
+    function openBranchModal(editCode = null) {
+        if (!branchModalBackdrop) return;
+
+        branchModalEditCode.value = editCode || '';
+        const availableBranches = typeof window.getAvailableBranches === 'function' ? window.getAvailableBranches() : [];
+
+        if (editCode) {
+            const bObj = availableBranches.find(b => b.code === editCode);
+            branchModalTitle.textContent = 'Edit Branch';
+            branchCodeInput.value = editCode;
+            branchCodeInput.disabled = true;
+            branchNameInput.value = bObj ? bObj.name : editCode;
+        } else {
+            branchModalTitle.textContent = 'Add New Branch';
+            branchForm.reset();
+            branchCodeInput.disabled = false;
+        }
+
+        branchModalBackdrop.style.display = 'flex';
+    }
+
+    function closeBranchModal() {
+        if (branchModalBackdrop) branchModalBackdrop.style.display = 'none';
+    }
+
+    if (addBranchBtn) addBranchBtn.addEventListener('click', () => openBranchModal(null));
+    if (closeBranchModalBtn) closeBranchModalBtn.addEventListener('click', closeBranchModal);
+    if (cancelBranchModalBtn) cancelBranchModalBtn.addEventListener('click', closeBranchModal);
+
+    if (branchForm) {
+        branchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editCode = branchModalEditCode.value;
+            const code = branchCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '_');
+            const name = branchNameInput.value.trim();
+
+            if (!code || !name) {
+                alert('Please enter both branch code and name.');
+                return;
+            }
+
+            if (!editCode) {
+                // Add brand new branch
+                let customBranches = [];
+                try {
+                    customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || [];
+                } catch (err) {}
+
+                customBranches.push({ code, name });
+                localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
+            } else {
+                // Edit existing branch
+                let modifiedBranches = {};
+                try {
+                    modifiedBranches = JSON.parse(localStorage.getItem('modified_branches_data')) || {};
+                } catch (err) {}
+
+                modifiedBranches[editCode] = { name };
+                localStorage.setItem('modified_branches_data', JSON.stringify(modifiedBranches));
+            }
+
+            closeBranchModal();
+            showToast(`Branch "${name}" saved successfully!`);
+            renderBranchesSidebar();
+            renderSubjectsGrid(searchInput ? searchInput.value : '');
+            await autoPublishState();
+        });
     }
 
     // Dynamic Grid Renderer
@@ -91,11 +278,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const searchLower = query.toLowerCase().trim();
 
         // Reload data from localStorage
-        if (typeof loadCustomSubjectsIntoData === 'function') {
-            loadCustomSubjectsIntoData();
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
         }
 
-        // Deduplicate subject objects (ignore aliases pointing to same object)
+        // Deduplicate subject objects
         const uniqueSubjects = [];
         const seenObjects = new Set();
 
@@ -120,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const titleMatch = (subj.title || '').toLowerCase().includes(searchLower);
                 const semMatch = (subj.semester || '').toLowerCase().includes(searchLower);
                 const idMatch = (subj.id || '').toLowerCase().includes(searchLower);
-                
+
                 let chapterMatch = false;
                 if (subj.chapters) {
                     chapterMatch = subj.chapters.some(c => (c.title && c.title.toLowerCase().includes(searchLower)) || (c.name && c.name.toLowerCase().includes(searchLower)));
@@ -199,7 +386,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }
 
-            // Custom Extra Links
             customLinks.forEach(link => {
                 if (link && link.title && link.url) {
                     resourceLinksHTML += `
@@ -236,13 +422,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
         }).join('');
 
-        // Attach Edit & Delete Listeners
+        // Attach Edit & Delete Listeners for Subject Cards
         if (isAdmin) {
             document.querySelectorAll('.edit-subject-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const sId = btn.dataset.id;
-                    openSubjectModal(sId);
+                    openSubjectModal(btn.dataset.id);
                 });
             });
 
@@ -252,42 +437,126 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const sId = btn.dataset.id;
                     const subj = subjectsData[sId];
                     const title = subj ? subj.title : sId;
+                    const branches = subj ? (subj.branches || ['ALL']) : ['ALL'];
+                    const activeBranch = getActiveBranch();
 
-                    if (await customConfirm(`Are you sure you want to delete "${title}"?`)) {
-                        // Mark as deleted in localStorage
-                        let deletedSubjects = [];
-                        try {
-                            deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
-                        } catch (e) {}
-                        if (!deletedSubjects.includes(sId)) {
-                            deletedSubjects.push(sId);
+                    const isMultiBranch = branches.includes('ALL') || branches.length > 1;
+
+                    if (isMultiBranch) {
+                        // Open subject delete options modal (Branch Only vs Global)
+                        openSubjectDeleteOptionsModal(sId, title, activeBranch, branches);
+                    } else {
+                        // Single branch subject - Delete globally
+                        if (await customConfirm(`Are you sure you want to delete "${title}"?`)) {
+                            await deleteSubjectGlobally(sId, title);
                         }
-                        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
-
-                        // If it's a custom subject, remove from custom list
-                        let customSubjects = [];
-                        try {
-                            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-                            customSubjects = customSubjects.filter(s => s.id !== sId);
-                            localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-                        } catch (e) {}
-
-                        delete subjectsData[sId];
-
-                        showToast(`Subject "${title}" deleted.`);
-                        renderSubjectsGrid(searchInput ? searchInput.value : '');
-
-                        if (window.supabaseRealtime && window.supabaseRealtime.deleteFolder) {
-                            await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
-                            await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
-                            await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
-                        }
-
-                        await autoPublishState();
                     }
                 });
             });
         }
+    }
+
+    // Branch-Specific vs Global Subject Deletion Handlers
+    let activeDeleteSubjectId = null;
+
+    function openSubjectDeleteOptionsModal(sId, title, activeBranch, branches) {
+        if (!subjectDeleteOptionsModal) return;
+
+        activeDeleteSubjectId = sId;
+        if (subjectDeleteModalSubtext) {
+            subjectDeleteModalSubtext.innerHTML = `Subject <strong>"${escapeHTML(title)}"</strong> is currently assigned to <em>${branches.join(', ')}</em>.<br>Do you want to remove it from <strong>${activeBranch}</strong> branch only, or delete it globally across all branches?`;
+        }
+        if (deleteActiveBranchName) {
+            deleteActiveBranchName.textContent = `${activeBranch} Branch`;
+        }
+
+        subjectDeleteOptionsModal.style.display = 'flex';
+    }
+
+    function closeSubjectDeleteOptionsModal() {
+        if (subjectDeleteOptionsModal) subjectDeleteOptionsModal.style.display = 'none';
+        activeDeleteSubjectId = null;
+    }
+
+    if (cancelDeleteOptionsBtn) cancelDeleteOptionsBtn.addEventListener('click', closeSubjectDeleteOptionsModal);
+
+    if (deleteCurrentBranchOnlyBtn) {
+        deleteCurrentBranchOnlyBtn.addEventListener('click', async () => {
+            if (!activeDeleteSubjectId) return;
+            const sId = activeDeleteSubjectId;
+            const activeBranch = getActiveBranch();
+            const subj = subjectsData[sId];
+
+            if (subj) {
+                let branches = subj.branches || ['ALL'];
+                if (branches.includes('ALL')) {
+                    // Expand ALL into all available branches except current
+                    const avail = typeof window.getAvailableBranches === 'function' ? window.getAvailableBranches().map(b => b.code) : ['CE', 'CSE', 'IT', 'ECE', 'AIDS'];
+                    branches = avail.filter(b => b !== activeBranch);
+                } else {
+                    branches = branches.filter(b => b !== activeBranch);
+                }
+
+                subj.branches = branches;
+
+                // Save update
+                let modifiedSubjects = {};
+                try {
+                    modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+                } catch (err) {}
+                modifiedSubjects[sId] = { title: subj.title, semester: subj.semester, branches: branches, resources: subj.resources, customLinks: subj.customLinks };
+                localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
+
+                showToast(`Removed "${subj.title}" from ${activeBranch} Branch.`);
+            }
+
+            closeSubjectDeleteOptionsModal();
+            renderSubjectsGrid(searchInput ? searchInput.value : '');
+            await autoPublishState();
+        });
+    }
+
+    if (deleteGlobalSubjectBtn) {
+        deleteGlobalSubjectBtn.addEventListener('click', async () => {
+            if (!activeDeleteSubjectId) return;
+            const sId = activeDeleteSubjectId;
+            const subj = subjectsData[sId];
+            const title = subj ? subj.title : sId;
+
+            closeSubjectDeleteOptionsModal();
+            await deleteSubjectGlobally(sId, title);
+        });
+    }
+
+    async function deleteSubjectGlobally(sId, title) {
+        let deletedSubjects = [];
+        try {
+            deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+        } catch (e) {}
+        if (!deletedSubjects.includes(sId)) {
+            deletedSubjects.push(sId);
+        }
+        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+
+        let customSubjects = [];
+        try {
+            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+            customSubjects = customSubjects.filter(s => s.id !== sId);
+            localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+        } catch (e) {}
+
+        delete subjectsData[sId];
+
+        showToast(`Subject "${title}" deleted globally.`);
+        renderSubjectsGrid(searchInput ? searchInput.value : '');
+
+        if (window.supabaseRealtime && window.supabaseRealtime.deleteFolder) {
+            await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
+            await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
+            await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
+        }
+
+        await autoPublishState();
     }
 
     // Helper: Dynamic Custom Link Rows
@@ -314,6 +583,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Dynamic Branch Checkboxes inside Subject Modal
+    function populateSubjectModalBranches(selectedBranches = ['ALL']) {
+        if (!branchCheckboxesContainer) return;
+
+        const availableBranches = typeof window.getAvailableBranches === 'function' ? window.getAvailableBranches() : [];
+
+        let checkboxesHTML = `
+            <label style="display: flex; align-items: center; gap: 4px; font-weight: 600; color: #0ea5e9; cursor: pointer;">
+                <input type="checkbox" class="branch-checkbox" value="ALL" ${selectedBranches.includes('ALL') ? 'checked' : ''}> ALL Branches
+            </label>
+        `;
+
+        availableBranches.forEach(b => {
+            checkboxesHTML += `
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                    <input type="checkbox" class="branch-checkbox" value="${b.code}" ${selectedBranches.includes(b.code) ? 'checked' : ''}> ${escapeHTML(b.name)}
+                </label>
+            `;
+        });
+
+        branchCheckboxesContainer.innerHTML = checkboxesHTML;
+    }
+
     // Subject Modal Handlers
     function openSubjectModal(editId = null, targetBranch = null) {
         if (!subjectModalBackdrop) return;
@@ -331,9 +623,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             subjectSemSelect.value = subj.semester || 'Semester 2';
 
             const selectedBranches = subj.branches || ['ALL'];
-            branchCheckboxes.forEach(cb => {
-                cb.checked = selectedBranches.includes(cb.value);
-            });
+            populateSubjectModalBranches(selectedBranches);
 
             const res = subj.resources || { notes: true, qb: true, assignments: true };
             if (resNotesCheckbox) resNotesCheckbox.checked = (res.notes !== false);
@@ -351,13 +641,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             subjectCodeInput.disabled = false;
 
             const activeBranch = targetBranch || getActiveBranch();
-            branchCheckboxes.forEach(cb => {
-                if (activeBranch === 'CE' || activeBranch === 'ALL') {
-                    cb.checked = (cb.value === 'ALL');
-                } else {
-                    cb.checked = (cb.value === activeBranch || cb.value === 'ALL');
-                }
-            });
+            const defaultSelected = (activeBranch === 'CE' || activeBranch === 'ALL') ? ['ALL'] : [activeBranch, 'ALL'];
+            populateSubjectModalBranches(defaultSelected);
 
             if (resNotesCheckbox) resNotesCheckbox.checked = true;
             if (resQbCheckbox) resQbCheckbox.checked = true;
@@ -368,9 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function closeSubjectModal() {
-        if (subjectModalBackdrop) {
-            subjectModalBackdrop.style.display = 'none';
-        }
+        if (subjectModalBackdrop) subjectModalBackdrop.style.display = 'none';
     }
 
     if (addSubjectBtn) {
@@ -393,7 +676,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const semester = subjectSemSelect.value;
 
             const selectedBranches = [];
-            branchCheckboxes.forEach(cb => {
+            document.querySelectorAll('.branch-checkbox').forEach(cb => {
                 if (cb.checked) selectedBranches.push(cb.value);
             });
 
@@ -407,14 +690,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Resources Enabled
             const resourcesObj = {
                 notes: resNotesCheckbox ? resNotesCheckbox.checked : true,
                 qb: resQbCheckbox ? resQbCheckbox.checked : true,
                 assignments: resAssCheckbox ? resAssCheckbox.checked : true
             };
 
-            // Custom Extra Links
             const customLinksArr = [];
             if (customLinksContainer) {
                 const rows = customLinksContainer.querySelectorAll('.custom-link-row');
@@ -430,7 +711,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             let subjObj = editId ? subjectsData[editId] : null;
 
             if (!subjObj) {
-                // Initializing brand new subject
                 subjObj = {
                     id: code,
                     title: title,
@@ -456,11 +736,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let customSubjects = [];
                 try {
                     customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-                } catch (e) {}
+                } catch (err) {}
                 customSubjects.push(subjObj);
                 localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
             } else {
-                // Editing existing subject
                 subjObj.title = title;
                 subjObj.semester = semester;
                 subjObj.branches = selectedBranches;
@@ -470,7 +749,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let modifiedSubjects = {};
                 try {
                     modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-                } catch (e) {}
+                } catch (err) {}
                 modifiedSubjects[editId] = { title, semester, branches: selectedBranches, resources: resourcesObj, customLinks: customLinksArr };
                 localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
             }
@@ -590,37 +869,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Branch selection listeners
-    const branchItems = document.querySelectorAll('.branch-item');
-    if (branchItems.length > 0) {
-        const savedBranch = localStorage.getItem('user_branch');
-        if (savedBranch) {
-            branchItems.forEach(item => {
-                if (item.dataset.branch === savedBranch) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-        }
-
-        branchItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                branchItems.forEach(b => b.classList.remove('active'));
-                item.classList.add('active');
-                const branchName = item.dataset.branch;
-
-                showToast(`Switched to ${item.textContent.trim()} Branch`);
-                localStorage.setItem('user_branch', branchName);
-                renderSubjectsGrid(searchInput ? searchInput.value : '');
-            });
-        });
-    }
-
     // Subscribe to Realtime Supabase updates
     if (window.supabaseRealtime) {
         window.supabaseRealtime.subscribe(() => {
+            renderBranchesSidebar();
             renderSubjectsGrid(searchInput ? searchInput.value : '');
         });
     }
@@ -630,6 +882,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             await window.supabaseRealtime.pullLatest();
         }
+        renderBranchesSidebar();
         renderSubjectsGrid();
     }
 

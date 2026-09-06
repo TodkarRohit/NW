@@ -50,14 +50,13 @@
     <div class="home-layout">
         <!-- Sidebar for Branch Selection -->
         <aside class="home-sidebar" id="homeSidebar">
-            <h3 class="home-sidebar-title">Branch</h3>
-            <ul class="branch-list" id="homeBranchList">
-                <li><a href="#" class="branch-item active" data-branch="CE">CE</a></li>
-                <li><a href="#" class="branch-item" data-branch="CSE">CSE</a></li>
-                <li><a href="#" class="branch-item" data-branch="IT">IT</a></li>
-                <li><a href="#" class="branch-item" data-branch="ECE">ECE</a></li>
-                <li><a href="#" class="branch-item" data-branch="AIDS">AI DS</a></li>
-            </ul>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 4px; margin-bottom: 0.8rem;">
+                <h3 class="home-sidebar-title" style="margin: 0; padding: 0;">Branch</h3>
+                <button type="button" id="addBranchBtn" style="display: none; background: rgba(14, 165, 233, 0.12); border: none; color: #0ea5e9; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer;" title="Add New Branch">
+                    <i class="fa-solid fa-plus"></i> Add
+                </button>
+            </div>
+            <ul class="branch-list" id="homeBranchList"></ul>
         </aside>
 
         <!-- Main Content Area -->
@@ -224,6 +223,55 @@
                 <button type="button" class="cancel-btn" id="confirmCancelBtn" style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:transparent; cursor:pointer;">Cancel</button>
                 <button type="button" class="submit-upload-btn" id="confirmOkBtn" style="padding:10px 20px; border-radius:8px; border:none; color:#fff; font-weight:bold; cursor:pointer; background: #ef4444;">
                     Yes, proceed
+                </button>
+            </div>
+        </div>
+    <!-- Add/Edit Branch Modal for Admin -->
+    <div class="admin-upload-backdrop" id="branchModalBackdrop" style="display: none;">
+        <div class="admin-upload-card" style="max-width: 440px; width: 90%;">
+            <div class="upload-modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-sitemap"></i>
+                    <h3 id="branchModalTitle">Add New Branch</h3>
+                </div>
+                <button type="button" class="close-modal-btn" id="closeBranchModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="branchForm" class="upload-modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+                <input type="hidden" id="branchModalEditCode" value="">
+                
+                <div class="form-group">
+                    <label for="branchCodeInput">Branch Code / Short Key</label>
+                    <input type="text" id="branchCodeInput" placeholder="e.g. MECH" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark);">
+                </div>
+
+                <div class="form-group">
+                    <label for="branchNameInput">Branch Display Name</label>
+                    <input type="text" id="branchNameInput" placeholder="e.g. Mechanical Engineering" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-dark);">
+                </div>
+
+                <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="cancel-btn" id="cancelBranchModalBtn" style="padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="submit-upload-btn" id="saveBranchBtn" style="padding: 10px 20px; border-radius: 8px; border: none; background: var(--primary-color, #0ea5e9); color: white; font-weight: 600; cursor: pointer;">Save Branch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Subject Delete Options Modal -->
+    <div class="admin-upload-backdrop" id="subjectDeleteOptionsModal" style="display: none;">
+        <div class="admin-upload-card" style="max-width: 440px; width: 90%; text-align: center; padding: 24px;">
+            <div style="font-size: 2.5rem; color: #ef4444; margin-bottom: 12px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--text-dark); font-size: 1.25rem; font-weight: 700;">Delete Subject Options</h3>
+            <p id="subjectDeleteModalSubtext" style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.5;"></p>
+            <div class="modal-actions" style="display:flex; flex-direction: column; gap:10px;">
+                <button type="button" id="deleteCurrentBranchOnlyBtn" style="padding:11px; border-radius:8px; border:1.5px solid #0ea5e9; background: rgba(14, 165, 233, 0.1); color:#0ea5e9; font-weight:bold; cursor:pointer;">
+                    Remove from <span id="deleteActiveBranchName">Current Branch</span> Only
+                </button>
+                <button type="button" id="deleteGlobalSubjectBtn" style="padding:11px; border-radius:8px; border:none; color:#fff; font-weight:bold; cursor:pointer; background: #ef4444;">
+                    Delete Globally (All Branches)
+                </button>
+                <button type="button" id="cancelDeleteOptionsBtn" style="padding:10px; border-radius:8px; border:1px solid #cbd5e1; background:transparent; cursor:pointer;">
+                    Cancel
                 </button>
             </div>
         </div>
