@@ -335,7 +335,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 6. Load Item Content / Upload Structure
     function loadItemContent(index) {
-        if (!items[index]) return;
+        if (!items[index]) index = 0;
+        activeIndex = index;
+        try {
+            sessionStorage.setItem(`active_index_${subjectKey}_${resourceType}`, index);
+        } catch (e) {}
 
         const currentItem = items[index];
         currentChapterName.textContent = currentItem.title;
@@ -1098,111 +1102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Live Online Users Counter Simulation
-    const onlineUsersCountEl = document.getElementById('onlineUsersCount');
-    if (onlineUsersCountEl) {
-        let baseCount = parseInt(sessionStorage.getItem('online_users_count')) || Math.floor(Math.random() * 12) + 16;
-        sessionStorage.setItem('online_users_count', baseCount);
-        onlineUsersCountEl.textContent = baseCount;
-
-        setInterval(() => {
-            const delta = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
-            baseCount = Math.max(12, Math.min(36, baseCount + delta));
-            sessionStorage.setItem('online_users_count', baseCount);
-            onlineUsersCountEl.textContent = baseCount;
-        }, 5000);
-    }
-
-    // 8. Add/Edit Unit/Topic functionality for Admins
-    const addUnitBtn = document.getElementById('addUnitBtn');
-    if (addUnitBtn) {
-        addUnitBtn.addEventListener('click', () => {
-            if (localStorage.getItem('isAdminMode') !== 'true') return;
-            openUnitModal(null);
-        });
-    }
-
-    const unitModalBackdrop = document.getElementById('unitModalBackdrop');
-    const closeUnitModalBtn = document.getElementById('closeUnitModalBtn');
-    const cancelUnitModalBtn = document.getElementById('cancelUnitModalBtn');
-    const unitForm = document.getElementById('unitForm');
-
-    function openUnitModal(index = null) {
-        if (!unitModalBackdrop) return;
-        const isEdit = index !== null;
-        document.getElementById('unitModalTitle').textContent = isEdit ? 'Edit Unit' : 'Add New Unit';
-        document.getElementById('unitModalIndex').value = isEdit ? index : '';
-        if (isEdit) {
-            document.getElementById('unitModalTitleInput').value = items[index].title || '';
-            document.getElementById('unitModalNameInput').value = items[index].name || '';
-        } else {
-            document.getElementById('unitModalTitleInput').value = '';
-            document.getElementById('unitModalNameInput').value = '';
-        }
-        unitModalBackdrop.classList.add('active');
-    }
-
-    function closeUnitModal() {
-        if (unitModalBackdrop) unitModalBackdrop.classList.remove('active');
-    }
-
-    if (closeUnitModalBtn) closeUnitModalBtn.addEventListener('click', closeUnitModal);
-    if (cancelUnitModalBtn) cancelUnitModalBtn.addEventListener('click', closeUnitModal);
-    if (unitModalBackdrop) {
-        unitModalBackdrop.addEventListener('click', (e) => {
-            if (e.target === unitModalBackdrop) closeUnitModal();
-        });
-    }
-
-    if (unitForm) {
-        unitForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const title = document.getElementById('unitModalTitleInput').value.trim();
-            const name = document.getElementById('unitModalNameInput').value.trim();
-            const indexVal = document.getElementById('unitModalIndex').value;
-            if (!title) return;
-
-            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
-            const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
-            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
-            let modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
-
-            if (indexVal !== '') {
-                const idx = parseInt(indexVal, 10);
-                items[idx].title = title;
-                items[idx].name = name;
-                
-                const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
-                if (customIdx >= 0) {
-                    customItems[customIdx].title = title;
-                    customItems[customIdx].name = name;
-                    localStorage.setItem(customItemsKey, JSON.stringify(customItems));
-                } else {
-                    modifiedItems[items[idx].id] = { title, name };
-                    localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
-                }
-                if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
-            } else {
-                const newId = `${subjectKey}-${isQB ? 'qb' : 'u'}${items.length + 1}-${Date.now()}`;
-                const newItem = { id: newId, title: title, unit: `Unit ${items.length + 1}`, name: name };
-                items.push(newItem);
-                customItems.push(newItem);
-                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
-                if (typeof showToast === 'function') showToast(`New ${itemSingular} added successfully!`);
-                activeIndex = items.length - 1;
-            }
-
-            chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
-            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
-            
-            if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
-                loadItemContent(activeIndex);
-            }
-            closeUnitModal();
-            autoPublishState();
-        });
-    }
-
     async function autoPublishState() {
         if (localStorage.getItem('isAdminMode') !== 'true') return;
         const exportData = {};
@@ -1213,14 +1112,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        try {
-            const jsonString = JSON.stringify(exportData);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
-            const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
-            if (error) console.warn("Auto-publish state notice:", error.message);
-        } catch (err) {
-            console.warn("Auto-publish state error:", err);
+        const jsonString = JSON.stringify(exportData);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
+        const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
+        if (error) {
+            console.error("Auto-publish state notice:", error);
+            throw error;
         }
     }
 
@@ -1241,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 console.error(err);
-                showToast('Failed to publish changes: ' + err.message, true);
+                showToast('Failed to publish changes: ' + (err.message || err), true);
             } finally {
                 publishBtn.innerHTML = `<i class="fa-solid fa-earth-americas"></i><span>Publish</span>`;
                 publishBtn.disabled = false;
@@ -1287,8 +1185,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch(e) {}
         
+        let initialIndex = 0;
+        try {
+            const savedIndex = parseInt(sessionStorage.getItem(`active_index_${subjectKey}_${resourceType}`), 10);
+            if (!isNaN(savedIndex) && items[savedIndex]) {
+                initialIndex = savedIndex;
+            }
+        } catch (e) {}
+
         renderItemList();
-        loadItemContent(0);
+        loadItemContent(initialIndex);
     }
     
     init();

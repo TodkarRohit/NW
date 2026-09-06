@@ -141,8 +141,7 @@ Below is the verified summary of all completed features, UI fixes, and security 
 | **Inline PDF Viewer** | PDF Viewing | Ensured files upload with `contentType: application/pdf` to render directly inline in browser frames instead of triggering forced downloads. |
 | **Theme Switcher** | UI / UX | Dark & Light mode toggle with persistent preference stored across sessions in `localStorage`. |
 | **Interactive Discussion Drawer** | Discussion | Assignment-level comment drawer storing real-time feedback in Supabase JSONB arrays. |
-| **Instant Keyboard Search** | Navigation | Global search input supporting `Ctrl + K` focus and `Esc` clear shortcuts across subjects and units. |
-| **Active Online Counter** | Engagement | Real-time animated badge indicating online active students on the portal. |
+| **Cloud State & Selection Memory** | Persistence | Published items, custom uploads, and active unit selection persist 100% across page reloads/refreshes. |
 | **Mobile Drawer & Responsive Grid** | Layout | CSS Grid and Flexbox layout tuned for desktop, tablet, and mobile browsers. |
 | **Automated Backend Test Suite** | Testing | Modular Express backend verified with 43 automated unit and integration tests (`test_suite.js`). |
 

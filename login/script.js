@@ -144,21 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Live Online Users Counter Simulation
-    const onlineUsersCountEl = document.getElementById('onlineUsersCount');
-    if (onlineUsersCountEl) {
-        let baseCount = parseInt(localStorage.getItem('online_users_count')) || Math.floor(Math.random() * 20) + 142; // Random between 142 and 162
-        localStorage.setItem('online_users_count', baseCount);
-        onlineUsersCountEl.textContent = baseCount;
-
-        setInterval(() => {
-            const delta = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, +1, +2
-            baseCount = Math.max(125, Math.min(185, baseCount + delta));
-            localStorage.setItem('online_users_count', baseCount);
-            onlineUsersCountEl.textContent = baseCount;
-        }, 5000);
-    }
-
     // Helper: Toast Notification
     function showToast(message) {
         const toast = document.getElementById('toast');

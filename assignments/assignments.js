@@ -651,27 +651,36 @@ public:
                 .select('*')
                 .eq('subject_key', subjectKey);
             if (error) throw error;
-            dbAssignments = data.map(row => ({
-                id: row.id,
-                chapterId: row.chapter_id,
-                unit: row.unit,
-                chapterTitle: row.chapter_title,
-                num: row.num,
-                title: row.title,
-                questionFile: row.question_file,
-                answerFile: row.answer_file,
-                questionDataUrl: row.question_data_url,
-                answerDataUrl: row.answer_data_url,
-                views: row.views,
-                downloads: row.downloads,
-                isCustom: row.is_custom,
-                comments: row.comments || [],
-                questionPreview: row.question_preview,
-                answerPreview: row.answer_preview
-            }));
+            if (data && data.length > 0) {
+                dbAssignments = data.map(row => ({
+                    id: row.id,
+                    chapterId: row.chapter_id,
+                    unit: row.unit,
+                    chapterTitle: row.chapter_title,
+                    num: row.num,
+                    title: row.title,
+                    questionFile: row.question_file,
+                    answerFile: row.answer_file,
+                    questionDataUrl: row.question_data_url,
+                    answerDataUrl: row.answer_data_url,
+                    views: row.views,
+                    downloads: row.downloads,
+                    isCustom: row.is_custom,
+                    comments: row.comments || [],
+                    questionPreview: row.question_preview,
+                    answerPreview: row.answer_preview
+                }));
+                try {
+                    localStorage.setItem(`custom_assignments_${subjectKey}`, JSON.stringify(dbAssignments));
+                } catch (e) {}
+            } else {
+                const localCustom = JSON.parse(localStorage.getItem(`custom_assignments_${subjectKey}`)) || [];
+                dbAssignments = localCustom;
+            }
         } catch (e) {
             console.error('Error fetching assignments from Supabase:', e);
-            dbAssignments = [];
+            const localCustom = JSON.parse(localStorage.getItem(`custom_assignments_${subjectKey}`)) || [];
+            dbAssignments = localCustom;
         }
     }
 
@@ -984,6 +993,9 @@ public:
                     }
 
                     dbAssignments.unshift(newAss);
+                    try {
+                        localStorage.setItem(`custom_assignments_${subjectKey}`, JSON.stringify(dbAssignments));
+                    } catch (e) {}
 
                     inpageForm.reset();
                     if (qNameDisplay) qNameDisplay.textContent = 'Choose Question PDF file...';
