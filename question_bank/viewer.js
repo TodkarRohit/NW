@@ -459,81 +459,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } else if (isQB) {
-            // Built-in Question Bank Questions vs Answers Paper View
+            // Built-in Question Bank Empty View
             itemUploadStatus.className = "status-indicator";
-            statusText.textContent = currentQBView === 'questions' ? "Viewing Question Paper" : "Viewing Answer Key";
+            statusText.textContent = currentQBView === 'questions' ? "No Question Paper PDF" : "No Answer Key PDF";
 
             const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
             
-            const paperViewHTML = currentQBView === 'questions' ? `
-                <div class="qb-paper-view question-paper">
+            const paperViewHTML = `
+                <div class="qb-paper-view ${currentQBView === 'questions' ? 'question-paper' : 'answer-paper'}">
                     <div class="paper-header">
-                        <div class="paper-badge question-badge">QUESTION PAPER</div>
+                        <div class="paper-badge ${currentQBView === 'questions' ? 'question-badge' : 'answer-badge'}">
+                            ${currentQBView === 'questions' ? 'QUESTION PAPER' : 'MODEL SOLUTIONS & ANSWER KEY'}
+                        </div>
                         <h3>${currentItem.title}</h3>
-                        <p class="paper-sub">${subjectData.title} &bull; ${subjectData.semester} &bull; Time: 2 Hours &bull; Max Marks: 50</p>
+                        <p class="paper-sub">${subjectData.title} &bull; ${subjectData.semester}</p>
                     </div>
-                    <div class="paper-section">
-                        <h4>SECTION A: Short Answer Questions (20 Marks)</h4>
-                        <div class="q-item">
-                            <span class="q-num">Q1.</span>
-                            <p>Define ${currentItem.name || 'key concepts'}. Explain memory representation and structural operations with algorithm complexity.</p>
-                        </div>
-                        <div class="q-item">
-                            <span class="q-num">Q2.</span>
-                            <p>Differentiate between linear and non-linear memory allocation with suitable C++ examples.</p>
-                        </div>
+                    <div class="paper-section" style="text-align: center; padding: 2.5rem 1rem;">
+                        <div style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem;">📄</div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-dark);">No ${currentQBView === 'questions' ? 'Question Paper' : 'Answer Key'} PDF Uploaded Yet</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 450px; margin: 0 auto 1.5rem;">
+                            ${isAdminMode ? `Upload your ${currentQBView === 'questions' ? 'Question Paper' : 'Model Answer'} PDF file for ${currentItem.title} to display it here.` : `The administrator has not uploaded a ${currentQBView === 'questions' ? 'Question Paper' : 'Model Answer'} PDF for this unit yet.`}
+                        </p>
+                        ${isAdminMode ? `
+                        <button type="button" class="upload-action-pill" id="stripUploadBtn" style="display: inline-flex; gap: 0.5rem; align-items: center;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload ${currentQBView === 'questions' ? 'Question' : 'Answer'} PDF
+                        </button>
+                        ` : ''}
                     </div>
-                    <div class="paper-section">
-                        <h4>SECTION B: Long Answer Questions & Applications (30 Marks)</h4>
-                        <div class="q-item">
-                            <span class="q-num">Q3.</span>
-                            <p>Write a complete C++ class implementation to solve real-world problem statement for ${currentItem.name || 'the given topic'}. Include constructors, destructors, and member functions.</p>
-                        </div>
-                        <div class="q-item">
-                            <span class="q-num">Q4.</span>
-                            <p>Analyze best-case, average-case, and worst-case time complexities with step-by-step trace diagrams.</p>
-                        </div>
-                    </div>
-                    ${isAdminMode ? `
-                    <div class="upload-pdf-strip">
-                        <span>Have your own Question PDF for this unit?</span>
-                        <button type="button" class="strip-upload-btn" id="stripUploadQBtn">Upload Question PDF</button>
-                    </div>
-                    ` : ''}
-                </div>
-            ` : `
-                <div class="qb-paper-view answer-paper">
-                    <div class="paper-header">
-                        <div class="paper-badge answer-badge">MODEL SOLUTIONS & ANSWER KEY</div>
-                        <h3>${currentItem.title} - Detailed Solutions</h3>
-                        <p class="paper-sub">${subjectData.title} &bull; ${subjectData.semester} &bull; Official Answer Key</p>
-                    </div>
-                    <div class="paper-section">
-                        <h4>MODEL SOLUTIONS & CODE IMPLEMENTATION</h4>
-                        <div class="q-item solution-item">
-                            <span class="sol-tag">Solution Q1:</span>
-                            <p><strong>Explanation:</strong> ${currentItem.name || 'Concept'} allows structured memory management. Time Complexity: O(1) for direct lookup, O(N) for sequential traversal.</p>
-                            <div class="sol-code-block">
-                                // C++ Solution Code<br>
-                                #include &lt;iostream&gt;<br>
-                                using namespace std;<br><br>
-                                int main() {<br>
-                                &nbsp;&nbsp;&nbsp;&nbsp;cout &lt;&lt; "Solution for ${currentItem.name || 'Question 1'}" &lt;&lt; endl;<br>
-                                &nbsp;&nbsp;&nbsp;&nbsp;return 0;<br>
-                                }
-                            </div>
-                        </div>
-                        <div class="q-item solution-item">
-                            <span class="sol-tag">Solution Q2:</span>
-                            <p><strong>Comparison:</strong> Contiguous memory allocation vs node-based dynamic references. Dynamic allocation avoids fixed memory limits but introduces pointer overhead.</p>
-                        </div>
-                    </div>
-                    ${isAdminMode ? `
-                    <div class="upload-pdf-strip">
-                        <span>Have your own Answer/Solution PDF for this unit?</span>
-                        <button type="button" class="strip-upload-btn" id="stripUploadABtn">Upload Answer PDF</button>
-                    </div>
-                    ` : ''}
                 </div>
             `;
 
@@ -552,15 +504,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            const stripQBtn = document.getElementById('stripUploadQBtn');
-            const stripABtn = document.getElementById('stripUploadABtn');
-            if (stripQBtn) stripQBtn.addEventListener('click', () => openQbUploadModal('questions'));
-            if (stripABtn) stripABtn.addEventListener('click', () => openQbUploadModal('answers'));
+            const stripBtn = document.getElementById('stripUploadBtn');
+            if (stripBtn) stripBtn.addEventListener('click', () => openQbUploadModal(currentQBView));
 
         } else {
             // Clean Upload / Outline Blueprint Structure for Study Notes
             itemUploadStatus.className = "status-indicator";
-            statusText.textContent = "Ready for Upload";
+            statusText.textContent = "No Notes PDF";
             const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
 
             notesDocument.innerHTML = `
@@ -578,17 +528,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
                     </div>
-                    <h3>Upload ${typeLabel}</h3>
-                    <p>Click here or drag & drop your study notes or PDF document for <strong>${currentItem.title}</strong>.</p>
-                    <div class="upload-action-pill">Choose File (PDF, DOCX, TXT, Images)</div>
+                    <h3>Upload ${typeLabel} PDF</h3>
+                    <p>Click here or drag & drop your PDF document for <strong>${currentItem.title}</strong>.</p>
+                    <div class="upload-action-pill">Choose PDF File</div>
                 </div>
                 ` : `
-                <div class="upload-dropzone" style="cursor: pointer; background: var(--bg-surface); border-style: dashed; padding: 20px;">
-                    <h3 style="color: var(--text-main); margin-bottom: 10px;"><i class="fa-regular fa-file-pdf" style="color: #ef4444;"></i> Module 1 Question Bank.pdf</h3>
-                    <p style="color: var(--text-light);">Click to view or download</p>
-                </div>
-                    <h3 style="color: var(--text-muted);">Admin Upload Only</h3>
-                    <p style="color: var(--text-light);">Only authenticated admins can upload study materials here.</p>
+                <div class="upload-dropzone" style="background: var(--bg-surface); border-style: dashed; padding: 25px; text-align: center;">
+                    <div style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem;">📚</div>
+                    <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">No Study Notes PDF Uploaded</h3>
+                    <p style="color: var(--text-muted);">The administrator has not uploaded a study notes PDF for this unit yet.</p>
                 </div>
                 `}
                 <!-- Structured Outline Layout -->
@@ -824,15 +772,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function detectCategoryFromFileName(fileName) {
+        const name = String(fileName || '').toLowerCase();
+        if (name.includes('assignment') || name.includes('ass_') || name.includes('sol_')) {
+            return 'assignments';
+        }
+        if (name.includes('question') || name.includes('qb') || name.includes('bank') || name.includes('paper') || name.includes('exam')) {
+            return 'qb';
+        }
+        if (name.includes('note') || name.includes('study') || name.includes('unit') || name.includes('ch')) {
+            return 'notes';
+        }
+        return null;
+    }
+
     async function handleFileSelection(file) {
         if (!file) return;
 
         try {
-            showToast(`Uploading "${file.name}" to cloud storage...`);
+            const detectedCat = detectCategoryFromFileName(file.name);
+            const catLabel = detectedCat ? (detectedCat === 'qb' ? 'Question Bank' : (detectedCat === 'assignments' ? 'Assignments' : 'Study Notes')) : (isQB ? 'Question Bank' : 'Study Notes');
+            showToast(`Categorizing & Uploading "${file.name}" to ${catLabel}...`);
             
-            // Upload to Supabase Storage
-            const subFolder = isQB ? 'question_bank' : 'notes';
+            // Upload to Unit-wise Supabase Storage Folder
+            const targetSubFolder = detectedCat === 'assignments' ? 'assignments' : (detectedCat === 'qb' ? 'question_bank' : (detectedCat === 'notes' ? 'notes' : (isQB ? 'question_bank' : 'notes')));
+            const unitId = items[activeIndex] ? items[activeIndex].id : `unit_${activeIndex}`;
+            const currentView = isQB ? currentQBView : 'notes';
+            const subFolder = `${targetSubFolder}/${subjectKey}/${unitId}/${currentView}`;
             const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+            
             const { error: err } = await window.supabaseClient.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
             
             if (err) throw err;
@@ -844,14 +812,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 size: file.size,
                 type: file.type || 'application/pdf',
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                data: urlData.publicUrl
+                data: urlData.publicUrl,
+                category: catLabel
             };
 
             const storageKey = getStorageKey(activeIndex, isQB ? currentQBView : null);
             localStorage.setItem(storageKey, JSON.stringify(docData));
             renderItemList(chapterSearchInput.value);
             loadItemContent(activeIndex);
-            showToast(`File "${file.name}" uploaded to Cloud successfully!`);
+            showToast(`File "${file.name}" categorized as ${catLabel} & uploaded!`);
 
             await autoPublishState();
         } catch (err) {
