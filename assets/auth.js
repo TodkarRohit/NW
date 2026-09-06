@@ -367,7 +367,11 @@
                 .from('academic-files')
                 .getPublicUrl('published_state/app_data.json');
 
-            const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+            const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (res.ok) {
                 const publishedData = await res.json();
                 

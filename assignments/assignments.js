@@ -1764,18 +1764,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, "&#039;");
     }
 
-    // Initial load & Realtime Sync
+    // Initial Load & Realtime Sync (Instant Paint + Async Fetch)
+    renderChapterNav();
+    renderAssignments(searchInput ? searchInput.value : '');
+    updateAdminUI();
+
+    // Background Async Fetch (Non-blocking)
+    fetchAssignments().then(() => {
+        renderChapterNav();
+        renderAssignments(searchInput ? searchInput.value : '');
+    }).catch(e => console.warn('Background assignment fetch:', e));
+
     if (window.supabaseRealtime) {
-        window.supabaseRealtime.subscribe(async () => {
-            await fetchAssignments();
-            renderChapterNav();
-            renderAssignments(searchInput ? searchInput.value : '');
+        window.supabaseRealtime.subscribe(() => {
+            fetchAssignments().then(() => {
+                renderChapterNav();
+                renderAssignments(searchInput ? searchInput.value : '');
+            });
         });
     }
-
-    await fetchAssignments();
-    renderChapterNav();
-    updateAdminUI();
 });
 
 

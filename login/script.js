@@ -923,14 +923,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Initial Load & Cloud Sync
-    async function init() {
-        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
-            await window.supabaseRealtime.pullLatest();
-        }
+    // Initial Load & Cloud Sync (Instant Paint + Async Background Sync)
+    function init() {
+        // 1. Render immediately from local cache (0ms latency paint)
         renderBranchesSidebar();
         renderSubjectsGrid();
-    }
 
+        // 2. Sync latest cloud state in background without blocking load
+        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
+            window.supabaseRealtime.pullLatest().then(() => {
+                renderBranchesSidebar();
+                renderSubjectsGrid(searchInput ? searchInput.value : '');
+            }).catch(e => console.warn('Background sync:', e));
+        }
+    }
     init();
+
 });
