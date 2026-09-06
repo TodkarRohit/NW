@@ -50,11 +50,13 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     flex-wrap: wrap;
     gap: 10px;
+    position: relative;
 }
 
 .header-left-actions {
     position: absolute;
-    top: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     left: 24px;
     display: flex;
     align-items: center;
@@ -64,7 +66,8 @@ body {
 
 .header-right-actions {
     position: absolute;
-    top: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 24px;
     display: flex;
     align-items: center;

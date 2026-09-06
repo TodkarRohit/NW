@@ -219,6 +219,7 @@ body {
     color: #ffffff;
     padding: 1rem 0 0.9rem 0;
     position: sticky;
+    position: relative;
     top: 0;
     z-index: 1000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
@@ -246,6 +247,34 @@ body {
     align-items: center;
     gap: 10px;
     z-index: 100;
+}
+
+.theme-toggle-btn, .admin-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 0.825rem;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.theme-toggle-btn:hover, .admin-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.theme-toggle-btn i, .admin-toggle-btn i {
+    font-size: 0.95rem;
 }
 
 .mobile-home-menu-btn {
@@ -1760,4 +1789,41 @@ footer {
 .remove-link-btn:hover {
     background: rgba(239, 68, 68, 0.25);
 }
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+.toast, .toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    border: 1px solid #334155;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast i, .toast-notification i {
+    color: #4ade80;
+    font-size: 1.1rem;
+}
+
+.toast.show, .toast-notification.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
 

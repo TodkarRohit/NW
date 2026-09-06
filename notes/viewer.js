@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             items.push(...customItems);
         }
         modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
-    } catch (e) {}
+    } catch (e) { }
 
     items.forEach(item => {
         if (modifiedItems[item.id]) {
@@ -246,15 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const qDataStr = localStorage.getItem(getStorageKey(index, 'questions'));
                     const aDataStr = localStorage.getItem(getStorageKey(index, isAss ? 'solutions' : 'answers'));
                     if (qDataStr) {
-                        try { uploadedFiles.push(JSON.parse(qDataStr)); } catch(e){}
+                        try { uploadedFiles.push(JSON.parse(qDataStr)); } catch (e) { }
                     }
                     if (aDataStr) {
-                        try { uploadedFiles.push(JSON.parse(aDataStr)); } catch(e){}
+                        try { uploadedFiles.push(JSON.parse(aDataStr)); } catch (e) { }
                     }
                 } else {
                     const nDataStr = localStorage.getItem(getStorageKey(index));
                     if (nDataStr) {
-                        try { uploadedFiles.push(JSON.parse(nDataStr)); } catch(e){}
+                        try { uploadedFiles.push(JSON.parse(nDataStr)); } catch (e) { }
                     }
                 }
                 const hasDoc = uploadedFiles.length > 0;
@@ -263,14 +263,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemBtn.style.display = 'flex';
                 itemBtn.style.flexDirection = 'column';
                 itemBtn.style.gap = '0';
-                
+
                 const btnInner = document.createElement('button');
                 btnInner.className = `chapter-item ${index === activeIndex ? 'active' : ''}`;
                 btnInner.setAttribute('type', 'button');
                 btnInner.style.width = '100%';
-                
+
                 const isAdminMode = checkIsAdmin();
-                
+
                 btnInner.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; width: 100%;">
                         <span class="chapter-item-title" style="flex:1; text-align:left;">${escapeHTML(displayTitle)}</span>
@@ -303,21 +303,21 @@ document.addEventListener('DOMContentLoaded', () => {
                             const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
                             let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
                             const isCustom = customItems.some(ci => ci.id === item.id);
-                            
+
                             if (isCustom) {
                                 customItems = customItems.filter(ci => ci.id !== item.id);
                                 localStorage.setItem(customItemsKey, JSON.stringify(customItems));
                             }
-                            
+
                             items.splice(index, 1);
-                            
+
                             localStorage.removeItem(getStorageKey(index, 'questions'));
                             localStorage.removeItem(getStorageKey(index, 'answers'));
                             localStorage.removeItem(getStorageKey(index, null));
 
                             chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
                             renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
-                            
+
                             if (activeIndex === index) activeIndex = 0;
                             else if (activeIndex > index) activeIndex--;
                             loadItemContent(activeIndex);
@@ -340,19 +340,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     dropdown.style.display = 'flex';
                     dropdown.style.flexDirection = 'column';
                     dropdown.style.gap = '8px';
-                    
+
                     // Adjust button radius so it merges with dropdown
                     btnInner.style.borderBottomLeftRadius = '0';
                     btnInner.style.borderBottomRightRadius = '0';
                     btnInner.style.borderBottom = '1px solid transparent';
-                    
+
                     dropdown.innerHTML = uploadedFiles.map(f => `
                         <div style="display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 1.1rem;"></i>
                             <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;" title="${f.name}">${f.name}</span>
                         </div>
                     `).join('');
-                    
+
                     itemBtn.appendChild(dropdown);
                 }
 
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeIndex = index;
         try {
             sessionStorage.setItem(`active_index_${subjectKey}_${resourceType}`, index);
-        } catch (e) {}
+        } catch (e) { }
 
         const currentItem = items[index];
         currentChapterName.textContent = currentItem.title;
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if an uploaded document exists for current view
         const storageKey = getStorageKey(index, isQB ? currentQBView : null);
         const storedDocJSON = localStorage.getItem(storageKey);
-        
+
         if (storedDocJSON) {
             const docData = JSON.parse(storedDocJSON);
             itemUploadStatus.className = "status-indicator uploaded";
@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!checkIsAdmin()) {
                         alert("Only administrators can delete files.");
                         return;
-                    }        
+                    }
                     if (await customConfirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
                         // 1. Remove from localStorage
                         localStorage.removeItem(storageKey);
@@ -567,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let deletedKeys = [];
                         try {
                             deletedKeys = JSON.parse(localStorage.getItem('deleted_keys_global')) || [];
-                        } catch (e) {}
+                        } catch (e) { }
                         if (!deletedKeys.includes(storageKey)) {
                             deletedKeys.push(storageKey);
                         }
@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
             statusText.textContent = currentQBView === 'questions' ? "No Question Paper PDF" : "No Answer Key PDF";
 
             const isAdminMode = checkIsAdmin();
-            
+
             const paperViewHTML = `
                 <div class="qb-paper-view ${currentQBView === 'questions' ? 'question-paper' : 'answer-paper'}">
                     <div class="paper-header">
@@ -869,7 +869,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const unitId = items[targetIndex] ? items[targetIndex].id : `unit_${targetIndex}`;
                 const subFolder = isQB ? `question_bank/${subjectKey}/${unitId}/${selectedDocType}` : `notes/${subjectKey}/${unitId}`;
                 const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-                
+
                 const { error: err } = await window.supabaseClient.storage
                     .from('academic-files')
                     .upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
@@ -932,20 +932,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const detectedCat = detectCategoryFromFileName(file.name);
             const catLabel = detectedCat ? (detectedCat === 'qb' ? 'Question Bank' : (detectedCat === 'assignments' ? 'Assignments' : 'Study Notes')) : (isQB ? 'Question Bank' : 'Study Notes');
             showToast(`Categorizing & Uploading "${file.name}" to ${catLabel}...`);
-            
+
             // Upload to Unit-wise Supabase Storage Folder
             const targetSubFolder = detectedCat === 'assignments' ? 'assignments' : (detectedCat === 'qb' ? 'question_bank' : (detectedCat === 'notes' ? 'notes' : (isQB ? 'question_bank' : 'notes')));
             const unitId = items[activeIndex] ? items[activeIndex].id : `unit_${activeIndex}`;
             const currentView = isQB ? currentQBView : 'notes';
             const subFolder = `${targetSubFolder}/${subjectKey}/${unitId}/${currentView}`;
             const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-            
+
             const { error: err } = await window.supabaseClient.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
-            
+
             if (err) throw err;
-            
+
             const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
-            
+
             const docData = {
                 name: file.name,
                 size: file.size,
@@ -1020,63 +1020,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentQBView === 'questions') {
                     fileTitle = `${currentItem.title}_Questions.txt`;
                     contentText = `========================================================================\n` +
-                                  `${subjectData.title} - QUESTION PAPER\n` +
-                                  `${currentItem.title}\n` +
-                                  `Semester: ${subjectData.semester} | Time: 2 Hours | Max Marks: 50\n` +
-                                  `========================================================================\n\n` +
-                                  `SECTION A: Short Answer Questions (20 Marks)\n` +
-                                  `------------------------------------------------------------------------\n` +
-                                  `Q1. Define ${currentItem.name || 'key concepts'}. Explain memory representation and structural operations with algorithm complexity.\n\n` +
-                                  `Q2. Differentiate between linear and non-linear memory allocation with suitable C++ examples.\n\n\n` +
-                                  `SECTION B: Long Answer Questions & Applications (30 Marks)\n` +
-                                  `------------------------------------------------------------------------\n` +
-                                  `Q3. Write a complete C++ class implementation to solve real-world problem statement for ${currentItem.name || 'the given topic'}. Include constructors, destructors, and member functions.\n\n` +
-                                  `Q4. Analyze best-case, average-case, and worst-case time complexities with step-by-step trace diagrams.\n\n` +
-                                  `========================================================================\n` +
-                                  `Engineering Notes Hub - Built for NMIET Students\n` +
-                                  `========================================================================\n`;
+                        `${subjectData.title} - QUESTION PAPER\n` +
+                        `${currentItem.title}\n` +
+                        `Semester: ${subjectData.semester} | Time: 2 Hours | Max Marks: 50\n` +
+                        `========================================================================\n\n` +
+                        `SECTION A: Short Answer Questions (20 Marks)\n` +
+                        `------------------------------------------------------------------------\n` +
+                        `Q1. Define ${currentItem.name || 'key concepts'}. Explain memory representation and structural operations with algorithm complexity.\n\n` +
+                        `Q2. Differentiate between linear and non-linear memory allocation with suitable C++ examples.\n\n\n` +
+                        `SECTION B: Long Answer Questions & Applications (30 Marks)\n` +
+                        `------------------------------------------------------------------------\n` +
+                        `Q3. Write a complete C++ class implementation to solve real-world problem statement for ${currentItem.name || 'the given topic'}. Include constructors, destructors, and member functions.\n\n` +
+                        `Q4. Analyze best-case, average-case, and worst-case time complexities with step-by-step trace diagrams.\n\n` +
+                        `========================================================================\n` +
+                        `Engineering Notes Hub - Built for NMIET Students\n` +
+                        `========================================================================\n`;
                 } else {
                     fileTitle = `${currentItem.title}_Model_Solutions.txt`;
                     contentText = `========================================================================\n` +
-                                  `${subjectData.title} - MODEL SOLUTIONS & ANSWER KEY\n` +
-                                  `${currentItem.title}\n` +
-                                  `Semester: ${subjectData.semester} | Official Answer Key\n` +
-                                  `========================================================================\n\n` +
-                                  `SOLUTION Q1:\n` +
-                                  `------------------------------------------------------------------------\n` +
-                                  `Explanation: ${currentItem.name || 'Concept'} allows structured memory management.\n` +
-                                  `Time Complexity: O(1) for direct lookup, O(N) for sequential traversal.\n\n` +
-                                  `C++ Code Implementation:\n` +
-                                  `#include <iostream>\n` +
-                                  `using namespace std;\n\n` +
-                                  `int main() {\n` +
-                                  `    cout << "Solution for ${currentItem.name || 'Question 1'}" << endl;\n` +
-                                  `    return 0;\n` +
-                                  `}\n\n\n` +
-                                  `SOLUTION Q2:\n` +
-                                  `------------------------------------------------------------------------\n` +
-                                  `Comparison: Contiguous memory allocation vs node-based dynamic references.\n` +
-                                  `Dynamic allocation avoids fixed memory limits but introduces pointer overhead.\n\n` +
-                                  `========================================================================\n` +
-                                  `Engineering Notes Hub - Built for NMIET Students\n` +
-                                  `========================================================================\n`;
+                        `${subjectData.title} - MODEL SOLUTIONS & ANSWER KEY\n` +
+                        `${currentItem.title}\n` +
+                        `Semester: ${subjectData.semester} | Official Answer Key\n` +
+                        `========================================================================\n\n` +
+                        `SOLUTION Q1:\n` +
+                        `------------------------------------------------------------------------\n` +
+                        `Explanation: ${currentItem.name || 'Concept'} allows structured memory management.\n` +
+                        `Time Complexity: O(1) for direct lookup, O(N) for sequential traversal.\n\n` +
+                        `C++ Code Implementation:\n` +
+                        `#include <iostream>\n` +
+                        `using namespace std;\n\n` +
+                        `int main() {\n` +
+                        `    cout << "Solution for ${currentItem.name || 'Question 1'}" << endl;\n` +
+                        `    return 0;\n` +
+                        `}\n\n\n` +
+                        `SOLUTION Q2:\n` +
+                        `------------------------------------------------------------------------\n` +
+                        `Comparison: Contiguous memory allocation vs node-based dynamic references.\n` +
+                        `Dynamic allocation avoids fixed memory limits but introduces pointer overhead.\n\n` +
+                        `========================================================================\n` +
+                        `Engineering Notes Hub - Built for NMIET Students\n` +
+                        `========================================================================\n`;
                 }
             } else {
                 fileTitle = `${currentItem.title}_Study_Notes.txt`;
                 contentText = `========================================================================\n` +
-                              `${subjectData.title} - STUDY NOTES\n` +
-                              `${currentItem.title}\n` +
-                              `Semester: ${subjectData.semester}\n` +
-                              `========================================================================\n\n` +
-                              `MODULE OVERVIEW:\n` +
-                              `${currentItem.name || currentItem.title}\n\n` +
-                              `KEY TOPICS & STUDY GUIDELINES:\n` +
-                              `1. Fundamentals & Core Architecture\n` +
-                              `2. Standard Operating Principles & Methods\n` +
-                              `3. Code Implementation & Real-World Examples\n\n` +
-                              `========================================================================\n` +
-                              `Engineering Notes Hub - Built for NMIET Students\n` +
-                              `========================================================================\n`;
+                    `${subjectData.title} - STUDY NOTES\n` +
+                    `${currentItem.title}\n` +
+                    `Semester: ${subjectData.semester}\n` +
+                    `========================================================================\n\n` +
+                    `MODULE OVERVIEW:\n` +
+                    `${currentItem.name || currentItem.title}\n\n` +
+                    `KEY TOPICS & STUDY GUIDELINES:\n` +
+                    `1. Fundamentals & Core Architecture\n` +
+                    `2. Standard Operating Principles & Methods\n` +
+                    `3. Code Implementation & Real-World Examples\n\n` +
+                    `========================================================================\n` +
+                    `Engineering Notes Hub - Built for NMIET Students\n` +
+                    `========================================================================\n`;
             }
 
             const blob = new Blob([contentText], { type: 'text/plain;charset=utf-8' });
@@ -1260,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (items[idx]) {
                     items[idx].title = title;
                     items[idx].name = name;
-                    
+
                     const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
                     if (customIdx >= 0) {
                         customItems[customIdx].title = title;
@@ -1284,14 +1284,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
             renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
-            
+
             if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
                 loadItemContent(activeIndex);
             }
             closeUnitModal();
             try {
                 await autoPublishState();
-            } catch (err) {}
+            } catch (err) { }
         });
     }
 
@@ -1313,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-            
+
             publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Publishing...</span>`;
             publishBtn.disabled = true;
 
@@ -1350,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
         const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
         const modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
-        
+
         // Clear and rebuild items
         items.length = 0;
         let rawDefaults = [];
@@ -1374,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { id: `${subjectKey}-u4`, title: "Unit 4: Applications & Implementation", unit: "Unit 4", name: "Applications & Implementation" }
             );
         }
-        
+
         items.forEach(item => {
             if (modifiedItems[item.id]) {
                 item.title = modifiedItems[item.id].title;
@@ -1389,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isNaN(savedIndex) && items[savedIndex]) {
                 initialIndex = savedIndex;
             }
-        } catch (e) {}
+        } catch (e) { }
 
         updateUploadBtnUI();
         renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
@@ -1410,11 +1410,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
                 if (res.ok) {
                     const publishedData = await res.json();
-                    
+
                     let cloudDeleted = [];
-                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch(e) {}
+                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch (e) { }
                     let localDeleted = [];
-                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
+                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch (e) { }
                     const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
                     localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
 
@@ -1429,7 +1429,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     updated = true;
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
 
         if (updated) {
@@ -1448,19 +1448,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (mode === 'normal') {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
-                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
             }
         } else if (mode === 'fullsite') {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
-                if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+                if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
             }
             body.classList.add('full-site-mode');
         } else if (mode === 'fullscreen') {
             if (docCard) {
                 if (docCard.requestFullscreen) {
-                    docCard.requestFullscreen().catch(() => {});
+                    docCard.requestFullscreen().catch(() => { });
                 } else if (docCard.webkitRequestFullscreen) {
                     docCard.webkitRequestFullscreen();
                 } else if (docCard.msRequestFullscreen) {
@@ -1477,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        try { localStorage.setItem('pdfViewMode', mode); } catch (e) {}
+        try { localStorage.setItem('pdfViewMode', mode); } catch (e) { }
     }
 
     function initPdfViewModeSwitcher() {
@@ -1560,6 +1560,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUploadBtnUI();
         renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
     });
-    
+
     init();
 });

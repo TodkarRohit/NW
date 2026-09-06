@@ -73,7 +73,8 @@ body {
 
 .header-left-actions {
     position: absolute;
-    top: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     left: 24px;
     display: flex;
     align-items: center;
@@ -83,7 +84,8 @@ body {
 
 .header-right-actions {
     position: absolute;
-    top: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 24px;
     display: flex;
     align-items: center;
