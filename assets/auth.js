@@ -435,9 +435,6 @@
     async function pushAndBroadcastStateChange() {
         if (!window.supabaseClient) return;
 
-        // Automatically clean loose/orphaned files at root of storage bucket
-        await cleanOrphanedSupabaseStorage();
-
         const exportData = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -510,31 +507,6 @@
         }
     }
 
-    async function cleanOrphanedSupabaseStorage() {
-        if (!window.supabaseClient) return;
-        try {
-            const { data: rootItems } = await window.supabaseClient.storage
-                .from('academic-files')
-                .list('');
-
-            if (rootItems && rootItems.length > 0) {
-                const allowedFolders = ['notes', 'assignments', 'question_bank', 'published_state'];
-                const looseFiles = rootItems
-                    .filter(item => item.id && !allowedFolders.includes(item.name))
-                    .map(item => item.name);
-
-                if (looseFiles.length > 0) {
-                    console.log('Cleaning loose root files from Supabase:', looseFiles);
-                    await window.supabaseClient.storage
-                        .from('academic-files')
-                        .remove(looseFiles);
-                }
-            }
-        } catch (err) {
-            console.warn('Error cleaning loose files from Supabase:', err);
-        }
-    }
-
     window.supabaseRealtime = {
         subscribe: function (callback) {
             if (typeof callback === 'function' && !registeredRealtimeCallbacks.includes(callback)) {
@@ -543,8 +515,7 @@
         },
         pushAndBroadcast: pushAndBroadcastStateChange,
         pullLatest: pullLatestStateFromSupabase,
-        deleteFolder: deleteSupabaseFolder,
-        cleanOrphans: cleanOrphanedSupabaseStorage
+        deleteFolder: deleteSupabaseFolder
     };
 
     // Initialize once DOM is ready

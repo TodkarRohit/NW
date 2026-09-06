@@ -188,17 +188,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Render Sidebar Items List
     function renderItemList(filterText = '') {
         chapterList.innerHTML = '';
-        const searchLower = filterText.toLowerCase();
+        const searchLower = (filterText || '').toLowerCase();
+
+        chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
         items.forEach((item, index) => {
-            const matches = item.title.toLowerCase().includes(searchLower) ||
-                            (item.name && item.name.toLowerCase().includes(searchLower));
+            if (!item) return;
+            const displayTitle = item.title || item.name || `Unit ${index + 1}`;
+            const displayName = item.name || item.title || '';
+            const matches = displayTitle.toLowerCase().includes(searchLower) || displayName.toLowerCase().includes(searchLower);
 
             if (matches) {
                 let uploadedFiles = [];
-                if (isQB) {
+                if (isQB || isAss) {
                     const qDataStr = localStorage.getItem(getStorageKey(index, 'questions'));
-                    const aDataStr = localStorage.getItem(getStorageKey(index, 'answers'));
+                    const aDataStr = localStorage.getItem(getStorageKey(index, isAss ? 'solutions' : 'answers'));
                     if (qDataStr) {
                         try { uploadedFiles.push(JSON.parse(qDataStr)); } catch(e){}
                     }
@@ -227,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 btnInner.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; width: 100%;">
-                        <span class="chapter-item-title" style="flex:1; text-align:left;">${item.title}</span>
+                        <span class="chapter-item-title" style="flex:1; text-align:left;">${escapeHTML(displayTitle)}</span>
                         <div style="display:flex; align-items:center; gap:4px;">
                             ${hasDoc ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
                             ${isAdminMode ? `
