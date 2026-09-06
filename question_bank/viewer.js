@@ -82,26 +82,25 @@ document.addEventListener('DOMContentLoaded', () => {
         window.loadCustomSubjectsIntoData();
     }
 
-    // 2. Load Subject Data with Fallback
-    if (!subjectsData[subjectKey]) {
+    // 2. Load Subject Data
+    let subjectData = subjectsData[subjectKey];
+    if (!subjectData) {
         const foundKey = Object.keys(subjectsData).find(k => k.toLowerCase() === subjectKey.toLowerCase());
         if (foundKey) {
             subjectKey = foundKey;
-        } else {
-            subjectKey = 'dsa';
+            subjectData = subjectsData[subjectKey];
         }
     }
-    const subjectData = subjectsData[subjectKey] || {
-        id: 'dsa',
-        title: 'Data Structure and Algorithm(C++)',
-        semester: 'Semester 2',
-        chapters: [
-            { id: "dsa-u1", title: "Unit 1: Introduction to Data Structures and Memory Representation", unit: "Unit 1", name: "Introduction to Data Structures and Memory Representation" },
-            { id: "dsa-u2", title: "Unit 2: Searching and Sorting Techniques", unit: "Unit 2", name: "Searching and Sorting Techniques" },
-            { id: "dsa-u3", title: "Unit 3: Stack", unit: "Unit 3", name: "Stack" },
-            { id: "dsa-u4", title: "Unit 4: Queue", unit: "Unit 4", name: "Queue" }
-        ]
-    };
+    if (!subjectData) {
+        subjectData = {
+            id: subjectKey,
+            title: subjectKey ? (subjectKey.toUpperCase() + ' (Subject Unavailable)') : 'Subject Unavailable',
+            semester: 'Semester 2',
+            chapters: [],
+            questionBanks: [],
+            assignments: []
+        };
+    }
 
     // 3. DOM Elements
     const subjectHeading = document.getElementById('subjectHeading');
@@ -415,8 +414,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 6. Load Item Content / Upload Structure
     function loadItemContent(index) {
+        if (!items || items.length === 0) {
+            currentChapterName.textContent = "No Unit Selected";
+            notesDocument.innerHTML = `
+                <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                    <i class="fa-solid fa-folder-open" style="font-size: 3.5rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                    <h3 style="margin-bottom: 0.5rem; color: var(--text-dark);">No Units Currently Available</h3>
+                    <p style="margin-bottom: 1.5rem;">There are no units or materials created for this subject yet.</p>
+                    ${checkIsAdmin() ? `
+                        <button type="button" class="upload-modal-btn" onclick="openUnitModal()" style="margin: 0 auto; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-plus"></i> Add First Unit
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            return;
+        }
+
         if (!items[index]) index = 0;
         activeIndex = index;
         try {

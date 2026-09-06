@@ -86,27 +86,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey]) {
             defaultSubjectAssignments[subjectKey] = {
                 title: subjectsData[subjectKey].title,
-                subtitle: subjectsData[subjectKey].semester + ' • NMIET',
+                subtitle: (subjectsData[subjectKey].semester || 'Semester 2') + ' • NMIET',
                 assignments: []
             };
         } else {
-            subjectKey = 'dsa';
+            defaultSubjectAssignments[subjectKey] = {
+                title: subjectKey ? (subjectKey.toUpperCase() + ' (Subject Unavailable)') : 'Subject Unavailable',
+                subtitle: 'Semester 2 • NMIET',
+                assignments: []
+            };
         }
     }
 
     const currentSubject = defaultSubjectAssignments[subjectKey];
 
-    // Chapters from data.js or default fallback
+    // Chapters from data.js
     let subjectChapters = [];
     if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey] && subjectsData[subjectKey].chapters) {
         subjectChapters = subjectsData[subjectKey].chapters;
-    } else {
-        subjectChapters = [
-            { id: `${subjectKey}-u1`, title: 'Unit 1: Fundamentals & Concepts', unit: 'Unit 1', name: 'Fundamentals & Concepts' },
-            { id: `${subjectKey}-u2`, title: 'Unit 2: Core Architecture & Methods', unit: 'Unit 2', name: 'Core Architecture & Methods' },
-            { id: `${subjectKey}-u3`, title: 'Unit 3: Advanced Operations', unit: 'Unit 3', name: 'Advanced Operations' },
-            { id: `${subjectKey}-u4`, title: 'Unit 4: Applications & Implementations', unit: 'Unit 4', name: 'Applications & Implementations' }
-        ];
     }
 
     // Active Chapter Filter State ('all' or specific chapter id e.g. 'dsa-u1')
