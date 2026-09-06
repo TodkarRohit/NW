@@ -442,21 +442,26 @@
         }
     }
 
-    let lastKnownTimestamp = 0;
+    let lastKnownStateSig = '';
     async function checkStateUpdateTimestamp() {
         if (!window.supabaseClient) return false;
         try {
-            const { data } = await window.supabaseClient.storage
+            const { data: urlData } = window.supabaseClient.storage
                 .from('academic-files')
-                .list('published_state', { search: 'app_data.json' });
+                .getPublicUrl('published_state/app_data.json');
 
-            if (data && data.length > 0) {
-                const fileInfo = data[0];
-                const updatedTime = new Date(fileInfo.updated_at || fileInfo.created_at).getTime();
-                if (updatedTime > lastKnownTimestamp) {
-                    lastKnownTimestamp = updatedTime;
-                    await pullLatestStateFromSupabase();
-                    return true;
+            if (urlData && urlData.publicUrl) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { method: 'HEAD', cache: 'no-store', signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const lastModified = res.headers.get('last-modified') || res.headers.get('etag');
+                    if (lastModified && lastModified !== lastKnownStateSig) {
+                        lastKnownStateSig = lastModified;
+                        await pullLatestStateFromSupabase();
+                        return true;
+                    }
                 }
             }
         } catch (e) {}

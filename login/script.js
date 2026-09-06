@@ -569,29 +569,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const normSId = sId.replace(/_/g, '-');
         const altSId = sId.replace(/-/g, '_');
-        const targets = Array.from(new Set([sId, normSId, altSId]));
-        
-        if (sId === 'maths' || sId === 'math') targets.push('maths', 'math');
-        if (sId === 'hardware' || sId === 'coa') targets.push('hardware', 'coa');
+        const targetTitleLower = (title || '').toLowerCase().trim();
+        const targets = new Set([sId, normSId, altSId]);
 
-        targets.forEach(t => {
-            if (!deletedSubjects.includes(t)) deletedSubjects.push(t);
+        if (sId === 'maths' || sId === 'math') { targets.add('maths'); targets.add('math'); }
+        if (sId === 'hardware' || sId === 'coa') { targets.add('hardware'); targets.add('coa'); }
+
+        // Find all matching subject IDs in subjectsData and custom_subjects_list by ID or Title
+        for (const k in subjectsData) {
+            const s = subjectsData[k];
+            if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
+                if (s.id) targets.add(s.id);
+                targets.add(k);
+            }
+        }
+
+        let customSubjects = [];
+        try {
+            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+            customSubjects.forEach(s => {
+                if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
+                    if (s.id) targets.add(s.id);
+                }
+            });
+        } catch (e) {}
+
+        const targetsArray = Array.from(targets);
+
+        targetsArray.forEach(t => {
+            if (t && !deletedSubjects.includes(t)) deletedSubjects.push(t);
             delete subjectsData[t];
         });
 
         localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
 
-        let customSubjects = [];
         try {
-            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-            customSubjects = customSubjects.filter(s => s && s.id && !targets.includes(s.id) && !targets.includes(s.id.replace(/_/g, '-')));
+            customSubjects = customSubjects.filter(s => {
+                if (!s || !s.id) return false;
+                const matchId = targets.has(s.id) || targets.has(s.id.replace(/_/g, '-'));
+                const matchTitle = s.title && s.title.toLowerCase().trim() === targetTitleLower;
+                return !matchId && !matchTitle;
+            });
             localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
         } catch (e) {}
 
         let modifiedSubjects = {};
         try {
             modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-            targets.forEach(t => delete modifiedSubjects[t]);
+            targetsArray.forEach(t => delete modifiedSubjects[t]);
             localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
         } catch (e) {}
 
