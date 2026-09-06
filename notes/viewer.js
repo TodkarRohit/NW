@@ -1101,6 +1101,120 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 8. Add/Edit Unit/Topic functionality for Admins
+    const addUnitBtn = document.getElementById('addUnitBtn');
+    if (addUnitBtn) {
+        addUnitBtn.addEventListener('click', () => {
+            if (localStorage.getItem('isAdminMode') !== 'true') {
+                if (document.getElementById('adminToggleBtn')) {
+                    document.getElementById('adminToggleBtn').click();
+                } else {
+                    alert('Please login as Admin to add new units.');
+                }
+                return;
+            }
+            openUnitModal(null);
+        });
+    }
+
+    const unitModalBackdrop = document.getElementById('unitModalBackdrop');
+    const closeUnitModalBtn = document.getElementById('closeUnitModalBtn');
+    const cancelUnitModalBtn = document.getElementById('cancelUnitModalBtn');
+    const unitForm = document.getElementById('unitForm');
+
+    function openUnitModal(index = null) {
+        if (!unitModalBackdrop) return;
+        const isEdit = index !== null;
+        const titleEl = document.getElementById('unitModalTitle');
+        const indexEl = document.getElementById('unitModalIndex');
+        const titleInput = document.getElementById('unitModalTitleInput');
+        const nameInput = document.getElementById('unitModalNameInput');
+
+        if (titleEl) titleEl.textContent = isEdit ? 'Edit Unit' : 'Add New Unit';
+        if (indexEl) indexEl.value = isEdit ? index : '';
+        if (isEdit && items[index]) {
+            if (titleInput) titleInput.value = items[index].title || '';
+            if (nameInput) nameInput.value = items[index].name || '';
+        } else {
+            if (titleInput) titleInput.value = '';
+            if (nameInput) nameInput.value = '';
+        }
+        unitModalBackdrop.classList.add('active');
+        unitModalBackdrop.style.display = 'flex';
+    }
+
+    function closeUnitModal() {
+        if (unitModalBackdrop) {
+            unitModalBackdrop.classList.remove('active');
+            unitModalBackdrop.style.display = 'none';
+        }
+    }
+
+    if (closeUnitModalBtn) closeUnitModalBtn.addEventListener('click', closeUnitModal);
+    if (cancelUnitModalBtn) cancelUnitModalBtn.addEventListener('click', closeUnitModal);
+    if (unitModalBackdrop) {
+        unitModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === unitModalBackdrop) closeUnitModal();
+        });
+    }
+
+    if (unitForm) {
+        unitForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('unitModalTitleInput');
+            const nameInput = document.getElementById('unitModalNameInput');
+            const indexEl = document.getElementById('unitModalIndex');
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const name = nameInput ? nameInput.value.trim() : '';
+            const indexVal = indexEl ? indexEl.value : '';
+            if (!title) return;
+
+            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+            const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+            let modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+
+            if (indexVal !== '') {
+                const idx = parseInt(indexVal, 10);
+                if (items[idx]) {
+                    items[idx].title = title;
+                    items[idx].name = name;
+                    
+                    const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
+                    if (customIdx >= 0) {
+                        customItems[customIdx].title = title;
+                        customItems[customIdx].name = name;
+                        localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                    } else {
+                        modifiedItems[items[idx].id] = { title, name };
+                        localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
+                    }
+                    if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
+                }
+            } else {
+                const newId = `${subjectKey}-${isQB ? 'qb' : 'u'}${items.length + 1}-${Date.now()}`;
+                const newItem = { id: newId, title: title, unit: `Unit ${items.length + 1}`, name: name };
+                items.push(newItem);
+                customItems.push(newItem);
+                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                if (typeof showToast === 'function') showToast(`New ${itemSingular} added successfully!`);
+                activeIndex = items.length - 1;
+            }
+
+            chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+            
+            if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
+                loadItemContent(activeIndex);
+            }
+            closeUnitModal();
+            try {
+                await autoPublishState();
+            } catch (err) {}
+        });
+    }
+
     async function autoPublishState() {
         if (localStorage.getItem('isAdminMode') !== 'true') return;
         const exportData = {};

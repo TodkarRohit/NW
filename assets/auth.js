@@ -53,16 +53,17 @@
             if (token) localStorage.setItem(TOKEN_KEY, token);
             if (user) {
                 localStorage.setItem(USER_KEY, JSON.stringify(user));
+                const uname = String(user.username || '').toLowerCase();
+                const uemail = String(user.email || '').toLowerCase();
                 const isAdmin = 
                     user.is_admin === true || 
                     user.is_admin === 'true' || 
                     user.role === 'admin' || 
                     String(user.role || '').toLowerCase() === 'admin' ||
-                    user.username === 'admin' || 
-                    user.email === 'rohittodkar92S@gmail.com' || 
-                    user.email === 'rohittodkar92@gmail.com' || 
-                    user.username === 'rohittodkar92S@gmail.com' ||
-                    user.username === 'rohittodkar92@gmail.com';
+                    uname === 'admin' || 
+                    uname === 'rohittodkar92' ||
+                    uname.includes('rohittodkar') ||
+                    uemail.includes('rohittodkar');
 
                 if (isAdmin) {
                     localStorage.setItem('isAdminMode', 'true');
