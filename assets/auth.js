@@ -408,15 +408,13 @@
                     'deleted_branches_'
                 ];
 
-                // 1. Purge all existing local sync keys to prevent stale leftovers
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (k && syncPrefixes.some(p => k.startsWith(p))) {
-                        keysToRemove.push(k);
+                // 1. Purge all existing local sync keys to prevent stale leftovers (using safe snapshot of keys)
+                const allKeys = Object.keys(localStorage);
+                allKeys.forEach(k => {
+                    if (syncPrefixes.some(p => k.startsWith(p))) {
+                        localStorage.removeItem(k);
                     }
-                }
-                keysToRemove.forEach(k => localStorage.removeItem(k));
+                });
 
                 // 2. Set all authoritative sync keys directly from Cloud published state
                 for (const key in publishedData) {

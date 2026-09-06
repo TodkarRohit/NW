@@ -567,7 +567,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
         } catch (e) {}
 
-        const targets = [sId];
+        const normSId = sId.replace(/_/g, '-');
+        const altSId = sId.replace(/-/g, '_');
+        const targets = Array.from(new Set([sId, normSId, altSId]));
+        
         if (sId === 'maths' || sId === 'math') targets.push('maths', 'math');
         if (sId === 'hardware' || sId === 'coa') targets.push('hardware', 'coa');
 
@@ -581,7 +584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let customSubjects = [];
         try {
             customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-            customSubjects = customSubjects.filter(s => !targets.includes(s.id));
+            customSubjects = customSubjects.filter(s => s && s.id && !targets.includes(s.id) && !targets.includes(s.id.replace(/_/g, '-')));
             localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
         } catch (e) {}
 
@@ -735,15 +738,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Remove code from deleted_subjects_list if previously deleted
+            // Remove code & normalized variants from deleted_subjects_list if previously deleted
             let deletedSubjects = [];
             try {
                 deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
             } catch (e) {}
-            if (deletedSubjects.includes(code)) {
-                deletedSubjects = deletedSubjects.filter(id => id !== code);
-                localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
-            }
+            const normCode = code.replace(/_/g, '-');
+            const altCode = code.replace(/-/g, '_');
+            deletedSubjects = deletedSubjects.filter(id => id !== code && id !== normCode && id !== altCode && id.replace(/_/g, '-') !== normCode);
+            localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
 
             const resourcesObj = {
                 notes: resNotesCheckbox ? resNotesCheckbox.checked : true,
