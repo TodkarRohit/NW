@@ -536,7 +536,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (subj) {
                 let branches = subj.branches || ['ALL'];
                 if (branches.includes('ALL')) {
-                    // Expand ALL into all available branches except current
                     const avail = typeof window.getAvailableBranches === 'function' ? window.getAvailableBranches().map(b => b.code) : ['CE', 'CSE', 'IT', 'ECE', 'AIDS'];
                     branches = avail.filter(b => b !== activeBranch);
                 } else {
@@ -544,13 +543,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 subj.branches = branches;
+                if (sId === 'maths' && subjectsData['math']) subjectsData['math'].branches = branches;
+                if (sId === 'hardware' && subjectsData['coa']) subjectsData['coa'].branches = branches;
 
-                // Save update
                 let modifiedSubjects = {};
                 try {
                     modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
                 } catch (err) {}
                 modifiedSubjects[sId] = { title: subj.title, semester: subj.semester, branches: branches, resources: subj.resources, customLinks: subj.customLinks };
+                if (sId === 'maths') modifiedSubjects['math'] = modifiedSubjects[sId];
+                if (sId === 'hardware') modifiedSubjects['coa'] = modifiedSubjects[sId];
+
                 localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
 
                 showToast(`Removed "${subj.title}" from ${activeBranch} Branch.`);
@@ -579,19 +582,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
         } catch (e) {}
-        if (!deletedSubjects.includes(sId)) {
-            deletedSubjects.push(sId);
-        }
+
+        const targets = [sId];
+        if (sId === 'maths' || sId === 'math') targets.push('maths', 'math');
+        if (sId === 'hardware' || sId === 'coa') targets.push('hardware', 'coa');
+
+        targets.forEach(t => {
+            if (!deletedSubjects.includes(t)) deletedSubjects.push(t);
+            delete subjectsData[t];
+        });
+
         localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
 
         let customSubjects = [];
         try {
             customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-            customSubjects = customSubjects.filter(s => s.id !== sId);
+            customSubjects = customSubjects.filter(s => !targets.includes(s.id));
             localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
         } catch (e) {}
 
-        delete subjectsData[sId];
+        let modifiedSubjects = {};
+        try {
+            modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+            targets.forEach(t => delete modifiedSubjects[t]);
+            localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
+        } catch (e) {}
 
         showToast(`Subject "${title}" deleted globally.`);
         renderSubjectsGrid(searchInput ? searchInput.value : '');

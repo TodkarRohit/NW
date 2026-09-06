@@ -103,38 +103,101 @@ function loadCustomSubjectsIntoData() {
         const deletedList = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
         deletedList.forEach(id => {
             delete subjectsData[id];
+            if (id === 'maths' || id === 'math') {
+                delete subjectsData['maths'];
+                delete subjectsData['math'];
+            }
+            if (id === 'hardware' || id === 'coa') {
+                delete subjectsData['hardware'];
+                delete subjectsData['coa'];
+            }
         });
 
         const modifiedData = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
         for (const id in modifiedData) {
-            if (subjectsData[id]) {
+            if (subjectsData[id] && !deletedList.includes(id)) {
                 Object.assign(subjectsData[id], modifiedData[id]);
             }
         }
 
         const customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
         customList.forEach(subj => {
-            if (subj && subj.id) {
+            if (subj && subj.id && !deletedList.includes(subj.id)) {
                 subjectsData[subj.id] = subj;
             }
         });
 
-        // Ensure all subjects have branches property
+        // Ensure all subjects have branches property and purge deleted ones
         for (const key in subjectsData) {
+            if (deletedList.includes(key)) {
+                delete subjectsData[key];
+                continue;
+            }
             if (subjectsData[key] && (!subjectsData[key].branches || !Array.isArray(subjectsData[key].branches) || subjectsData[key].branches.length === 0)) {
                 subjectsData[key].branches = ["ALL"];
             }
         }
 
-        // Reassign aliases
-        if (subjectsData["maths"]) subjectsData["math"] = subjectsData["maths"];
-        if (subjectsData["hardware"]) subjectsData["coa"] = subjectsData["hardware"];
+        // Reassign aliases only if subject is not deleted
+        if (subjectsData["maths"] && !deletedList.includes("maths") && !deletedList.includes("math")) {
+            subjectsData["math"] = subjectsData["maths"];
+        } else {
+            delete subjectsData["math"];
+            delete subjectsData["maths"];
+        }
+
+        if (subjectsData["hardware"] && !deletedList.includes("hardware") && !deletedList.includes("coa")) {
+            subjectsData["coa"] = subjectsData["hardware"];
+        } else {
+            delete subjectsData["coa"];
+            delete subjectsData["hardware"];
+        }
     } catch(e) {
         console.error("Error loading custom subjects into subjectsData:", e);
     }
 }
 loadCustomSubjectsIntoData();
 window.loadCustomSubjectsIntoData = loadCustomSubjectsIntoData;
+
+/**
+ * Global Confirm Modal Dialog Helper
+ */
+window.customConfirm = function(message) {
+    return new Promise((resolve) => {
+        const backdrop = document.getElementById('confirmModalBackdrop');
+        const msgEl = document.getElementById('confirmModalMessage');
+        const okBtn = document.getElementById('confirmOkBtn');
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+
+        if (!backdrop || !okBtn || !cancelBtn) {
+            resolve(window.confirm(message));
+            return;
+        }
+
+        if (msgEl) msgEl.textContent = message;
+        backdrop.style.display = 'flex';
+
+        const cleanup = () => {
+            backdrop.style.display = 'none';
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+        };
+
+        const onOk = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        const onCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+    });
+};
+
 
 const defaultBranchesList = [
     { code: "CE", name: "CE" },
