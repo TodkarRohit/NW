@@ -408,14 +408,17 @@
                     'deleted_branches_'
                 ];
 
-                // 1. Remove any deleted keys specified in cloud's deleted_keys_global
-                let cloudDeletedKeys = [];
-                try {
-                    cloudDeletedKeys = JSON.parse(publishedData['deleted_keys_global'] || '[]');
-                } catch (e) {}
-                cloudDeletedKeys.forEach(delKey => localStorage.removeItem(delKey));
+                // 1. Purge all existing local sync keys to prevent stale leftovers
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && syncPrefixes.some(p => k.startsWith(p))) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach(k => localStorage.removeItem(k));
 
-                // 2. Authoritative overwrite of local storage keys with published cloud state
+                // 2. Set all authoritative sync keys directly from Cloud published state
                 for (const key in publishedData) {
                     if (syncPrefixes.some(p => key.startsWith(p))) {
                         if (publishedData[key] !== null && publishedData[key] !== undefined) {
@@ -424,24 +427,12 @@
                     }
                 }
 
-                // 3. Purge deleted subject/branch keys from custom_subjects_list and custom_branches_list
-                let cloudDeletedSubjects = [];
-                try { cloudDeletedSubjects = JSON.parse(publishedData['deleted_subjects_list'] || '[]'); } catch (e) {}
-                if (cloudDeletedSubjects.length > 0) {
-                    let customSubjects = [];
-                    try { customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list') || '[]'); } catch (e) {}
-                    customSubjects = customSubjects.filter(s => s && s.id && !cloudDeletedSubjects.includes(s.id));
-                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-                }
-
-                let cloudDeletedBranches = [];
-                try { cloudDeletedBranches = JSON.parse(publishedData['deleted_branches_list'] || '[]'); } catch (e) {}
-                if (cloudDeletedBranches.length > 0) {
-                    let customBranches = [];
-                    try { customBranches = JSON.parse(localStorage.getItem('custom_branches_list') || '[]'); } catch (e) {}
-                    customBranches = customBranches.filter(b => b && b.code && !cloudDeletedBranches.includes(b.code));
-                    localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
-                }
+                // 3. Remove deleted keys specified in cloud's deleted_keys_global
+                let cloudDeletedKeys = [];
+                try {
+                    cloudDeletedKeys = JSON.parse(publishedData['deleted_keys_global'] || '[]');
+                } catch (e) {}
+                cloudDeletedKeys.forEach(delKey => localStorage.removeItem(delKey));
 
                 // 4. Reload in-memory structures
                 if (typeof window.loadCustomSubjectsIntoData === 'function') {
