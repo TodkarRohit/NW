@@ -821,13 +821,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Auto Publish State to Supabase
     async function autoPublishState() {
-        const isAdmin = checkAdminState();
-        if (!isAdmin || !window.supabaseClient) return;
-
         if (window.supabaseRealtime && window.supabaseRealtime.pushAndBroadcast) {
             await window.supabaseRealtime.pushAndBroadcast();
         }
     }
+
 
     // Search Input Listeners
     if (searchInput) {

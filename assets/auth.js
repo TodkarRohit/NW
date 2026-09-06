@@ -339,13 +339,14 @@
     window.clientId = myClientId;
 
     async function pullLatestStateFromSupabase() {
-        if (!window.supabaseClient) return;
+        const client = window.supabaseClient || getSupabaseClient();
+        if (!client) return;
         try {
             let publishedData = null;
 
-            // Primary: Download direct from Supabase Storage API (bypasses CDN edge cache)
+            // 1. Primary: Download direct from Supabase Storage API (bypasses CDN edge cache)
             try {
-                const { data: blobData, error: downloadErr } = await window.supabaseClient.storage
+                const { data: blobData, error: downloadErr } = await client.storage
                     .from('academic-files')
                     .download('published_state/app_data.json');
                 if (!downloadErr && blobData) {
@@ -353,21 +354,39 @@
                     publishedData = JSON.parse(text);
                 }
             } catch (dlErr) {
-                console.warn('Storage API download fallback to public URL:', dlErr);
+                console.warn('Storage API download fallback:', dlErr);
             }
 
-            // Fallback: Fetch from public URL with 10s timeout
+            // 2. Secondary Fallback: Download from Storage Public URL
             if (!publishedData) {
-                const { data: urlData } = window.supabaseClient.storage
-                    .from('academic-files')
-                    .getPublicUrl('published_state/app_data.json');
+                try {
+                    const { data: urlData } = client.storage
+                        .from('academic-files')
+                        .getPublicUrl('published_state/app_data.json');
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (res.ok) {
-                    publishedData = await res.json();
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+                    const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        publishedData = await res.json();
+                    }
+                } catch (urlErr) {}
+            }
+
+            // 3. Tertiary Fallback: Fetch from Supabase DB Table (public.assignments)
+            if (!publishedData) {
+                try {
+                    const { data: dbRows } = await client
+                        .from('assignments')
+                        .select('question_data_url')
+                        .eq('id', '__published_state__');
+
+                    if (dbRows && dbRows.length > 0 && dbRows[0].question_data_url) {
+                        publishedData = JSON.parse(dbRows[0].question_data_url);
+                    }
+                } catch (dbErr) {
+                    console.warn('DB table state pull fallback:', dbErr);
                 }
             }
 
@@ -444,8 +463,8 @@
                     }
                 });
 
-                if (typeof loadCustomSubjectsIntoData === 'function') {
-                    loadCustomSubjectsIntoData();
+                if (typeof window.loadCustomSubjectsIntoData === 'function') {
+                    window.loadCustomSubjectsIntoData();
                 }
             }
         } catch (e) {
@@ -475,7 +494,8 @@
     }
 
     async function pushAndBroadcastStateChange() {
-        if (!window.supabaseClient) return;
+        const client = window.supabaseClient || getSupabaseClient();
+        if (!client) return;
 
         window.lastLocalSaveTime = Date.now();
 
@@ -504,14 +524,31 @@
         const blob = new Blob([jsonString], { type: 'application/json' });
 
         try {
-            const { error: uploadErr } = await window.supabaseClient.storage
+            // 1. Upload to Supabase Storage
+            const { error: uploadErr } = await client.storage
                 .from('academic-files')
                 .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true });
 
             if (uploadErr) {
-                console.error('Supabase state upload error:', uploadErr);
+                console.warn('Supabase storage state upload warning:', uploadErr);
             }
 
+            // 2. Dual Backup to Supabase Table (public.assignments) as fallback
+            try {
+                await client.from('assignments').upsert({
+                    id: '__published_state__',
+                    subject_key: 'system',
+                    chapter_id: 'config',
+                    title: 'Published App State',
+                    question_file: 'app_data.json',
+                    question_data_url: jsonString,
+                    created_at: new Date().toISOString()
+                });
+            } catch (dbErr) {
+                console.warn('DB table state backup error:', dbErr);
+            }
+
+            // 3. Broadcast to all clients
             if (realtimeChannel) {
                 await realtimeChannel.send({
                     type: 'broadcast',
