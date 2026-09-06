@@ -212,14 +212,59 @@ body {
 }
 
 /* ==========================================================================
-   Header Section
+   Header Section (Pinned Sticky & Compact Size)
    ========================================================================== */
 .hub-header {
     background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
     color: #ffffff;
-    padding: 2.75rem 0 2.5rem 0;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.12);
+    padding: 1rem 0 0.9rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.header-left-actions {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+.header-right-actions {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+}
+
+.mobile-home-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.mobile-home-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
 }
 
 .header-container {
@@ -234,9 +279,9 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 28px;
+    gap: 20px;
     text-align: left;
-    margin-top: 1rem;
+    margin-top: 0.25rem;
     width: 100%;
     max-width: 860px;
 }
@@ -245,12 +290,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 96px;
-    height: 96px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.25);
-    border: 3.5px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25), 0 0 24px rgba(56, 189, 248, 0.5);
+    border: 2.5px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
@@ -260,7 +305,7 @@ body {
 .header-big-logo-badge:hover {
     transform: scale(1.08) rotate(4deg);
     border-color: #38bdf8;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35), 0 0 32px rgba(56, 189, 248, 0.7);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .hub-big-logo {
@@ -279,40 +324,40 @@ body {
 .header-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: #ffffff;
-    padding: 5px 14px;
+    padding: 3px 11px;
     border-radius: var(--radius-pill);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .badge-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: #38bdf8;
     box-shadow: 0 0 8px #38bdf8;
 }
 
 .hub-header h1 {
-    font-size: 2.5rem;
+    font-size: 1.65rem;
     font-weight: 800;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.35rem;
-    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.15rem;
+    line-height: 1.15;
 }
 
 .hub-header p {
-    font-size: 1.05rem;
-    opacity: 0.92;
+    font-size: 0.88rem;
+    opacity: 0.9;
     font-weight: 400;
     margin: 0;
 }
