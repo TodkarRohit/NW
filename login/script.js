@@ -911,19 +911,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (homeSidebarToggle && homeSidebar) {
         homeSidebarToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            homeSidebar.classList.toggle('active');
-            homeSidebar.classList.toggle('collapsed');
+            const isOpen = homeSidebar.classList.toggle('active');
+            if (isOpen) {
+                homeSidebar.classList.remove('collapsed');
+            } else {
+                homeSidebar.classList.add('collapsed');
+            }
         });
 
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 900 && homeSidebar.classList.contains('active')) {
-                if (!homeSidebar.contains(e.target) && e.target !== homeSidebarToggle) {
+                if (!homeSidebar.contains(e.target) && !homeSidebarToggle.contains(e.target)) {
                     homeSidebar.classList.remove('active');
                     homeSidebar.classList.add('collapsed');
                 }
             }
         });
     }
+
 
     // Subscribe to Realtime Supabase updates
     if (window.supabaseRealtime) {

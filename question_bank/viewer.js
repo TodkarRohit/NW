@@ -1514,14 +1514,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initSidebarToggle() {
         const sidebarPanel = document.getElementById('sidebarPanel');
+        const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
         const toggleSidebarDesktopBtn = document.getElementById('toggleSidebarDesktopBtn');
         const toggleSidebarCollapseBtn = document.getElementById('toggleSidebarCollapseBtn');
         const toggleSidebarText = document.getElementById('toggleSidebarText');
         const toggleSidebarIcon = document.getElementById('toggleSidebarIcon');
 
-        function toggleSidebar() {
+        function toggleSidebar(e) {
+            if (e) e.stopPropagation();
             if (!sidebarPanel) return;
-            const isCollapsed = sidebarPanel.classList.toggle('collapsed');
+            const isOpen = sidebarPanel.classList.toggle('open');
+            const isCollapsed = sidebarPanel.classList.toggle('collapsed', !isOpen);
             localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
             if (toggleSidebarText) {
                 toggleSidebarText.textContent = isCollapsed ? 'Show Sidebar' : 'Hide Sidebar';
@@ -1531,6 +1534,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        if (mobileSidebarToggle) {
+            mobileSidebarToggle.addEventListener('click', toggleSidebar);
+        }
         if (toggleSidebarDesktopBtn) {
             toggleSidebarDesktopBtn.addEventListener('click', toggleSidebar);
         }
@@ -1538,12 +1544,22 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleSidebarCollapseBtn.addEventListener('click', toggleSidebar);
         }
 
-        if (localStorage.getItem('sidebarCollapsed') === 'true' && sidebarPanel) {
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 900 && sidebarPanel && sidebarPanel.classList.contains('open')) {
+                if (!sidebarPanel.contains(e.target) && (!mobileSidebarToggle || !mobileSidebarToggle.contains(e.target)) && (!toggleSidebarDesktopBtn || !toggleSidebarDesktopBtn.contains(e.target))) {
+                    sidebarPanel.classList.remove('open');
+                    sidebarPanel.classList.add('collapsed');
+                }
+            }
+        });
+
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && sidebarPanel && window.innerWidth > 900) {
             sidebarPanel.classList.add('collapsed');
             if (toggleSidebarText) toggleSidebarText.textContent = 'Show Sidebar';
             if (toggleSidebarIcon) toggleSidebarIcon.className = 'fa-solid fa-bars';
         }
     }
+
 
     function init() {
         initSidebarToggle();
