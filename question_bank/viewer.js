@@ -728,8 +728,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 showToast(`Uploading "${file.name}" to cloud storage...`);
-                const subFolder = isQB ? 'question_bank' : 'notes';
-                const fileName = `${subFolder}/${Date.now()}_${selectedDocType}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                const unitId = items[targetIndex] ? items[targetIndex].id : `unit_${targetIndex}`;
+                const subFolder = isQB ? `question_bank/${subjectKey}/${unitId}/${selectedDocType}` : `notes/${subjectKey}/${unitId}`;
+                const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
                 
                 const { error: err } = await window.supabaseClient.storage
                     .from('academic-files')
