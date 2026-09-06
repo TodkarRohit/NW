@@ -1216,16 +1216,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function autoPublishState() {
-        if (localStorage.getItem('isAdminMode') !== 'true') return;
+        const user = window.authService ? window.authService.getUser() : null;
+        const uname = user ? String(user.username || '').toLowerCase() : '';
+        const uemail = user ? String(user.email || '').toLowerCase() : '';
+        const isAdmin = (
+            localStorage.getItem('isAdminMode') === 'true' ||
+            (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
+        );
+
+        if (!isAdmin) return;
+
         const exportData = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (
-                key.startsWith(`doc_upload_${subjectKey}_`) ||
-                key.startsWith(`custom_items_${subjectKey}_`) ||
-                key.startsWith(`modified_items_${subjectKey}_`) ||
-                (isQB && key.includes(`_qb_`)) ||
-                (!isQB && key.includes(`_notes_`))
+                key.startsWith('doc_upload_') ||
+                key.startsWith('custom_items_') ||
+                key.startsWith('modified_items_')
             ) {
                 exportData[key] = localStorage.getItem(key);
             }
@@ -1233,18 +1240,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const jsonString = JSON.stringify(exportData);
         const blob = new Blob([jsonString], { type: 'application/json' });
-        const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
-        const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
-        if (error) {
-            console.error("Auto-publish state notice:", error);
-            throw error;
+        
+        // Upload both subject-specific state file and global app_data.json backup
+        const fileNames = [
+            `published_state/${subjectKey}_${resourceType}_state.json`,
+            `published_state/app_data.json`
+        ];
+
+        for (const fileName of fileNames) {
+            const { error } = await window.supabaseClient.storage.from('academic-files').upload(fileName, blob, { contentType: 'application/json', upsert: true });
+            if (error) {
+                console.error(`Auto-publish error (${fileName}):`, error);
+                throw error;
+            }
         }
     }
 
     const publishBtn = document.getElementById('publishBtn');
     if (publishBtn) {
         publishBtn.addEventListener('click', async () => {
-            if (localStorage.getItem('isAdminMode') !== 'true') {
+            const user = window.authService ? window.authService.getUser() : null;
+            const uname = user ? String(user.username || '').toLowerCase() : '';
+            const uemail = user ? String(user.email || '').toLowerCase() : '';
+            const isAdmin = (
+                localStorage.getItem('isAdminMode') === 'true' ||
+                (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
+            );
+
+            if (!isAdmin) {
                 showToast('Please login as Admin to publish changes to all users!', true);
                 if (document.getElementById('adminToggleBtn')) {
                     document.getElementById('adminToggleBtn').click();
@@ -1274,42 +1297,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Load
     async function init() {
-        try {
-            const fileName = `published_state/${subjectKey}_${resourceType}_state.json`;
-            const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
-            const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
-            if (res.ok) {
-                const publishedData = await res.json();
-                
-                // Always sync published state from Supabase so all users and admins have the latest cloud state
-                for (const key in publishedData) {
-                    localStorage.setItem(key, publishedData[key]);
-                }
+        const fileNames = [
+            `published_state/${subjectKey}_${resourceType}_state.json`,
+            `published_state/app_data.json`
+        ];
 
-                // Re-sync items from localStorage if custom items changed
-                const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
-                const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
-                const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
-                const modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
-                
-                // Clear and rebuild items
-                items.length = 0;
-                const defaultItems = JSON.parse(JSON.stringify(isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || [])));
-                items.push(...defaultItems);
-                if (customItems.length > 0) {
-                    items.push(...customItems);
-                }
-                
-                items.forEach(item => {
-                    if (modifiedItems[item.id]) {
-                        item.title = modifiedItems[item.id].title;
-                        item.name = modifiedItems[item.id].name;
+        for (const fileName of fileNames) {
+            try {
+                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
+                const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
+                if (res.ok) {
+                    const publishedData = await res.json();
+                    for (const key in publishedData) {
+                        localStorage.setItem(key, publishedData[key]);
                     }
-                });
-                chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
-            }
-        } catch(e) {}
+                }
+            } catch(e) {}
+        }
+
+        // Re-sync items from localStorage if custom items changed
+        const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+        const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+        const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+        const modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
         
+        // Clear and rebuild items
+        items.length = 0;
+        const defaultItems = JSON.parse(JSON.stringify(isQB ? (subjectData.questionBanks || subjectData.chapters || []) : (subjectData.chapters || [])));
+        items.push(...defaultItems);
+        if (customItems.length > 0) {
+            items.push(...customItems);
+        }
+        
+        items.forEach(item => {
+            if (modifiedItems[item.id]) {
+                item.title = modifiedItems[item.id].title;
+                item.name = modifiedItems[item.id].name;
+            }
+        });
+        chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+
         let initialIndex = 0;
         try {
             const savedIndex = parseInt(sessionStorage.getItem(`active_index_${subjectKey}_${resourceType}`), 10);

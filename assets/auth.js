@@ -268,6 +268,28 @@
             const token = this.getToken();
             const adminToggleBtn = document.getElementById('adminToggleBtn');
 
+            if (user) {
+                const uname = String(user.username || '').toLowerCase();
+                const uemail = String(user.email || '').toLowerCase();
+                const isAdmin = 
+                    user.is_admin === true || 
+                    user.is_admin === 'true' || 
+                    user.role === 'admin' || 
+                    String(user.role || '').toLowerCase() === 'admin' ||
+                    uname === 'admin' || 
+                    uname === 'rohittodkar92' ||
+                    uname.includes('rohittodkar') ||
+                    uemail.includes('rohittodkar');
+
+                if (isAdmin) {
+                    localStorage.setItem('isAdminMode', 'true');
+                } else {
+                    localStorage.setItem('isAdminMode', 'false');
+                }
+            } else {
+                localStorage.setItem('isAdminMode', 'false');
+            }
+
             if (adminToggleBtn) {
                 if (token && user) {
                     adminToggleBtn.classList.add('active');
