@@ -60,26 +60,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelDeleteOptionsBtn = document.getElementById('cancelDeleteOptionsBtn');
 
     function customConfirm(message) {
-        return new Promise((resolve) => {
-            if (!confirmModalBackdrop || !confirmModalMessage || !confirmOkBtn || !confirmCancelBtn) {
-                resolve(confirm(message));
-                return;
-            }
-            confirmModalMessage.textContent = message;
-            confirmModalBackdrop.style.display = 'flex';
-
-            const cleanup = () => {
-                confirmModalBackdrop.style.display = 'none';
-                confirmOkBtn.removeEventListener('click', onOk);
-                confirmCancelBtn.removeEventListener('click', onCancel);
-            };
-
-            const onOk = () => { cleanup(); resolve(true); };
-            const onCancel = () => { cleanup(); resolve(false); };
-
-            confirmOkBtn.addEventListener('click', onOk);
-            confirmCancelBtn.addEventListener('click', onCancel);
-        });
+        if (typeof window.customConfirm === 'function') {
+            return window.customConfirm(message);
+        }
+        return Promise.resolve(confirm(message));
     }
 
     const publishStateBtn = document.getElementById('publishStateBtn');

@@ -1719,39 +1719,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function customConfirm(message) {
-        return new Promise((resolve) => {
-            const backdrop = document.getElementById('confirmModalBackdrop');
-            const messageEl = document.getElementById('confirmModalMessage');
-            const okBtn = document.getElementById('confirmOkBtn');
-            const cancelBtn = document.getElementById('confirmCancelBtn');
-            
-            if (!backdrop || !messageEl || !okBtn || !cancelBtn) {
-                resolve(confirm(message));
-                return;
-            }
-            
-            messageEl.textContent = message;
-            backdrop.style.display = 'flex';
-            
-            const cleanup = () => {
-                backdrop.style.display = 'none';
-                okBtn.removeEventListener('click', onOk);
-                cancelBtn.removeEventListener('click', onCancel);
-            };
-            
-            const onOk = () => {
-                cleanup();
-                resolve(true);
-            };
-            
-            const onCancel = () => {
-                cleanup();
-                resolve(false);
-            };
-            
-            okBtn.addEventListener('click', onOk);
-            cancelBtn.addEventListener('click', onCancel);
-        });
+        if (typeof window.customConfirm === 'function') {
+            return window.customConfirm(message);
+        }
+        return Promise.resolve(confirm(message));
     }
 
     function escapeHtml(str) {
