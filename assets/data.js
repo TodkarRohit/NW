@@ -121,10 +121,14 @@ function loadCustomSubjectsIntoData() {
 
         // Ensure all subjects have branches property
         for (const key in subjectsData) {
-            if (!subjectsData[key].branches || !Array.isArray(subjectsData[key].branches) || subjectsData[key].branches.length === 0) {
+            if (subjectsData[key] && (!subjectsData[key].branches || !Array.isArray(subjectsData[key].branches) || subjectsData[key].branches.length === 0)) {
                 subjectsData[key].branches = ["ALL"];
             }
         }
+
+        // Reassign aliases
+        if (subjectsData["maths"]) subjectsData["math"] = subjectsData["maths"];
+        if (subjectsData["hardware"]) subjectsData["coa"] = subjectsData["hardware"];
     } catch(e) {
         console.error("Error loading custom subjects into subjectsData:", e);
     }

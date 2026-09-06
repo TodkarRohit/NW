@@ -82,6 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
         window.loadCustomSubjectsIntoData();
     }
 
+    if (subjectKey === 'math') subjectKey = 'maths';
+    if (subjectKey === 'hardware') subjectKey = 'coa';
+
+    const defaultSubjectTitles = {
+        'dsa': 'Data Structure and Algorithm(C++)',
+        'oop': 'Object Oriented Programming (Using C++)',
+        'maths': 'Engineering Mathematics',
+        'math': 'Engineering Mathematics',
+        'hardware': 'Computer Organization and Architecture',
+        'coa': 'Computer Organization and Architecture',
+        'os': 'Operating System'
+    };
+
     // 2. Load Subject Data
     let subjectData = subjectsData[subjectKey];
     if (!subjectData) {
@@ -92,9 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     if (!subjectData) {
+        const resolvedTitle = defaultSubjectTitles[subjectKey.toLowerCase()] || (subjectKey ? subjectKey.toUpperCase() : 'Subject');
         subjectData = {
             id: subjectKey,
-            title: subjectKey ? (subjectKey.toUpperCase() + ' (Subject Unavailable)') : 'Subject Unavailable',
+            title: resolvedTitle,
             semester: 'Semester 2',
             chapters: [],
             questionBanks: [],

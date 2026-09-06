@@ -82,6 +82,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (subjectKey === 'math') subjectKey = 'maths';
     if (subjectKey === 'coa') subjectKey = 'hardware';
 
+    const defaultSubjectTitles = {
+        'dsa': 'Data Structure and Algorithm(C++)',
+        'oop': 'Object Oriented Programming (Using C++)',
+        'maths': 'Engineering Mathematics',
+        'math': 'Engineering Mathematics',
+        'hardware': 'Computer Organization and Architecture',
+        'coa': 'Computer Organization and Architecture',
+        'os': 'Operating System'
+    };
+
     if (!defaultSubjectAssignments[subjectKey]) {
         if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey]) {
             defaultSubjectAssignments[subjectKey] = {
@@ -90,8 +100,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 assignments: []
             };
         } else {
+            const resolvedTitle = defaultSubjectTitles[subjectKey.toLowerCase()] || (subjectKey ? subjectKey.toUpperCase() : 'Subject');
             defaultSubjectAssignments[subjectKey] = {
-                title: subjectKey ? (subjectKey.toUpperCase() + ' (Subject Unavailable)') : 'Subject Unavailable',
+                title: resolvedTitle,
                 subtitle: 'Semester 2 • NMIET',
                 assignments: []
             };
