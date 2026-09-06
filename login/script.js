@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (res.qb !== false) {
                 resourceLinksHTML += `
-                    <a href="../notes/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
+                    <a href="../question_bank/viewer.html?subject=${subj.id}&type=qb" class="btn btn-qb">
                         <i class="fa-solid fa-circle-question"></i> Question Banks
                     </a>
                 `;

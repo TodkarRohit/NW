@@ -67,6 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g,
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
+
     // Set data-resource on body for scoped theme styling (notes vs qb vs assignments)
     document.body.setAttribute('data-resource', resourceType);
 

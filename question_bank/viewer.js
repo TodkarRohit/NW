@@ -67,6 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>'"]/g,
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
+
     // Set data-resource on body for scoped theme styling (notes vs qb vs assignments)
     document.body.setAttribute('data-resource', resourceType);
 
@@ -263,11 +270,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnInner.setAttribute('type', 'button');
                 btnInner.style.width = '100%';
                 
-                const isAdminMode = localStorage.getItem('isAdminMode') === 'true';
+                const isAdminMode = checkIsAdmin();
                 
                 btnInner.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; width: 100%;">
-                        <span class="chapter-item-title" style="flex:1; text-align:left;">${item.title}</span>
+                        <span class="chapter-item-title" style="flex:1; text-align:left;">${escapeHTML(item.title || item.name || '')}</span>
                         <div style="display:flex; align-items:center; gap:4px;">
                             ${hasDoc ? `<span style="font-size: 0.7rem; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap;">Uploaded</span>` : ''}
                             ${isAdminMode ? `
