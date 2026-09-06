@@ -445,12 +445,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (isAdminMode) {
                 adminToggleBtn.classList.add('active');
                 adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> <span>Admin Active (Logout)</span>';
-                if (openUploadModalBtn) openUploadModalBtn.style.display = 'inline-flex';
             } else {
                 adminToggleBtn.classList.remove('active');
                 adminToggleBtn.innerHTML = '<i class="fa-solid fa-user-shield"></i> <span>Admin Mode</span>';
-                if (openUploadModalBtn) openUploadModalBtn.style.display = 'none';
             }
+        }
+        if (openUploadModalBtn) {
+            openUploadModalBtn.style.display = 'inline-flex';
         }
 
         renderAdminUploadSection();
@@ -460,97 +461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderAdminUploadSection() {
         if (!adminUploadPortalSection) return;
-
-        if (!isAdminMode) {
-            adminUploadPortalSection.innerHTML = `
-                <div class="admin-upload-locked-card">
-                    <div class="locked-icon-wrap">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div class="locked-info-content">
-                        <h3>Assignment Upload Portal (Admin Protected)</h3>
-                        <p>Only verified faculty and portal administrators can upload question & solution PDF documents for this course.</p>
-                    </div>
-                    <button type="button" class="admin-login-cta-btn" id="inlineAdminLoginBtn">
-                        <i class="fa-solid fa-lock"></i> Login as Admin to Upload
-                    </button>
-                </div>
-            `;
-            const inlineBtn = document.getElementById('inlineAdminLoginBtn');
-            if (inlineBtn) inlineBtn.addEventListener('click', () => document.getElementById('adminToggleBtn').click());
-        } else {
-            adminUploadPortalSection.innerHTML = `
-                <div class="admin-upload-active-card">
-                    <div class="upload-card-top">
-                        <div class="upload-title-wrap">
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <div>
-                                <h3>Upload New Assignment Files (Admin Active)</h3>
-                                <p>Upload Question & Answer PDF documents to be published under the selected chapter.</p>
-                            </div>
-                        </div>
-                        <span class="admin-status-badge"><i class="fa-solid fa-circle-check"></i> Admin Verified</span>
-                    </div>
-
-                    <form id="inPageAdminUploadForm" class="inpage-upload-form">
-                        <div class="form-grid-3">
-                            <div class="form-group">
-                                <label for="inpageUploadChapter"><i class="fa-solid fa-folder-tree"></i> Select Target Chapter</label>
-                                <select id="inpageUploadChapter" required>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="inpageUploadAssNum"><i class="fa-solid fa-hashtag"></i> Assignment No.</label>
-                                <input type="number" id="inpageUploadAssNum" min="1" max="50" placeholder="e.g. 1" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="inpageUploadAssTitle"><i class="fa-solid fa-heading"></i> Assignment Title</label>
-                                <input type="text" id="inpageUploadAssTitle" placeholder="e.g. ASSIGNMENT 1: Array Operations" required>
-                            </div>
-                        </div>
-
-                        <div class="form-grid-2">
-                            <div class="form-group">
-                                <label for="inpageUploadQPdf"><i class="fa-solid fa-file-pdf" style="color:#0284c7"></i> Question PDF Document</label>
-                                <div class="file-dropzone" id="inpageQDropzone">
-                                    <i class="fa-solid fa-file-circle-question" style="color:#0284c7"></i>
-                                    <span class="file-name-display" id="inpageQPdfName">Choose Question PDF file...</span>
-                                    <input type="file" id="inpageUploadQPdf" accept=".pdf" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="inpageUploadAPdf"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> Solution / Answer PDF Document</label>
-                                <div class="file-dropzone" id="inpageADropzone">
-                                    <i class="fa-solid fa-file-circle-check" style="color:#16a34a"></i>
-                                    <span class="file-name-display" id="inpageAPdfName">Choose Solution PDF file...</span>
-                                    <input type="file" id="inpageUploadAPdf" accept=".pdf" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-grid-2">
-                            <div class="form-group">
-                                <label for="inpageUploadQNotes"><i class="fa-solid fa-align-left"></i> Question Description / Highlights (Optional)</label>
-                                <textarea id="inpageUploadQNotes" rows="2" placeholder="Briefly describe questions, problem statements..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="inpageUploadANotes"><i class="fa-solid fa-square-check"></i> Solution Approach / Notes (Optional)</label>
-                                <textarea id="inpageUploadANotes" rows="2" placeholder="Briefly describe solution complexity, method..."></textarea>
-                            </div>
-                        </div>
-
-                        <div class="form-actions-right">
-                            <button type="submit" class="submit-upload-btn">
-                                <i class="fa-solid fa-cloud-arrow-up"></i> Publish to Chapter
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            `;
-
-            attachInPageUploadListeners();
-            updateUploadChapterDropdown();
-        }
+        adminUploadPortalSection.innerHTML = '';
     }
 
     function updateUploadChapterDropdown() {
