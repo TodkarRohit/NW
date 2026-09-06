@@ -344,7 +344,7 @@
 
         try {
             realtimeChannel = window.supabaseClient.channel('academic_hub_realtime', {
-                config: { broadcast: { self: true } }
+                config: { broadcast: { self: false } }
             });
 
             realtimeChannel

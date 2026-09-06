@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else tabNotesLink.classList.remove('active');
     }
     if (tabQbLink) {
-        tabQbLink.href = `viewer.html?subject=${subjectKey}&type=qb`;
+        tabQbLink.href = `../question_bank/viewer.html?subject=${subjectKey}&type=qb`;
         if (resourceType === 'qb') tabQbLink.classList.add('active');
         else tabQbLink.classList.remove('active');
     }
