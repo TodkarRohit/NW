@@ -102,6 +102,9 @@
                     <div style="display:flex; align-items:center; gap: 8px;">
                         <span class="chapter-count" id="chapterCount">0 Items</span>
                         <button id="addUnitBtn" style="display:none; background: #059669; color: white; border: none; border-radius: 4px; padding: 3px 6px; cursor: pointer; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Add New Unit"><i class="fa-solid fa-plus"></i></button>
+                        <button id="toggleSidebarCollapseBtn" class="collapse-sidebar-btn" title="Hide Chapter List" style="background: transparent; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; cursor: pointer; color: var(--text-muted); font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="sidebar-search">
@@ -131,13 +134,17 @@
         <!-- Right Panel: Notes / Assignment Preview Window -->
         <main class="preview-panel" id="previewPanel">
 
-
-
             <!-- Document Meta Bar -->
             <div class="preview-meta-bar">
-                <div class="meta-info">
-                    <span class="meta-label">Selected Item:</span>
-                    <strong class="current-chapter-title" id="currentChapterName">Loading...</strong>
+                <div class="meta-info" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button id="toggleSidebarDesktopBtn" class="toggle-sidebar-btn" title="Toggle Chapter List Sidebar" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-heading); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-bars-staggered" id="toggleSidebarIcon"></i>
+                        <span id="toggleSidebarText">Hide Sidebar</span>
+                    </button>
+                    <div>
+                        <span class="meta-label">Selected Item:</span>
+                        <strong class="current-chapter-title" id="currentChapterName">Loading...</strong>
+                    </div>
                 </div>
                 <div class="status-indicator" id="itemUploadStatus">
                     <span class="status-dot"></span>

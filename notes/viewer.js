@@ -492,6 +492,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="uploaded-document-card">
+                    <div class="doc-preview-body">
+                        ${docData.type.startsWith('image/') ? `
+                            <img src="${docData.data}" alt="Document Preview" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px;">
+                        ` : docData.type === 'application/pdf' ? `
+                            <iframe src="${docData.data}" title="PDF Preview"></iframe>
+                        ` : `
+                            <div style="text-align: center; padding: 2rem; color: #475569;">
+                                <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">📄 ${docData.name}</p>
+                                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">File is ready for viewing and download.</p>
+                                <a href="${docData.data}" download="${docData.name}" class="upload-action-pill" style="text-decoration: none; display: inline-block;">📥 Download Attached File</a>
+                            </div>
+                        `}
+                    </div>
                     <div class="uploaded-doc-header">
                         <div class="doc-info">
                             <div class="doc-file-icon">📄</div>
@@ -506,20 +519,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="doc-action-btn delete-btn" id="deleteDocBtn">Remove</button>
                             ` : ''}
                         </div>
-                    </div>
-
-                    <div class="doc-preview-body">
-                        ${docData.type.startsWith('image/') ? `
-                            <img src="${docData.data}" alt="Document Preview" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px;">
-                        ` : docData.type === 'application/pdf' ? `
-                            <iframe src="${docData.data}" title="PDF Preview"></iframe>
-                        ` : `
-                            <div style="text-align: center; padding: 2rem; color: #475569;">
-                                <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">📄 ${docData.name}</p>
-                                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">File is ready for viewing and download.</p>
-                                <a href="${docData.data}" download="${docData.name}" class="upload-action-pill" style="text-decoration: none; display: inline-block;">📥 Download Attached File</a>
-                            </div>
-                        `}
                     </div>
                 </div>
 
@@ -1404,6 +1403,200 @@ document.addEventListener('DOMContentLoaded', () => {
                     try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
                     const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
                     localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
+    function closeUnitModal() {
+        if (unitModalBackdrop) {
+            unitModalBackdrop.classList.remove('active');
+            unitModalBackdrop.style.display = 'none';
+        }
+    }
+
+    if (closeUnitModalBtn) closeUnitModalBtn.addEventListener('click', closeUnitModal);
+    if (cancelUnitModalBtn) cancelUnitModalBtn.addEventListener('click', closeUnitModal);
+    if (unitModalBackdrop) {
+        unitModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === unitModalBackdrop) closeUnitModal();
+        });
+    }
+
+    if (unitForm) {
+        unitForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('unitModalTitleInput');
+            const nameInput = document.getElementById('unitModalNameInput');
+            const indexEl = document.getElementById('unitModalIndex');
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const name = nameInput ? nameInput.value.trim() : '';
+            const indexVal = indexEl ? indexEl.value : '';
+            if (!title) return;
+
+            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+            const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+            let modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+
+            if (indexVal !== '') {
+                const idx = parseInt(indexVal, 10);
+                if (items[idx]) {
+                    items[idx].title = title;
+                    items[idx].name = name;
+                    
+                    const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
+                    if (customIdx >= 0) {
+                        customItems[customIdx].title = title;
+                        customItems[customIdx].name = name;
+                        localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                    } else {
+                        modifiedItems[items[idx].id] = { title, name };
+                        localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
+                    }
+                    if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
+                }
+            } else {
+                const newId = `${subjectKey}-${isQB ? 'qb' : 'u'}${items.length + 1}-${Date.now()}`;
+                const newItem = { id: newId, title: title, unit: `Unit ${items.length + 1}`, name: name };
+                items.push(newItem);
+                customItems.push(newItem);
+                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                if (typeof showToast === 'function') showToast(`New ${itemSingular} added successfully!`);
+                activeIndex = items.length - 1;
+            }
+
+            chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+            
+            if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
+                loadItemContent(activeIndex);
+            }
+            closeUnitModal();
+            try {
+                await autoPublishState();
+            } catch (err) {}
+        });
+    }
+
+    async function autoPublishState() {
+        if (window.supabaseRealtime && window.supabaseRealtime.pushAndBroadcast) {
+            await window.supabaseRealtime.pushAndBroadcast();
+        }
+    }
+
+    const publishBtn = document.getElementById('publishBtn');
+    if (publishBtn) {
+        publishBtn.addEventListener('click', async () => {
+            const isAdmin = checkIsAdmin();
+
+            if (!isAdmin) {
+                showToast('Please login as Admin to publish changes to all users!', true);
+                if (document.getElementById('adminToggleBtn')) {
+                    document.getElementById('adminToggleBtn').click();
+                }
+                return;
+            }
+            
+            publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Publishing...</span>`;
+            publishBtn.disabled = true;
+
+            try {
+                await autoPublishState();
+                if (typeof showToast === 'function') {
+                    showToast('Changes published successfully to all users!');
+                } else {
+                    alert('Changes published successfully!');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to publish changes: ' + (err.message || err), true);
+            } finally {
+                publishBtn.innerHTML = `<i class="fa-solid fa-earth-americas"></i><span>Publish</span>`;
+                publishBtn.disabled = false;
+            }
+        });
+    }
+
+    // Initial Load & Synchronous UI Render
+    function refreshDataAndUI() {
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
+
+        const currentSubject = subjectsData[subjectKey] || subjectData;
+        if (subjectHeading && currentSubject) {
+            subjectHeading.textContent = currentSubject.title;
+        }
+
+        // Re-sync items from localStorage if custom items changed
+        const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+        const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+        const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+        const modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+        
+        // Clear and rebuild items
+        items.length = 0;
+        let rawDefaults = [];
+        if (isQB) {
+            rawDefaults = currentSubject.questionBanks || currentSubject.chapters || [];
+        } else if (isAss) {
+            rawDefaults = currentSubject.assignments || currentSubject.chapters || [];
+        } else {
+            rawDefaults = currentSubject.chapters || [];
+        }
+        items.push(...JSON.parse(JSON.stringify(rawDefaults)));
+        if (customItems.length > 0) {
+            items.push(...customItems);
+        }
+
+        if (!items || items.length === 0) {
+            items.push(
+                { id: `${subjectKey}-u1`, title: "Unit 1: Fundamentals & Concepts", unit: "Unit 1", name: "Fundamentals & Concepts" },
+                { id: `${subjectKey}-u2`, title: "Unit 2: Core Architecture & Methods", unit: "Unit 2", name: "Core Architecture & Methods" },
+                { id: `${subjectKey}-u3`, title: "Unit 3: Advanced Operations", unit: "Unit 3", name: "Advanced Operations" },
+                { id: `${subjectKey}-u4`, title: "Unit 4: Applications & Implementation", unit: "Unit 4", name: "Applications & Implementation" }
+            );
+        }
+        
+        items.forEach(item => {
+            if (modifiedItems[item.id]) {
+                item.title = modifiedItems[item.id].title;
+                item.name = modifiedItems[item.id].name;
+            }
+        });
+        chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+
+        let initialIndex = activeIndex || 0;
+        try {
+            const savedIndex = parseInt(sessionStorage.getItem(`active_index_${subjectKey}_${resourceType}`), 10);
+            if (!isNaN(savedIndex) && items[savedIndex]) {
+                initialIndex = savedIndex;
+            }
+        } catch (e) {}
+
+        updateUploadBtnUI();
+        renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+        loadItemContent(initialIndex);
+    }
+
+    async function syncCloudState() {
+        if (!window.supabaseClient) return;
+        const fileNames = [
+            `published_state/${subjectKey}_${resourceType}_state.json`,
+            `published_state/app_data.json`
+        ];
+
+        let updated = false;
+        for (const fileName of fileNames) {
+            try {
+                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
+                const res = await fetch(urlData.publicUrl + '?t=' + Date.now());
+                if (res.ok) {
+                    const publishedData = await res.json();
+                    
+                    let cloudDeleted = [];
+                    try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch(e) {}
+                    let localDeleted = [];
+                    try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch(e) {}
+                    const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
+                    localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
 
                     mergedDeleted.forEach(delKey => {
                         localStorage.removeItem(delKey);
@@ -1424,7 +1617,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function initSidebarToggle() {
+        const sidebarPanel = document.getElementById('sidebarPanel');
+        const toggleSidebarDesktopBtn = document.getElementById('toggleSidebarDesktopBtn');
+        const toggleSidebarCollapseBtn = document.getElementById('toggleSidebarCollapseBtn');
+        const toggleSidebarText = document.getElementById('toggleSidebarText');
+        const toggleSidebarIcon = document.getElementById('toggleSidebarIcon');
+
+        function toggleSidebar() {
+            if (!sidebarPanel) return;
+            const isCollapsed = sidebarPanel.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+            if (toggleSidebarText) {
+                toggleSidebarText.textContent = isCollapsed ? 'Show Sidebar' : 'Hide Sidebar';
+            }
+            if (toggleSidebarIcon) {
+                toggleSidebarIcon.className = isCollapsed ? 'fa-solid fa-bars' : 'fa-solid fa-bars-staggered';
+            }
+        }
+
+        if (toggleSidebarDesktopBtn) {
+            toggleSidebarDesktopBtn.addEventListener('click', toggleSidebar);
+        }
+        if (toggleSidebarCollapseBtn) {
+            toggleSidebarCollapseBtn.addEventListener('click', toggleSidebar);
+        }
+
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && sidebarPanel) {
+            sidebarPanel.classList.add('collapsed');
+            if (toggleSidebarText) toggleSidebarText.textContent = 'Show Sidebar';
+            if (toggleSidebarIcon) toggleSidebarIcon.className = 'fa-solid fa-bars';
+        }
+    }
+
     function init() {
+        initSidebarToggle();
         // Synchronously render UI first
         refreshDataAndUI();
 
