@@ -1221,7 +1221,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const exportData = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if ((isQB && key.includes(`_qb_`)) || (!isQB && key.includes(`_notes_`)) || key === `custom_items_${subjectKey}_${resourceType}` || key === `modified_items_${subjectKey}_${resourceType}`) {
+            if (
+                key.startsWith(`doc_upload_${subjectKey}_`) ||
+                key.startsWith(`custom_items_${subjectKey}_`) ||
+                key.startsWith(`modified_items_${subjectKey}_`) ||
+                (isQB && key.includes(`_qb_`)) ||
+                (!isQB && key.includes(`_notes_`))
+            ) {
                 exportData[key] = localStorage.getItem(key);
             }
         }
@@ -1239,7 +1245,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const publishBtn = document.getElementById('publishBtn');
     if (publishBtn) {
         publishBtn.addEventListener('click', async () => {
-            if (localStorage.getItem('isAdminMode') !== 'true') return;
+            if (localStorage.getItem('isAdminMode') !== 'true') {
+                showToast('Please login as Admin to publish changes to all users!', true);
+                if (document.getElementById('adminToggleBtn')) {
+                    document.getElementById('adminToggleBtn').click();
+                }
+                return;
+            }
             
             publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Publishing...</span>`;
             publishBtn.disabled = true;
