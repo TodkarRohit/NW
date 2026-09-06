@@ -1447,7 +1447,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (uploadQuestionPdfInput && qPdfNameDisplay) {
         uploadQuestionPdfInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
-                qPdfNameDisplay.textContent = '📄 ' + e.target.files[0].name;
+                const file = e.target.files[0];
+                qPdfNameDisplay.textContent = '📄 ' + file.name;
+
+                const titleInput = document.getElementById('uploadAssTitle');
+                const numInput = document.getElementById('uploadAssNum');
+
+                // Extract assignment number if present (e.g. "Assignment_1" -> 1)
+                const numMatch = file.name.match(/(?:assignment|ass|a)[_\s-]*(\d+)/i) || file.name.match(/(\d+)/);
+                if (numMatch && numInput && !numInput.value) {
+                    numInput.value = parseInt(numMatch[1], 10);
+                }
+
+                if (titleInput && (!titleInput.value || titleInput.value.trim() === '')) {
+                    // Clean filename into title (e.g., "Assignment_1_Matrices.pdf" -> "ASSIGNMENT 1: Matrices")
+                    let cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ').trim();
+                    titleInput.value = cleanName;
+                }
             }
         });
     }
