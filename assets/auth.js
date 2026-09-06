@@ -366,7 +366,7 @@
 
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { signal: controller.signal });
+                    const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { cache: 'no-store', signal: controller.signal });
                     clearTimeout(timeoutId);
                     if (res.ok) {
                         publishedData = await res.json();
@@ -390,79 +390,60 @@
                 }
             }
 
-            if (publishedData) {
-                // 1. Merge Deleted Keys & Lists
-                const mergeDeletedList = (keyName) => {
-                    let cloudDeleted = [];
-                    try { cloudDeleted = JSON.parse(publishedData[keyName] || '[]'); } catch (e) {}
-                    let localDeleted = [];
-                    try { localDeleted = JSON.parse(localStorage.getItem(keyName) || '[]'); } catch (e) {}
-                    const merged = Array.from(new Set([...cloudDeleted, ...localDeleted]));
-                    localStorage.setItem(keyName, JSON.stringify(merged));
-                    return merged;
-                };
+            if (publishedData && typeof publishedData === 'object') {
+                window.lastCloudSyncTime = Date.now();
 
-                const mergedKeysDeleted = mergeDeletedList('deleted_keys_global');
-                const mergedSubjDeleted = mergeDeletedList('deleted_subjects_list');
-                const mergedBranchDeleted = mergeDeletedList('deleted_branches_list');
+                const syncPrefixes = [
+                    'doc_upload_',
+                    'custom_items_',
+                    'modified_items_',
+                    'modified_units_',
+                    'custom_assignments_',
+                    'deleted_keys_',
+                    'custom_subjects_',
+                    'modified_subjects_',
+                    'deleted_subjects_',
+                    'custom_branches_',
+                    'modified_branches_',
+                    'deleted_branches_'
+                ];
 
-                // Remove deleted items locally
-                mergedKeysDeleted.forEach(delKey => localStorage.removeItem(delKey));
-                mergedSubjDeleted.forEach(delId => {
-                    let customSubjects = [];
-                    try { customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || []; } catch(e){}
-                    customSubjects = customSubjects.filter(s => s && s.id !== delId);
-                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-                });
-                mergedBranchDeleted.forEach(delCode => {
-                    let customBranches = [];
-                    try { customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || []; } catch(e){}
-                    customBranches = customBranches.filter(b => b && b.code !== delCode);
-                    localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
-                });
+                // 1. Remove any deleted keys specified in cloud's deleted_keys_global
+                let cloudDeletedKeys = [];
+                try {
+                    cloudDeletedKeys = JSON.parse(publishedData['deleted_keys_global'] || '[]');
+                } catch (e) {}
+                cloudDeletedKeys.forEach(delKey => localStorage.removeItem(delKey));
 
-                // 2. Smart Merge Array Items (custom_subjects_list, custom_branches_list, custom_items_*, custom_assignments_*)
-                const mergeArrayByKey = (keyName, idField = 'id') => {
-                    let cloudArray = [];
-                    if (publishedData[keyName]) {
-                        try { cloudArray = JSON.parse(publishedData[keyName]) || []; } catch (e) {}
-                    }
-                    let localArray = [];
-                    try { localArray = JSON.parse(localStorage.getItem(keyName) || '[]'); } catch (e) {}
-
-                    const map = new Map();
-                    cloudArray.forEach(item => {
-                        if (item && item[idField]) map.set(item[idField], item);
-                    });
-                    localArray.forEach(item => {
-                        if (item && item[idField]) map.set(item[idField], item); // local preserves recent additions
-                    });
-
-                    const merged = Array.from(map.values());
-                    localStorage.setItem(keyName, JSON.stringify(merged));
-                };
-
-                mergeArrayByKey('custom_subjects_list', 'id');
-                mergeArrayByKey('custom_branches_list', 'code');
-
-                // Merge all custom_items_* and custom_assignments_* in publishedData & localStorage
-                const allKeys = new Set([...Object.keys(publishedData), ...Object.keys(localStorage)]);
-                allKeys.forEach(key => {
-                    if (mergedKeysDeleted.includes(key)) return;
-                    if (key.startsWith('custom_items_') || key.startsWith('custom_assignments_')) {
-                        mergeArrayByKey(key, 'id');
-                    } else if (
-                        key.startsWith('doc_upload_') ||
-                        key.startsWith('modified_items_') ||
-                        key.startsWith('modified_subjects_') ||
-                        key.startsWith('modified_branches_')
-                    ) {
-                        if (publishedData[key]) {
+                // 2. Authoritative overwrite of local storage keys with published cloud state
+                for (const key in publishedData) {
+                    if (syncPrefixes.some(p => key.startsWith(p))) {
+                        if (publishedData[key] !== null && publishedData[key] !== undefined) {
                             localStorage.setItem(key, publishedData[key]);
                         }
                     }
-                });
+                }
 
+                // 3. Purge deleted subject/branch keys from custom_subjects_list and custom_branches_list
+                let cloudDeletedSubjects = [];
+                try { cloudDeletedSubjects = JSON.parse(publishedData['deleted_subjects_list'] || '[]'); } catch (e) {}
+                if (cloudDeletedSubjects.length > 0) {
+                    let customSubjects = [];
+                    try { customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list') || '[]'); } catch (e) {}
+                    customSubjects = customSubjects.filter(s => s && s.id && !cloudDeletedSubjects.includes(s.id));
+                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+                }
+
+                let cloudDeletedBranches = [];
+                try { cloudDeletedBranches = JSON.parse(publishedData['deleted_branches_list'] || '[]'); } catch (e) {}
+                if (cloudDeletedBranches.length > 0) {
+                    let customBranches = [];
+                    try { customBranches = JSON.parse(localStorage.getItem('custom_branches_list') || '[]'); } catch (e) {}
+                    customBranches = customBranches.filter(b => b && b.code && !cloudDeletedBranches.includes(b.code));
+                    localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
+                }
+
+                // 4. Reload in-memory structures
                 if (typeof window.loadCustomSubjectsIntoData === 'function') {
                     window.loadCustomSubjectsIntoData();
                 }
@@ -524,10 +505,12 @@
         const blob = new Blob([jsonString], { type: 'application/json' });
 
         try {
-            // 1. Upload to Supabase Storage
+            lastKnownTimestamp = Date.now();
+
+            // 1. Upload to Supabase Storage with no-cache control
             const { error: uploadErr } = await client.storage
                 .from('academic-files')
-                .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true });
+                .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true, cacheControl: '0' });
 
             if (uploadErr) {
                 console.warn('Supabase storage state upload warning:', uploadErr);
