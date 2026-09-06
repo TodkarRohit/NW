@@ -464,18 +464,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         adminUploadPortalSection.innerHTML = '';
     }
 
-    function updateUploadChapterDropdown() {
-        const inpageSelect = document.getElementById('inpageUploadChapter');
+    function updateUploadChapterDropdown(targetSubKey = subjectKey) {
         const modalSelect = document.getElementById('uploadChapterSelect');
 
-        const optionsHtml = subjectChapters.map(ch => `
-            <option value="${ch.id}" ${activeChapterId === ch.id ? 'selected' : ''}>
+        let normKey = targetSubKey ? targetSubKey.toLowerCase() : 'maths';
+        if (normKey === 'math') normKey = 'maths';
+        if (normKey === 'coa') normKey = 'hardware';
+
+        let chaptersToUse = [];
+        if (typeof subjectsData !== 'undefined' && subjectsData[normKey] && subjectsData[normKey].chapters) {
+            chaptersToUse = subjectsData[normKey].chapters;
+        } else {
+            chaptersToUse = subjectChapters;
+        }
+
+        const optionsHtml = chaptersToUse.map(ch => `
+            <option value="${ch.id}">
                 ${ch.unit ? `${ch.unit}: ` : ''}${ch.name || ch.title}
             </option>
         `).join('');
 
-        if (inpageSelect) inpageSelect.innerHTML = optionsHtml;
         if (modalSelect) modalSelect.innerHTML = optionsHtml;
+    }
+
+    const uploadSubjectSelect = document.getElementById('uploadSubjectSelect');
+    if (uploadSubjectSelect) {
+        uploadSubjectSelect.addEventListener('change', (e) => {
+            updateUploadChapterDropdown(e.target.value);
+        });
     }
 
     function attachInPageUploadListeners() {
@@ -711,6 +727,102 @@ document.addEventListener('DOMContentLoaded', async () => {
             ` : '';
 
             const unitTag = ass.unit || (subjectChapters.find(c => c.id === ass.chapterId) ? subjectChapters.find(c => c.id === ass.chapterId).unit : 'Unit 1');
+            const hasAnswer = !!(ass.answerFile || ass.answerDataUrl);
+
+            const answerBoxHtml = hasAnswer ? `
+                <div class="qa-box answer-box">
+                    <div class="qa-top-bar">
+                        <span class="tag-badge">ASSIGNMENT ${ass.num} • ${unitTag} ANSWER</span>
+                        <div class="file-title-bar" title="${escapeHtml(ass.title)}">${escapeHtml(ass.title)}</div>
+                    </div>
+
+                    <!-- PDF Preview Box -->
+                    <div class="pdf-preview-box">
+                        <div class="pdf-header-controls">
+                            <span><i class="fa-solid fa-file-pdf" style="color:#4ade80"></i> Solution Document Preview</span>
+                            <div class="pdf-controls-group">
+                                <button class="pdf-control-btn view-pdf-btn" data-file="${escapeHtml(ass.answerFile)}" data-id="${ass.id}" data-type="answer">
+                                    <i class="fa-solid fa-expand"></i> Full View
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pdf-body-content">
+                            ${ass.answerPreview || '<p>Solution Available</p>'}
+                        </div>
+                    </div>
+
+                    <!-- File Name Indicator -->
+                    <div class="file-name-bar">
+                        <i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> <span>${escapeHtml(ass.answerFile)}</span>
+                    </div>
+
+                    <!-- Action Toolbar -->
+                    <div class="action-toolbar">
+                        <button class="action-btn download-btn" data-id="${ass.id}" data-file="${escapeHtml(ass.answerFile)}" data-type="answer">
+                            <i class="fa-solid fa-download"></i> Download
+                        </button>
+                        <button class="action-btn comment-btn" data-id="${ass.id}" data-title="${escapeHtml(ass.title)}">
+                            <i class="fa-solid fa-comment-dots"></i> Comment (${comments.length})
+                        </button>
+                        ${isAdminMode ? `
+                            <button class="action-btn admin-upload-solution-btn" data-id="${ass.id}" data-chapter="${ass.chapterId}" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3);">
+                                <i class="fa-solid fa-pen-to-square"></i> Update Solution
+                            </button>
+                        ` : ''}
+                        ${adminDeleteBtnHtml}
+                        <div class="count-badge">
+                            <span><i class="fa-solid fa-eye" style="color:#16a34a"></i> ${counts.views} views</span>
+                            <span>•</span>
+                            <span id="dl-count-a-${ass.id}"><i class="fa-solid fa-cloud-arrow-down" style="color:#16a34a"></i> ${counts.downloads} downloads</span>
+                        </div>
+                    </div>
+                </div>
+            ` : `
+                <div class="qa-box answer-box pending-answer-box">
+                    <div class="qa-top-bar">
+                        <span class="tag-badge pending-tag" style="background:rgba(245,158,11,0.2); color:#f59e0b; border:1px solid rgba(245,158,11,0.4);">
+                            <i class="fa-solid fa-clock"></i> SOLUTION PENDING
+                        </span>
+                        <div class="file-title-bar" title="${escapeHtml(ass.title)}">${escapeHtml(ass.title)}</div>
+                    </div>
+
+                    <!-- PDF Preview Box -->
+                    <div class="pdf-preview-box">
+                        <div class="pdf-header-controls">
+                            <span><i class="fa-solid fa-clock" style="color:#f59e0b"></i> Solution Pending</span>
+                        </div>
+                        <div class="pdf-body-content">
+                            <div class="pdf-doc-view" style="text-align:center; padding:1.75rem 1rem;">
+                                <i class="fa-solid fa-hourglass-half" style="font-size:2.2rem; color:#f59e0b; margin-bottom:0.6rem;"></i>
+                                <div class="pdf-doc-title" style="color:#f1f5f9; font-weight:600; font-size:1.05rem;">Solution Document Coming Soon</div>
+                                <p style="font-size:0.85rem; color:#94a3b8; margin-top:6px;">Question PDF is available. Faculty/Admin will upload the solution PDF here soon.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Name Indicator -->
+                    <div class="file-name-bar" style="color:#94a3b8; font-style:italic;">
+                        <i class="fa-solid fa-file-circle-xmark" style="color:#f59e0b"></i> <span>No solution PDF attached yet</span>
+                    </div>
+
+                    <!-- Action Toolbar -->
+                    <div class="action-toolbar">
+                        ${isAdminMode ? `
+                            <button class="action-btn admin-upload-solution-btn" data-id="${ass.id}" data-chapter="${ass.chapterId}" style="background:#16a34a; color:#ffffff; font-weight:600;">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Solution PDF
+                            </button>
+                        ` : `
+                            <button class="action-btn" disabled style="opacity:0.5; cursor:not-allowed;">
+                                <i class="fa-solid fa-clock"></i> Solution Pending
+                            </button>
+                        `}
+                        <button class="action-btn comment-btn" data-id="${ass.id}" data-title="${escapeHtml(ass.title)}">
+                            <i class="fa-solid fa-comment-dots"></i> Comment (${comments.length})
+                        </button>
+                        ${adminDeleteBtnHtml}
+                    </div>
+                </div>
+            `;
 
             card.innerHTML = `
                 <div class="qa-grid">
@@ -762,51 +874,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
 
                     <!-- RIGHT BOX: ANSWER BOX -->
-                    <div class="qa-box answer-box">
-                        <div class="qa-top-bar">
-                            <span class="tag-badge">ASSIGNMENT ${ass.num} • ${unitTag} ANSWER</span>
-                            <div class="file-title-bar" title="${escapeHtml(ass.title)}">${escapeHtml(ass.title)}</div>
-                        </div>
-
-                        <!-- PDF Preview Box -->
-                        <div class="pdf-preview-box">
-                            <div class="pdf-header-controls">
-                                <span><i class="fa-solid fa-file-pdf" style="color:#4ade80"></i> Solution Document Preview</span>
-                                <div class="pdf-controls-group">
-                                    <button class="pdf-control-btn view-pdf-btn" data-file="${escapeHtml(ass.answerFile)}" data-id="${ass.id}" data-type="answer">
-                                        <i class="fa-solid fa-expand"></i> Full View
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="pdf-body-content">
-                                ${ass.answerPreview}
-                            </div>
-                        </div>
-
-                        <!-- File Name Indicator -->
-                        <div class="file-name-bar">
-                            <i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> <span>${escapeHtml(ass.answerFile)}</span>
-                        </div>
-
-                        <!-- Action Toolbar -->
-                        <div class="action-toolbar">
-                            <button class="action-btn download-btn" data-id="${ass.id}" data-file="${escapeHtml(ass.answerFile)}" data-type="answer">
-                                <i class="fa-solid fa-download"></i> Download
-                            </button>
-                            <button class="action-btn comment-btn" data-id="${ass.id}" data-title="${escapeHtml(ass.title)}">
-                                <i class="fa-solid fa-comment-dots"></i> Comment (${comments.length})
-                            </button>
-                            <button class="action-btn share-btn" data-id="${ass.id}">
-                                <i class="fa-solid fa-share-nodes"></i> Share
-                            </button>
-                            ${adminDeleteBtnHtml}
-                            <div class="count-badge">
-                                <span><i class="fa-solid fa-eye" style="color:#16a34a"></i> ${counts.views} views</span>
-                                <span>•</span>
-                                <span id="dl-count-a-${ass.id}"><i class="fa-solid fa-cloud-arrow-down" style="color:#16a34a"></i> ${counts.downloads} downloads</span>
-                            </div>
-                        </div>
-                    </div>
+                    ${answerBoxHtml}
                 </div>
             `;
 
@@ -970,6 +1038,68 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (await customConfirm('Are you sure you want to delete this assignment?')) {
                     deleteCustomAssignment(subjectKey, assId);
                 }
+            });
+        });
+
+        // Admin Upload / Update Solution PDF Buttons
+        document.querySelectorAll('.admin-upload-solution-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!isAdminMode) return;
+                const assId = btn.getAttribute('data-id');
+                const targetChapterId = btn.getAttribute('data-chapter') || 'dsa-u1';
+
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'file';
+                hiddenInput.accept = '.pdf';
+                hiddenInput.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    try {
+                        showToast(`Uploading solution PDF: ${file.name}...`);
+                        const aFileName = `assignments/${subjectKey}/${targetChapterId}/solutions/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+
+                        const { error: uploadErr } = await window.supabaseClient.storage
+                            .from('academic-files')
+                            .upload(aFileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
+
+                        if (uploadErr) throw uploadErr;
+
+                        const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aFileName);
+                        const aDataUrl = urlData.publicUrl;
+
+                        const newPreview = `
+                            <div class="pdf-doc-view">
+                                <div class="pdf-doc-title"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> ${escapeHtml(file.name)}</div>
+                                <p>Uploaded PDF Solution Document. Click Download below or Full View to inspect.</p>
+                                <div class="pdf-doc-meta" style="margin-top:8px;">File size: ${(file.size / 1024).toFixed(1)} KB • PDF Document</div>
+                            </div>
+                        `;
+
+                        const { error: dbErr } = await window.supabaseClient.from('assignments').update({
+                            answer_file: file.name,
+                            answer_data_url: aDataUrl,
+                            answer_preview: newPreview
+                        }).eq('id', assId);
+
+                        if (dbErr) throw dbErr;
+
+                        const found = dbAssignments.find(a => me => a.id === assId);
+                        const targetItem = dbAssignments.find(a => a.id === assId);
+                        if (targetItem) {
+                            targetItem.answerFile = file.name;
+                            targetItem.answerDataUrl = aDataUrl;
+                            targetItem.answerPreview = newPreview;
+                        }
+
+                        renderAssignments(searchInput ? searchInput.value : '');
+                        showToast('Solution PDF uploaded & attached successfully!');
+                    } catch (err) {
+                        console.error('Error updating solution:', err);
+                        showToast('Failed to upload solution PDF', true);
+                    }
+                };
+                hiddenInput.click();
             });
         });
 
@@ -1248,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (uploadModalBackdrop) {
                 const selectSub = document.getElementById('uploadSubjectSelect');
                 if (selectSub) selectSub.value = subjectKey;
-                updateUploadChapterDropdown();
+                updateUploadChapterDropdown(selectSub ? selectSub.value : subjectKey);
                 uploadModalBackdrop.classList.add('active');
             }
         });
@@ -1258,7 +1388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (uploadModalBackdrop) uploadModalBackdrop.classList.remove('active');
         if (adminUploadForm) adminUploadForm.reset();
         if (qPdfNameDisplay) qPdfNameDisplay.textContent = 'Choose Question PDF...';
-        if (aPdfNameDisplay) aPdfNameDisplay.textContent = 'Choose Solution PDF...';
+        if (aPdfNameDisplay) aPdfNameDisplay.textContent = 'Choose Solution PDF (Optional)...';
     }
 
     if (closeUploadModalBtn) closeUploadModalBtn.addEventListener('click', closeUploadModal);
@@ -1300,42 +1430,71 @@ document.addEventListener('DOMContentLoaded', async () => {
             const qNotes = document.getElementById('uploadQuestionNotes').value.trim();
             const aNotes = document.getElementById('uploadAnswerNotes').value.trim();
 
-            const qFile = uploadQuestionPdfInput.files[0];
-            const aFile = uploadAnswerPdfInput.files[0];
+            const qFile = uploadQuestionPdfInput ? uploadQuestionPdfInput.files[0] : null;
+            const aFile = uploadAnswerPdfInput ? uploadAnswerPdfInput.files[0] : null;
 
-            if (!qFile || !aFile) {
-                showToast('Please select both Question PDF and Solution PDF files!');
+            if (!qFile) {
+                showToast('Please select a Question PDF file!');
                 return;
             }
 
             try {
                 showToast('Processing & Uploading PDF Files...');
-                // Upload to Unit-wise Supabase Storage Folder
-                const qFileName = `assignments/${subjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-                const aFileName = `assignments/${subjectKey}/${targetChapterId}/solutions/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-
+                // Upload Question PDF
+                const qFileName = `assignments/${targetSubjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
                 const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
                 if (qErr) throw qErr;
                 const { data: qUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(qFileName);
                 const qDataUrl = qUrlData.publicUrl;
 
-                const { error: aErr } = await window.supabaseClient.storage.from('academic-files').upload(aFileName, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
-                if (aErr) throw aErr;
-                const { data: aUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aFileName);
-                const aDataUrl = aUrlData.publicUrl;
+                let aDataUrl = null;
+                let aFileName = '';
+                let aPreviewHtml = `
+                    <div class="pdf-doc-view" style="text-align:center; padding:1.5rem 1rem;">
+                        <i class="fa-solid fa-hourglass-half" style="font-size:2rem; color:#f59e0b; margin-bottom:0.5rem;"></i>
+                        <div class="pdf-doc-title" style="color:#f1f5f9; font-weight:600;">Solution Document Coming Soon</div>
+                        <p style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">${escapeHtml(aNotes || 'Solution PDF will be uploaded soon.')}</p>
+                    </div>
+                `;
 
-                const targetChObj = subjectChapters.find(c => c.id === targetChapterId) || subjectChapters[0];
+                if (aFile) {
+                    aFileName = aFile.name;
+                    const aStoragePath = `assignments/${targetSubjectKey}/${targetChapterId}/solutions/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                    const { error: aErr } = await window.supabaseClient.storage.from('academic-files').upload(aStoragePath, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                    if (aErr) throw aErr;
+                    const { data: aUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aStoragePath);
+                    aDataUrl = aUrlData.publicUrl;
+                    aPreviewHtml = `
+                        <div class="pdf-doc-view">
+                            <div class="pdf-doc-title"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> ${escapeHtml(aFile.name)}</div>
+                            <p>${escapeHtml(aNotes || 'Uploaded PDF Solution Document. Click Download below to get full PDF file.')}</p>
+                            <div class="pdf-doc-meta" style="margin-top:8px;">File size: ${(aFile.size / 1024).toFixed(1)} KB • PDF Document</div>
+                        </div>
+                    `;
+                }
+
+                let normKey = targetSubjectKey ? targetSubjectKey.toLowerCase() : 'maths';
+                if (normKey === 'math') normKey = 'maths';
+                if (normKey === 'coa') normKey = 'hardware';
+
+                let targetChObj = null;
+                if (typeof subjectsData !== 'undefined' && subjectsData[normKey] && subjectsData[normKey].chapters) {
+                    targetChObj = subjectsData[normKey].chapters.find(c => c.id === targetChapterId);
+                }
+                if (!targetChObj) {
+                    targetChObj = subjectChapters.find(c => c.id === targetChapterId) || { unit: 'Unit 1', title: 'Unit 1' };
+                }
 
                 const newAssId = `custom_ass_${Date.now()}`;
                 const newAssignment = {
                     id: newAssId,
                     chapterId: targetChapterId,
-                    unit: targetChObj ? targetChObj.unit : 'Unit 1',
-                    chapterTitle: targetChObj ? targetChObj.title : 'Unit 1',
+                    unit: targetChObj ? (targetChObj.unit || 'Unit 1') : 'Unit 1',
+                    chapterTitle: targetChObj ? (targetChObj.name || targetChObj.title) : 'Unit 1',
                     num: assNum,
                     title: assTitle,
                     questionFile: qFile.name,
-                    answerFile: aFile.name,
+                    answerFile: aFileName,
                     questionDataUrl: qDataUrl,
                     answerDataUrl: aDataUrl,
                     views: 1,
@@ -1349,25 +1508,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="pdf-doc-meta" style="margin-top:8px;">File size: ${(qFile.size / 1024).toFixed(1)} KB • PDF Document</div>
                         </div>
                     `,
-                    answerPreview: `
-                        <div class="pdf-doc-view">
-                            <div class="pdf-doc-title"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> ${escapeHtml(aFile.name)}</div>
-                            <p>${escapeHtml(aNotes || 'Uploaded PDF Solution Document. Click Download below to get full PDF file.')}</p>
-                            <div class="pdf-doc-meta" style="margin-top:8px;">File size: ${(aFile.size / 1024).toFixed(1)} KB • PDF Document</div>
-                        </div>
-                    `
+                    answerPreview: aPreviewHtml
                 };
 
                 const { error: dbErr } = await window.supabaseClient.from('assignments').insert([{
                     id: newAssId,
                     subject_key: targetSubjectKey,
                     chapter_id: targetChapterId,
-                    unit: targetChObj ? targetChObj.unit : 'Unit 1',
-                    chapter_title: targetChObj ? targetChObj.title : 'Unit 1',
+                    unit: targetChObj ? (targetChObj.unit || 'Unit 1') : 'Unit 1',
+                    chapter_title: targetChObj ? (targetChObj.name || targetChObj.title) : 'Unit 1',
                     num: assNum,
                     title: assTitle,
                     question_file: qFile.name,
-                    answer_file: aFile.name,
+                    answer_file: aFileName,
                     question_data_url: qDataUrl,
                     answer_data_url: aDataUrl,
                     question_preview: newAssignment.questionPreview,
@@ -1386,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 dbAssignments.unshift(newAssignment);
 
                 closeUploadModal();
-                showToast('Assignment & PDF Files Published Successfully!');
+                showToast('Assignment Published Successfully!');
 
                 if (targetSubjectKey === subjectKey) {
                     activeChapterId = targetChapterId;
