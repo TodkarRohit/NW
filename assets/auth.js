@@ -323,74 +323,114 @@
     // ---------------------------------------------------------
     let realtimeChannel = null;
     const registeredRealtimeCallbacks = [];
-
-    function initSupabaseRealtime() {
-        if (!window.supabaseClient) return;
-
-        try {
-            realtimeChannel = window.supabaseClient.channel('academic_hub_realtime', {
-                config: { broadcast: { self: false } }
-            });
-
-            realtimeChannel
-                .on('broadcast', { event: 'academic_state_updated' }, async (payload) => {
-                    await pullLatestStateFromSupabase();
-                    registeredRealtimeCallbacks.forEach(cb => {
-                        try { cb(payload); } catch (e) {}
-                    });
-                })
-                .subscribe();
-        } catch (e) {
-            console.warn('Realtime channel init warning:', e);
-        }
-
-        // Periodic Fallback Sync Check (every 6 seconds)
-        let lastSyncCheck = 0;
-        setInterval(async () => {
-            const now = Date.now();
-            if (now - lastSyncCheck > 5000) {
-                lastSyncCheck = now;
-                const updated = await checkStateUpdateTimestamp();
-                if (updated) {
-                    registeredRealtimeCallbacks.forEach(cb => {
-                        try { cb(); } catch (e) {}
-                    });
-                }
-            }
-        }, 6000);
-    }
+    const myClientId = 'client_' + Math.random().toString(36).substring(2, 9);
+    window.clientId = myClientId;
 
     async function pullLatestStateFromSupabase() {
         if (!window.supabaseClient) return;
         try {
-            const { data: urlData } = window.supabaseClient.storage
-                .from('academic-files')
-                .getPublicUrl('published_state/app_data.json');
+            let publishedData = null;
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            // Primary: Download direct from Supabase Storage API (bypasses CDN edge cache)
+            try {
+                const { data: blobData, error: downloadErr } = await window.supabaseClient.storage
+                    .from('academic-files')
+                    .download('published_state/app_data.json');
+                if (!downloadErr && blobData) {
+                    const text = await blobData.text();
+                    publishedData = JSON.parse(text);
+                }
+            } catch (dlErr) {
+                console.warn('Storage API download fallback to public URL:', dlErr);
+            }
 
-            const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (res.ok) {
-                const publishedData = await res.json();
-                
-                let cloudDeleted = [];
-                try { cloudDeleted = JSON.parse(publishedData['deleted_keys_global'] || '[]'); } catch (e) {}
-                let localDeleted = [];
-                try { localDeleted = JSON.parse(localStorage.getItem('deleted_keys_global') || '[]'); } catch (e) {}
-                const mergedDeleted = Array.from(new Set([...cloudDeleted, ...localDeleted]));
-                localStorage.setItem('deleted_keys_global', JSON.stringify(mergedDeleted));
+            // Fallback: Fetch from public URL with 10s timeout
+            if (!publishedData) {
+                const { data: urlData } = window.supabaseClient.storage
+                    .from('academic-files')
+                    .getPublicUrl('published_state/app_data.json');
 
-                mergedDeleted.forEach(delKey => {
-                    localStorage.removeItem(delKey);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    publishedData = await res.json();
+                }
+            }
+
+            if (publishedData) {
+                // 1. Merge Deleted Keys & Lists
+                const mergeDeletedList = (keyName) => {
+                    let cloudDeleted = [];
+                    try { cloudDeleted = JSON.parse(publishedData[keyName] || '[]'); } catch (e) {}
+                    let localDeleted = [];
+                    try { localDeleted = JSON.parse(localStorage.getItem(keyName) || '[]'); } catch (e) {}
+                    const merged = Array.from(new Set([...cloudDeleted, ...localDeleted]));
+                    localStorage.setItem(keyName, JSON.stringify(merged));
+                    return merged;
+                };
+
+                const mergedKeysDeleted = mergeDeletedList('deleted_keys_global');
+                const mergedSubjDeleted = mergeDeletedList('deleted_subjects_list');
+                const mergedBranchDeleted = mergeDeletedList('deleted_branches_list');
+
+                // Remove deleted items locally
+                mergedKeysDeleted.forEach(delKey => localStorage.removeItem(delKey));
+                mergedSubjDeleted.forEach(delId => {
+                    let customSubjects = [];
+                    try { customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || []; } catch(e){}
+                    customSubjects = customSubjects.filter(s => s && s.id !== delId);
+                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+                });
+                mergedBranchDeleted.forEach(delCode => {
+                    let customBranches = [];
+                    try { customBranches = JSON.parse(localStorage.getItem('custom_branches_list')) || []; } catch(e){}
+                    customBranches = customBranches.filter(b => b && b.code !== delCode);
+                    localStorage.setItem('custom_branches_list', JSON.stringify(customBranches));
                 });
 
-                for (const key in publishedData) {
-                    if (!mergedDeleted.includes(key)) {
-                        localStorage.setItem(key, publishedData[key]);
+                // 2. Smart Merge Array Items (custom_subjects_list, custom_branches_list, custom_items_*, custom_assignments_*)
+                const mergeArrayByKey = (keyName, idField = 'id') => {
+                    let cloudArray = [];
+                    if (publishedData[keyName]) {
+                        try { cloudArray = JSON.parse(publishedData[keyName]) || []; } catch (e) {}
                     }
-                }
+                    let localArray = [];
+                    try { localArray = JSON.parse(localStorage.getItem(keyName) || '[]'); } catch (e) {}
+
+                    const map = new Map();
+                    cloudArray.forEach(item => {
+                        if (item && item[idField]) map.set(item[idField], item);
+                    });
+                    localArray.forEach(item => {
+                        if (item && item[idField]) map.set(item[idField], item); // local preserves recent additions
+                    });
+
+                    const merged = Array.from(map.values());
+                    localStorage.setItem(keyName, JSON.stringify(merged));
+                };
+
+                mergeArrayByKey('custom_subjects_list', 'id');
+                mergeArrayByKey('custom_branches_list', 'code');
+
+                // Merge all custom_items_* and custom_assignments_* in publishedData & localStorage
+                const allKeys = new Set([...Object.keys(publishedData), ...Object.keys(localStorage)]);
+                allKeys.forEach(key => {
+                    if (mergedKeysDeleted.includes(key)) return;
+                    if (key.startsWith('custom_items_') || key.startsWith('custom_assignments_')) {
+                        mergeArrayByKey(key, 'id');
+                    } else if (
+                        key.startsWith('doc_upload_') ||
+                        key.startsWith('modified_items_') ||
+                        key.startsWith('modified_subjects_') ||
+                        key.startsWith('modified_branches_')
+                    ) {
+                        if (publishedData[key]) {
+                            localStorage.setItem(key, publishedData[key]);
+                        }
+                    }
+                });
 
                 if (typeof loadCustomSubjectsIntoData === 'function') {
                     loadCustomSubjectsIntoData();
@@ -413,12 +453,9 @@
                 const fileInfo = data[0];
                 const updatedTime = new Date(fileInfo.updated_at || fileInfo.created_at).getTime();
                 if (updatedTime > lastKnownTimestamp) {
-                    if (lastKnownTimestamp > 0) {
-                        lastKnownTimestamp = updatedTime;
-                        await pullLatestStateFromSupabase();
-                        return true;
-                    }
                     lastKnownTimestamp = updatedTime;
+                    await pullLatestStateFromSupabase();
+                    return true;
                 }
             }
         } catch (e) {}
@@ -427,6 +464,8 @@
 
     async function pushAndBroadcastStateChange() {
         if (!window.supabaseClient) return;
+
+        window.lastLocalSaveTime = Date.now();
 
         const exportData = {};
         for (let i = 0; i < localStorage.length; i++) {
@@ -452,20 +491,63 @@
         const blob = new Blob([jsonString], { type: 'application/json' });
 
         try {
-            await window.supabaseClient.storage
+            const { error: uploadErr } = await window.supabaseClient.storage
                 .from('academic-files')
                 .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true });
+
+            if (uploadErr) {
+                console.error('Supabase state upload error:', uploadErr);
+            }
 
             if (realtimeChannel) {
                 await realtimeChannel.send({
                     type: 'broadcast',
                     event: 'academic_state_updated',
-                    payload: { timestamp: Date.now() }
+                    payload: { timestamp: Date.now(), sender: window.clientId || 'default' }
                 });
             }
         } catch (e) {
             console.error('Error broadcasting state change to Supabase:', e);
         }
+    }
+
+    function initSupabaseRealtime() {
+        if (!window.supabaseClient) return;
+
+        try {
+            realtimeChannel = window.supabaseClient.channel('academic_hub_realtime', {
+                config: { broadcast: { self: false } }
+            });
+
+            realtimeChannel
+                .on('broadcast', { event: 'academic_state_updated' }, async (payload) => {
+                    if (payload && payload.payload && payload.payload.sender === window.clientId) {
+                        return; // Ignore self broadcast
+                    }
+                    await pullLatestStateFromSupabase();
+                    registeredRealtimeCallbacks.forEach(cb => {
+                        try { cb(payload); } catch (e) {}
+                    });
+                })
+                .subscribe();
+        } catch (e) {
+            console.warn('Realtime channel init warning:', e);
+        }
+
+        // Periodic Fallback Sync Check (every 6 seconds)
+        let lastSyncCheck = 0;
+        setInterval(async () => {
+            const now = Date.now();
+            if (now - lastSyncCheck > 5000) {
+                lastSyncCheck = now;
+                const updated = await checkStateUpdateTimestamp();
+                if (updated) {
+                    registeredRealtimeCallbacks.forEach(cb => {
+                        try { cb(); } catch (e) {}
+                    });
+                }
+            }
+        }, 6000);
     }
 
     async function deleteSupabaseFolder(folderPath) {
