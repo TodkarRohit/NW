@@ -2,6 +2,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Portal-GitHub_Pages-brightgreen?style=for-the-badge&logo=github)](https://todkarrohit.github.io/NW/)
 [![Documentation](https://img.shields.io/badge/SRS_Document-IEEE_Standard-blue?style=for-the-badge&logo=markdown)](./SRS_DOCUMENT.md)
+[![DSA Guide](https://img.shields.io/badge/DSA_Guide-Short_Detail_Visual-orange?style=for-the-badge&logo=codeforces)](./DSA_PROJECT_QUESTIONS.md)
 [![Database](https://img.shields.io/badge/Database-Supabase_PostgreSQL-3FCF8E?style=for-the-badge&logo=supabase)](https://supabase.com)
 [![Frontend](https://img.shields.io/badge/Frontend-HTML5_CSS3_JS-E34F26?style=for-the-badge&logo=html5)](#)
 [![Backend](https://img.shields.io/badge/Backend-Node.js_Express_MongoDB-339933?style=for-the-badge&logo=nodedotjs)](#)
@@ -244,6 +245,20 @@ To run the automated backend test suite (43 tests):
 ```bash
 node test_suite.js
 ```
+
+## 🎯 How This Project is Useful for Others
+
+### 1. For Engineering Students
+- **All-in-One Study Portal**: Provides instant access to unit-wise study notes, question banks, and assignment model answers without mandatory login.
+- **Visual DSA Questions Guide**: Includes a dedicated [Data Structures & Algorithms Complete Guide](./DSA_PROJECT_QUESTIONS.md) with short 2-sentence summaries, detailed C++ code, and ASCII / Mermaid memory diagrams for fast revision.
+- **Side-by-Side Learning**: Interactive 2-panel viewers let students view questions and answer solutions side-by-side with inline PDF previews.
+
+### 2. For Faculty & Academic Administrators
+- **No-Code Content Management**: Faculty can upload question papers and solution PDFs directly via the Admin Upload Portal without modifying code or databases manually.
+- **Persistent Cloud Publishing**: Uploads and updates are published immediately to Supabase cloud storage, synchronizing state across all student devices.
+
+### 3. For Peer Developers & Technical Reviewers
+- **Modern Hybrid Reference Architecture**: Demonstrates clean integration between GitHub Pages static hosting, Supabase BaaS (PostgreSQL + S3 Storage), and an optional Node.js/Express REST backend with 43 automated test cases.
 
 ---
 
