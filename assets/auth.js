@@ -627,8 +627,18 @@
     };
 
     // Initialize once DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         authService.updateHeaderUI();
         initSupabaseRealtime();
+        
+        // Immediately fetch latest published state from Supabase Storage on page load
+        try {
+            await pullLatestStateFromSupabase();
+            registeredRealtimeCallbacks.forEach(cb => {
+                try { cb(); } catch (e) {}
+            });
+        } catch (e) {
+            console.warn('Initial storage pull:', e);
+        }
     });
 })();
