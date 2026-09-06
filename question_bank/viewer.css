@@ -2049,42 +2049,124 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 
-/* 2nd Mode: Full Site View (Expanded in Page) */
+/* 2nd Mode: Full Site View (Wall-to-Wall View) */
+body.full-site-mode {
+    overflow: hidden !important;
+}
+
 body.full-site-mode .assignments-header,
-body.full-site-mode .viewer-header {
-    display: none !important;
-}
-
-body.full-site-mode .sidebar-panel {
-    margin-left: calc(-1 * var(--sidebar-width)) !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-body.full-site-mode .preview-panel {
-    padding: 0.5rem !important;
-}
-
-body.full-site-mode .notes-document {
-    padding: 0.5rem !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-body.full-site-mode .structure-header {
-    display: flex !important;
-    padding-bottom: 0.4rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
+body.full-site-mode .viewer-header,
+body.full-site-mode .sidebar-panel,
+body.full-site-mode .sidebar-backdrop,
+body.full-site-mode .preview-meta-bar,
+body.full-site-mode .structure-header,
+body.full-site-mode .qb-switcher-container,
+body.full-site-mode .uploaded-doc-header,
+body.full-site-mode .document-outline-card,
 body.full-site-mode .chapter-pagination {
     display: none !important;
 }
 
+body.full-site-mode .viewer-layout {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+body.full-site-mode .preview-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #0f172a !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+}
+
+body.full-site-mode .notes-document {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #0f172a !important;
+}
+
+body.full-site-mode .uploaded-document-card {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #0f172a !important;
+}
+
+body.full-site-mode .doc-preview-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #0f172a !important;
+}
+
 body.full-site-mode .doc-preview-body iframe,
 body.full-site-mode .doc-preview-body embed {
-    height: calc(100vh - 110px) !important;
-    min-height: 550px !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+/* Floating 3-Mode Switcher Pill for 2nd Mode */
+.floating-pdf-mode-switcher {
+    display: none;
+    position: fixed;
+    top: 14px;
+    right: 20px;
+    z-index: 100000;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 4px 8px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+body.full-site-mode .floating-pdf-mode-switcher {
+    display: block;
+}
+
+body.full-site-mode .floating-pdf-mode-switcher .pdf-mode-switcher {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+body.full-site-mode .floating-pdf-mode-switcher .pdf-mode-btn {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.full-site-mode .floating-pdf-mode-switcher .pdf-mode-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+body.full-site-mode .floating-pdf-mode-switcher .pdf-mode-btn.active {
+    background: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
 }
 
 /* 3rd Mode: Native Browser Full Screen */
@@ -2112,8 +2194,4 @@ body.full-site-mode .doc-preview-body embed {
 .uploaded-document-card:-webkit-full-screen .doc-preview-body iframe {
     height: 100% !important;
     border-radius: 0 !important;
-}
-    --text-muted: #94a3b8;
-    --text-heading: #e2e8f0;
-    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
