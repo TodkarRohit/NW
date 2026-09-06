@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS public.assignments (
     num int,
     title text NOT NULL,
     question_file text NOT NULL,
-    answer_file text NOT NULL,
+    answer_file text,
     question_data_url text NOT NULL,
-    answer_data_url text NOT NULL,
+    answer_data_url text,
     question_preview text,
     answer_preview text,
     views int DEFAULT 0,
@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS public.assignments (
     comments jsonb DEFAULT '[]'::jsonb,
     created_at timestamptz DEFAULT now()
 );
+
+-- Drop NOT NULL constraints if table already exists
+ALTER TABLE public.assignments ALTER COLUMN answer_file DROP NOT NULL;
+ALTER TABLE public.assignments ALTER COLUMN answer_data_url DROP NOT NULL;
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;

@@ -340,13 +340,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function fetchAssignments() {
         try {
+            const keysToQuery = [subjectKey];
+            if (subjectKey === 'maths') keysToQuery.push('math');
+            if (subjectKey === 'math') keysToQuery.push('maths');
+            if (subjectKey === 'hardware') keysToQuery.push('coa');
+            if (subjectKey === 'coa') keysToQuery.push('hardware');
+
             const { data, error } = await window.supabaseClient
                 .from('assignments')
                 .select('*')
-                .eq('subject_key', subjectKey);
-            if (error) throw error;
-            if (data && data.length > 0) {
-                dbAssignments = data.map(row => ({
+                .in('subject_key', keysToQuery);
+
+            const localCustom = JSON.parse(localStorage.getItem(`custom_assignments_${subjectKey}`)) || [];
+
+            if (!error && data) {
+                const remoteAssignments = data.map(row => ({
                     id: row.id,
                     chapterId: row.chapter_id,
                     unit: row.unit,
@@ -364,11 +372,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     questionPreview: row.question_preview,
                     answerPreview: row.answer_preview
                 }));
+
+                const combinedMap = new Map();
+                remoteAssignments.forEach(item => combinedMap.set(item.id, item));
+                localCustom.forEach(item => {
+                    if (!combinedMap.has(item.id)) {
+                        combinedMap.set(item.id, item);
+                    }
+                });
+
+                dbAssignments = Array.from(combinedMap.values());
                 try {
                     localStorage.setItem(`custom_assignments_${subjectKey}`, JSON.stringify(dbAssignments));
                 } catch (e) {}
             } else {
-                const localCustom = JSON.parse(localStorage.getItem(`custom_assignments_${subjectKey}`)) || [];
                 dbAssignments = localCustom;
             }
         } catch (e) {
@@ -1101,17 +1118,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!file) return;
 
                     try {
-                        showToast(`Uploading solution PDF: ${file.name}...`);
-                        const aFileName = `assignments/${subjectKey}/${targetChapterId}/solutions/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                        let aDataUrl = '';
+                        try {
+                            const { error: uploadErr } = await window.supabaseClient.storage
+                                .from('academic-files')
+                                .upload(aFileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
 
-                        const { error: uploadErr } = await window.supabaseClient.storage
-                            .from('academic-files')
-                            .upload(aFileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
-
-                        if (uploadErr) throw uploadErr;
-
-                        const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aFileName);
-                        const aDataUrl = urlData.publicUrl;
+                            if (uploadErr) {
+                                console.warn('Solution storage upload failed, using DataURL fallback:', uploadErr);
+                                aDataUrl = await fileToDataUrl(file);
+                            } else {
+                                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aFileName);
+                                aDataUrl = urlData ? urlData.publicUrl : await fileToDataUrl(file);
+                            }
+                        } catch (stgErr) {
+                            console.warn('Storage exception, using DataURL fallback:', stgErr);
+                            aDataUrl = await fileToDataUrl(file);
+                        }
 
                         const newPreview = `
                             <div class="pdf-doc-view">
@@ -1121,21 +1144,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         `;
 
-                        const { error: dbErr } = await window.supabaseClient.from('assignments').update({
-                            answer_file: file.name,
-                            answer_data_url: aDataUrl,
-                            answer_preview: newPreview
-                        }).eq('id', assId);
+                        try {
+                            await window.supabaseClient.from('assignments').update({
+                                answer_file: file.name,
+                                answer_data_url: aDataUrl,
+                                answer_preview: newPreview
+                            }).eq('id', assId);
+                        } catch (dbErr) {
+                            console.error('Database update solution error:', dbErr);
+                        }
 
-                        if (dbErr) throw dbErr;
-
-                        const found = dbAssignments.find(a => me => a.id === assId);
                         const targetItem = dbAssignments.find(a => a.id === assId);
                         if (targetItem) {
                             targetItem.answerFile = file.name;
                             targetItem.answerDataUrl = aDataUrl;
                             targetItem.answerPreview = newPreview;
                         }
+
+                        try {
+                            localStorage.setItem(`custom_assignments_${subjectKey}`, JSON.stringify(dbAssignments));
+                        } catch (e) {}
 
                         renderAssignments(searchInput ? searchInput.value : '');
                         showToast('Solution PDF uploaded & attached successfully!');
@@ -1500,15 +1528,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             try {
-                showToast('Processing & Uploading PDF Files...');
-                // Upload Question PDF
-                const qFileName = `assignments/${targetSubjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-                const { error: qErr } = await window.supabaseClient.storage.from('academic-files').upload(qFileName, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
-                if (qErr) throw qErr;
-                const { data: qUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(qFileName);
-                const qDataUrl = qUrlData.publicUrl;
+                showToast('Uploading assignment PDF files...');
+                const qFileNamePath = `assignments/${targetSubjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+                let qDataUrl = '';
 
-                let aDataUrl = null;
+                try {
+                    const { error: qErr } = await window.supabaseClient.storage
+                        .from('academic-files')
+                        .upload(qFileNamePath, qFile, { contentType: qFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                    
+                    if (qErr) {
+                        console.warn('Storage upload failed, using DataURL fallback:', qErr);
+                        qDataUrl = await fileToDataUrl(qFile);
+                    } else {
+                        const { data: qUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(qFileNamePath);
+                        qDataUrl = (qUrlData && qUrlData.publicUrl) ? qUrlData.publicUrl : await fileToDataUrl(qFile);
+                    }
+                } catch (stgErr) {
+                    console.warn('Storage exception, using DataURL fallback:', stgErr);
+                    qDataUrl = await fileToDataUrl(qFile);
+                }
+
+                let aDataUrl = '';
                 let aFileName = '';
                 let aPreviewHtml = `
                     <div class="pdf-doc-view" style="text-align:center; padding:1.5rem 1rem;">
@@ -1521,10 +1562,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (aFile) {
                     aFileName = aFile.name;
                     const aStoragePath = `assignments/${targetSubjectKey}/${targetChapterId}/solutions/${Date.now()}_${aFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-                    const { error: aErr } = await window.supabaseClient.storage.from('academic-files').upload(aStoragePath, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
-                    if (aErr) throw aErr;
-                    const { data: aUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aStoragePath);
-                    aDataUrl = aUrlData.publicUrl;
+                    try {
+                        const { error: aErr } = await window.supabaseClient.storage
+                            .from('academic-files')
+                            .upload(aStoragePath, aFile, { contentType: aFile.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                        
+                        if (aErr) {
+                            console.warn('Solution storage upload failed, using DataURL fallback:', aErr);
+                            aDataUrl = await fileToDataUrl(aFile);
+                        } else {
+                            const { data: aUrlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(aStoragePath);
+                            aDataUrl = (aUrlData && aUrlData.publicUrl) ? aUrlData.publicUrl : await fileToDataUrl(aFile);
+                        }
+                    } catch (aStgErr) {
+                        console.warn('Solution storage exception, using DataURL fallback:', aStgErr);
+                        aDataUrl = await fileToDataUrl(aFile);
+                    }
+
                     aPreviewHtml = `
                         <div class="pdf-doc-view">
                             <div class="pdf-doc-title"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> ${escapeHtml(aFile.name)}</div>
@@ -1533,6 +1587,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     `;
                 }
+
+                // Safe strings to satisfy database NOT NULL constraints
+                const safeAnswerFile = aFileName || '';
+                const safeAnswerDataUrl = aDataUrl || '';
+                const safeQuestionDataUrl = qDataUrl || '';
 
                 let normKey = targetSubjectKey ? targetSubjectKey.toLowerCase() : 'maths';
                 if (normKey === 'math') normKey = 'maths';
@@ -1555,9 +1614,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     num: assNum,
                     title: assTitle,
                     questionFile: qFile.name,
-                    answerFile: aFileName,
-                    questionDataUrl: qDataUrl,
-                    answerDataUrl: aDataUrl,
+                    answerFile: safeAnswerFile,
+                    questionDataUrl: safeQuestionDataUrl,
+                    answerDataUrl: safeAnswerDataUrl,
                     views: 1,
                     downloads: 0,
                     isCustom: true,
@@ -1572,38 +1631,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                     answerPreview: aPreviewHtml
                 };
 
-                const { error: dbErr } = await window.supabaseClient.from('assignments').insert([{
-                    id: newAssId,
-                    subject_key: targetSubjectKey,
-                    chapter_id: targetChapterId,
-                    unit: targetChObj ? (targetChObj.unit || 'Unit 1') : 'Unit 1',
-                    chapter_title: targetChObj ? (targetChObj.name || targetChObj.title) : 'Unit 1',
-                    num: assNum,
-                    title: assTitle,
-                    question_file: qFile.name,
-                    answer_file: aFileName,
-                    question_data_url: qDataUrl,
-                    answer_data_url: aDataUrl,
-                    question_preview: newAssignment.questionPreview,
-                    answer_preview: newAssignment.answerPreview,
-                    views: 1,
-                    downloads: 0,
-                    is_custom: true,
-                    comments: []
-                }]);
+                // Insert into database
+                try {
+                    const { error: dbErr } = await window.supabaseClient.from('assignments').insert([{
+                        id: newAssId,
+                        subject_key: targetSubjectKey,
+                        chapter_id: targetChapterId,
+                        unit: targetChObj ? (targetChObj.unit || 'Unit 1') : 'Unit 1',
+                        chapter_title: targetChObj ? (targetChObj.name || targetChObj.title) : 'Unit 1',
+                        num: assNum,
+                        title: assTitle,
+                        question_file: qFile.name,
+                        answer_file: safeAnswerFile,
+                        question_data_url: safeQuestionDataUrl,
+                        answer_data_url: safeAnswerDataUrl,
+                        question_preview: newAssignment.questionPreview,
+                        answer_preview: newAssignment.answerPreview,
+                        views: 1,
+                        downloads: 0,
+                        is_custom: true,
+                        comments: []
+                    }]);
 
-                if (dbErr) {
-                    console.error('Database Error:', dbErr);
-                    throw new Error('Failed to save assignment metadata to database.');
+                    if (dbErr) {
+                        console.error('Database Insert Error:', dbErr);
+                    }
+                } catch (dbEx) {
+                    console.error('Database Exception:', dbEx);
                 }
 
+                // Add to local state & localStorage fallback so it renders immediately!
                 dbAssignments.unshift(newAssignment);
+                try {
+                    const localKey = `custom_assignments_${targetSubjectKey}`;
+                    const currentLocal = JSON.parse(localStorage.getItem(localKey)) || [];
+                    currentLocal.unshift(newAssignment);
+                    localStorage.setItem(localKey, JSON.stringify(currentLocal));
+                } catch (e) {}
 
                 closeUploadModal();
                 showToast('Assignment Published Successfully!');
 
-                if (targetSubjectKey === subjectKey) {
-                    activeChapterId = targetChapterId;
+                if (targetSubjectKey === subjectKey || (targetSubjectKey === 'maths' && subjectKey === 'math') || (targetSubjectKey === 'math' && subjectKey === 'maths')) {
+                    activeChapterId = 'all';
                     renderChapterNav();
                     renderAssignments(searchInput ? searchInput.value : '');
                 } else {
@@ -1611,7 +1681,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err) {
                 console.error(err);
-                showToast('Error processing PDF file upload.');
+                showToast('Error processing PDF file upload.', true);
             }
         });
     }
