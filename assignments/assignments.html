@@ -364,6 +364,201 @@
                 <button type="button" class="cancel-btn" id="confirmCancelBtn" style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:transparent; cursor:pointer;">Cancel</button>
                 <button type="button" class="submit-upload-btn" id="confirmOkBtn" style="padding:10px 20px; border-radius:8px; border:none; color:#fff; font-weight:bold; cursor:pointer; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);">
                     Yes, proceed
+                <div class="form-group custom-form-group" id="emailFormGroup" style="display:none;">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" id="adminEmailInput" placeholder="Email Address" autocomplete="email">
+                </div>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-user-tag"></i>
+                    <input type="text" id="adminUsernameInput" placeholder="Enter username" required autocomplete="username" maxlength="20">
+                </div>
+                <div class="auth-hint">
+                    <span id="usernameRuleText"></span>
+                </div>
+                <div id="usernameSuggestionsContainer" class="username-suggestions"></div>
+
+                <div class="form-group custom-form-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="adminPasswordInput" placeholder="Enter password (min. 6 characters)" required autocomplete="current-password">
+                </div>
+
+                <div class="custom-login-options">
+                    <label class="custom-checkbox-label">
+                        <input type="checkbox" id="rememberMeCheckbox">
+                        <span class="custom-checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="#" class="custom-forgot-link">Forgot Password?</a>
+                </div>
+
+                <div id="loginErrorMsg" class="login-error-msg custom-error" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span id="loginErrorText">Invalid username or password!</span>
+                </div>
+                
+                <div class="modal-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="cancel-btn custom-submit-btn" id="cancelAdminLoginBtn" style="background: rgba(255,255,255,0.2); flex: 1;">Cancel</button>
+                    <button type="submit" class="submit-login-btn custom-submit-btn auth-submit-btn" id="authSubmitBtn" style="flex: 1;">
+                        <span id="authSubmitBtnText">LOGIN</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin PDF Upload Modal (Popup alternative) -->
+    <div class="admin-upload-backdrop" id="uploadModalBackdrop">
+        <div class="admin-upload-card">
+            <div class="upload-modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                    <h3>Upload New Assignment (Admin)</h3>
+                </div>
+                <button class="close-modal-btn" id="closeUploadModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="adminUploadForm" class="upload-modal-body">
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="uploadSubjectSelect"><i class="fa-solid fa-book"></i> Select Subject</label>
+                        <select id="uploadSubjectSelect" required>
+                            <option value="dsa">Data Structure and Algorithm (C++)</option>
+                            <option value="oop">Object Oriented Programming (Using C++)</option>
+                            <option value="os">Operating System</option>
+                            <option value="maths">Engineering Mathematics</option>
+                            <option value="hardware">Computer hardware and its organization</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadChapterSelect"><i class="fa-solid fa-folder"></i> Target Chapter / Unit</label>
+                        <select id="uploadChapterSelect" required>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="uploadAssNum"><i class="fa-solid fa-hashtag"></i> Assignment No.</label>
+                        <input type="number" id="uploadAssNum" min="1" max="50" placeholder="e.g. 1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadAssTitle"><i class="fa-solid fa-heading"></i> Assignment Title</label>
+                        <input type="text" id="uploadAssTitle" placeholder="e.g. ASSIGNMENT 1: Array Operations & Matrices" required>
+                    </div>
+                </div>
+
+                <!-- PDF File Dropzone Row -->
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="uploadQuestionPdf"><i class="fa-solid fa-file-pdf" style="color:#0284c7"></i> Question PDF File</label>
+                        <div class="file-dropzone" id="qDropzone">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span class="file-name-display" id="qPdfName">Choose Question PDF...</span>
+                            <input type="file" id="uploadQuestionPdf" accept=".pdf" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="uploadAnswerPdf"><i class="fa-solid fa-file-pdf" style="color:#16a34a"></i> Answer / Solution PDF File (Optional)</label>
+                        <div class="file-dropzone" id="aDropzone">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span class="file-name-display" id="aPdfName">Choose Solution PDF (Optional)...</span>
+                            <input type="file" id="uploadAnswerPdf" accept=".pdf">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="uploadQuestionNotes"><i class="fa-solid fa-align-left"></i> Question Description / Highlights (Optional)</label>
+                    <textarea id="uploadQuestionNotes" rows="2" placeholder="Briefly describe Question 1, Question 2 or key topics..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="uploadAnswerNotes"><i class="fa-solid fa-square-check"></i> Answer Description / Solution Notes (Optional)</label>
+                    <textarea id="uploadAnswerNotes" rows="2" placeholder="Briefly describe solution approach or algorithm complexity..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" id="cancelUploadBtn">Cancel</button>
+                    <button type="submit" class="submit-upload-btn"><i class="fa-solid fa-cloud-arrow-up"></i> Save & Publish Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Comment Drawer Sidebar / Modal -->
+    <div class="comment-modal-backdrop" id="commentModalBackdrop">
+        <div class="comment-drawer" id="commentDrawer">
+            <div class="drawer-header">
+                <div class="drawer-title-info">
+                    <i class="fa-solid fa-comments"></i>
+                    <h3 id="commentModalTitle">Discussion & Comments</h3>
+                </div>
+                <button class="close-drawer-btn" id="closeCommentDrawer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="drawer-body">
+                <div class="comments-list" id="commentsList">
+                    <!-- Comments rendered dynamically -->
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <form id="commentForm">
+                    <div class="input-group">
+                        <input type="text" id="authorNameInput" placeholder="Your Name (optional)...">
+                    </div>
+                    <div class="input-group">
+                        <textarea id="commentTextInput" rows="3" placeholder="Write a comment or ask a question about this assignment..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-comment-btn"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full PDF Preview Modal -->
+    <div class="full-view-backdrop" id="fullViewModal">
+        <div class="full-view-card">
+            <div class="full-view-header">
+                <div class="full-view-title-group">
+                    <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i>
+                    <h3 id="fullViewFileName">Document Preview</h3>
+                </div>
+                <div class="full-view-actions">
+                    <button class="download-modal-btn" id="fullViewDownloadBtn">
+                        <i class="fa-solid fa-download"></i> Download PDF
+                    </button>
+                    <button class="close-modal-btn" id="closeFullViewModal">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="full-view-body" id="fullViewContent">
+                <!-- PDF preview content rendered dynamically -->
+            </div>
+        </div>
+        <footer>
+        <div class="container">
+            <p>&copy; 2026 Engineering Notes Hub. Built for NMIET students.</p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" style="display:none; position:fixed; bottom:24px; right:24px; background:#0f172a; color:#fff; padding:12px 20px; border-radius:30px; z-index:9999; font-weight:600; align-items:center; gap:8px;">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Confirm Dialog Modal -->
+    <div class="modal-backdrop" id="confirmModalBackdrop" style="display:none; z-index: 2000; position:fixed; inset:0; background:rgba(15,23,42,0.6); align-items:center; justify-content:center;">
+        <div class="modal-content" style="background:var(--card-bg); max-width: 400px; padding:2rem; border-radius:18px; text-align: center; box-shadow:var(--shadow-hover); border: 2px solid #cbd5e1;">
+            <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 style="margin-bottom: 1rem; color: var(--text-dark); font-size: 1.25rem; font-weight: 700;">Are you sure?</h3>
+            <p id="confirmModalMessage" style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;"></p>
+            <div class="modal-actions" style="display:flex; justify-content: center; gap:12px;">
+                <button type="button" class="cancel-btn" id="confirmCancelBtn" style="padding:10px 20px; border-radius:8px; border:1px solid #cbd5e1; background:transparent; cursor:pointer;">Cancel</button>
+                <button type="button" class="submit-upload-btn" id="confirmOkBtn" style="padding:10px 20px; border-radius:8px; border:none; color:#fff; font-weight:bold; cursor:pointer; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);">
+                    Yes, proceed
                 </button>
             </div>
         </div>
@@ -371,9 +566,9 @@
 
     <!-- Include Data & Script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../assets/auth.js?v=2.0"></script>
-    <script src="../assets/data.js?v=2.0"></script>
-    <script src="assignments.js?v=2.0"></script>
-    <script src="../assets/auth-modal.js?v=2.0"></script>
+    <script src="../assets/data.js?v=3.0"></script>
+    <script src="../assets/auth.js?v=3.0"></script>
+    <script src="assignments.js?v=3.0"></script>
+    <script src="../assets/auth-modal.js?v=3.0"></script>
 </body>
 </html>
