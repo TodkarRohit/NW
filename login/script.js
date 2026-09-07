@@ -838,11 +838,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             subjectsData[code] = subjObj;
+            if (typeof window.loadCustomSubjectsIntoData === 'function') {
+                window.loadCustomSubjectsIntoData();
+            }
             closeSubjectModal();
             showToast(`Subject "${title}" saved successfully!`);
             renderSubjectsGrid(searchInput ? searchInput.value : '');
 
-            await autoPublishState();
+            autoPublishState();
         });
     }
 
