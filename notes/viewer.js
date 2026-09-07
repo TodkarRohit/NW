@@ -174,15 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const items = JSON.parse(JSON.stringify(rawItems));
 
-    // Ensure items is never empty (fallback default 4 units)
-    if (!items || items.length === 0) {
-        items.push(
-            { id: `${subjectKey}-u1`, title: "Unit 1: Fundamentals & Concepts", unit: "Unit 1", name: "Fundamentals & Concepts" },
-            { id: `${subjectKey}-u2`, title: "Unit 2: Core Architecture & Methods", unit: "Unit 2", name: "Core Architecture & Methods" },
-            { id: `${subjectKey}-u3`, title: "Unit 3: Advanced Operations", unit: "Unit 3", name: "Advanced Operations" },
-            { id: `${subjectKey}-u4`, title: "Unit 4: Applications & Implementation", unit: "Unit 4", name: "Applications & Implementation" }
-        );
-    }
+    // Filter out deleted units
+    const deletedUnitsKey = `deleted_units_${subjectKey}_${resourceType}`;
+    let deletedUnitsList = [];
+    try {
+        deletedUnitsList = JSON.parse(localStorage.getItem(deletedUnitsKey)) || [];
+    } catch (e) {}
 
     // Load any custom items from localStorage on startup
     const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
@@ -191,10 +188,20 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         const customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
         if (customItems.length > 0) {
-            items.push(...customItems);
+            customItems.forEach(ci => {
+                if (ci && ci.id && !items.some(it => it.id === ci.id)) {
+                    items.push(ci);
+                }
+            });
         }
         modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
     } catch (e) { }
+
+    if (deletedUnitsList.length > 0) {
+        const filtered = items.filter(it => it && (!it.id || !deletedUnitsList.includes(it.id)));
+        items.length = 0;
+        items.push(...filtered);
+    }
 
     function syncSaveUnitMod(sKey, idx, itemObj, newTitle, newName) {
         if (!sKey) return;
@@ -407,15 +414,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', async (e) => {
                         e.stopPropagation(); // prevent selecting the item
-                        if (await customConfirm(`Are you sure you want to delete "${item.title}"?`)) {
+                        if (await customConfirm(`Are you sure you want to delete "${item.title || item.name}"?`)) {
+                            const itemId = item.id;
+                            if (itemId) {
+                                const deletedUnitsKey = `deleted_units_${subjectKey}_${resourceType}`;
+                                let deletedUnits = JSON.parse(localStorage.getItem(deletedUnitsKey)) || [];
+                                if (!deletedUnits.includes(itemId)) {
+                                    deletedUnits.push(itemId);
+                                    localStorage.setItem(deletedUnitsKey, JSON.stringify(deletedUnits));
+                                }
+                            }
+
                             // Find and remove from customItems if it's a custom item
                             const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
                             let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
-                            const isCustom = customItems.some(ci => ci.id === item.id);
+                            customItems = customItems.filter(ci => ci && ci.id !== item.id);
+                            localStorage.setItem(customItemsKey, JSON.stringify(customItems));
 
-                            if (isCustom) {
-                                customItems = customItems.filter(ci => ci.id !== item.id);
-                                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                            // Update subjectsData in memory & localStorage
+                            if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey]) {
+                                const subj = subjectsData[subjectKey];
+                                const prop = isQB ? 'questionBanks' : (isAss ? 'assignments' : 'chapters');
+                                if (subj[prop] && Array.isArray(subj[prop])) {
+                                    subj[prop] = subj[prop].filter(u => u && u.id !== item.id);
+                                }
+                                let modifiedSubjects = {};
+                                try {
+                                    modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+                                } catch (err) {}
+                                modifiedSubjects[subjectKey] = Object.assign({}, modifiedSubjects[subjectKey] || {}, {
+                                    title: subj.title,
+                                    semester: subj.semester,
+                                    branches: subj.branches,
+                                    resources: subj.resources,
+                                    customLinks: subj.customLinks,
+                                    chapters: subj.chapters,
+                                    questionBanks: subj.questionBanks
+                                });
+                                localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
                             }
 
                             items.splice(index, 1);

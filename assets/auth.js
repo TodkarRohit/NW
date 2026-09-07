@@ -495,12 +495,7 @@
 
     async function pullLatestStateFromSupabase(force = false) {
         if (!force && localStorage.getItem('hasUnpublishedChanges') === 'true') {
-            const confirmOverwrite = confirm('You have unpublished local changes. Pulling latest data from cloud will overwrite your local changes. Do you want to proceed and discard your local changes?');
-            if (!confirmOverwrite) {
-                return false;
-            }
-            localStorage.setItem('hasUnpublishedChanges', 'false');
-            updateUnpublishedBanner();
+            return false;
         }
 
         const client = window.supabaseClient || getSupabaseClient();
@@ -562,6 +557,7 @@
                     'custom_items_',
                     'modified_items_',
                     'modified_units_',
+                    'deleted_units_',
                     'custom_assignments_',
                     'deleted_keys_',
                     'custom_subjects_',
@@ -650,6 +646,7 @@
                 key.startsWith('custom_items_') ||
                 key.startsWith('modified_items_') ||
                 key.startsWith('modified_units_') ||
+                key.startsWith('deleted_units_') ||
                 key.startsWith('custom_assignments_') ||
                 key.startsWith('deleted_keys_') ||
                 key.startsWith('custom_subjects_') ||
