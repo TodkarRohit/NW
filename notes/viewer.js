@@ -1733,6 +1733,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (toggleSidebarText) toggleSidebarText.textContent = 'Show Sidebar';
             if (toggleSidebarIcon) toggleSidebarIcon.className = 'fa-solid fa-bars';
         }
+
+        window.addEventListener('academicStateRefreshed', () => {
+            if (typeof window.loadCustomSubjectsIntoData === 'function') {
+                window.loadCustomSubjectsIntoData();
+            }
+            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+            loadItemContent(activeIndex);
+        });
     }
 
 

@@ -600,6 +600,15 @@
                 if (typeof window.loadCustomSubjectsIntoData === 'function') {
                     window.loadCustomSubjectsIntoData();
                 }
+
+                try {
+                    window.dispatchEvent(new CustomEvent('academicStateRefreshed'));
+                } catch (e) {}
+
+                registeredRealtimeCallbacks.forEach(cb => {
+                    try { cb(); } catch (e) {}
+                });
+
                 return true;
             }
         } catch (e) {

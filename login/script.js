@@ -1015,13 +1015,25 @@ window.SubjectCard = SubjectCard;
     }
 
 
-    // Subscribe to Realtime Supabase updates
+    // Subscribe to Realtime Supabase updates & State Refresh events
     if (window.supabaseRealtime) {
         window.supabaseRealtime.subscribe(() => {
+            if (typeof window.loadCustomSubjectsIntoData === 'function') {
+                window.loadCustomSubjectsIntoData();
+            }
             renderBranchesSidebar();
             renderSubjectsGrid(searchInput ? searchInput.value : '');
         });
     }
+
+    window.addEventListener('academicStateRefreshed', () => {
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
+        checkAdminState();
+        renderBranchesSidebar();
+        renderSubjectsGrid(searchInput ? searchInput.value : '');
+    });
 
     window.addEventListener('auth_state_changed', () => {
         checkAdminState();
