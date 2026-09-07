@@ -48,6 +48,16 @@ const errorHandler = (err, req, res, next) => {
         message = 'Authentication token expired';
     }
 
+    // Multer File Upload Errors (e.g. file size limit exceeded)
+    if (err.name === 'MulterError') {
+        statusCode = 400;
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            message = 'File size exceeds maximum allowed limit of 25MB';
+        } else {
+            message = `File upload error: ${err.message}`;
+        }
+    }
+
     // Mongoose / MongoDB Connection Error
     if (err.name === 'MongooseError' || (err.message && err.message.includes('buffering timed out')) || err.name === 'MongoServerSelectionError' || err.name === 'MongoNetworkError') {
         statusCode = 503;

@@ -978,18 +978,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const subFolder = `${targetSubFolder}/${subjectKey}/${unitId}/${currentView}`;
             const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
             
-            const { error: err } = await window.supabaseClient.storage.from('academic-files').upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
-            
-            if (err) throw err;
-            
-            const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
-            
+            const formData = new FormData();
+            formData.append('path', fileName);
+            formData.append('file', file);
+            const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+
+            const uploadRes = await fetch('/api/assignments/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + (token || '')
+                },
+                body: formData
+            });
+
+            if (!uploadRes.ok) {
+                const uploadErrJson = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
+                throw new Error(uploadErrJson.message || 'File upload failed');
+            }
+
+            const uploadResData = await uploadRes.json();
+            const publicUrl = uploadResData.publicUrl || (window.supabaseClient ? window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName).data.publicUrl : '');
+
             const docData = {
                 name: file.name,
                 size: file.size,
                 type: file.type || 'application/pdf',
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                data: urlData.publicUrl,
+                data: publicUrl,
                 category: catLabel
             };
 

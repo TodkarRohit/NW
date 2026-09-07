@@ -362,9 +362,6 @@
     }
 
     async function pushAndBroadcastStateChange() {
-        const client = window.supabaseClient || getSupabaseClient();
-        if (!client) throw new Error('Supabase client is not available. Please check your connection.');
-
         window.lastLocalSaveTime = Date.now();
 
         const exportData = {};
@@ -388,35 +385,23 @@
             }
         }
 
-        const jsonString = JSON.stringify(exportData);
-        const blob = new Blob([jsonString], { type: 'application/json' });
+        const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+        const res = await fetch('/api/assignments/publish-state', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (token || '')
+            },
+            body: JSON.stringify({ data: exportData })
+        });
 
-        // 1. Upload to Supabase Storage with no-cache control
-        const { error: uploadErr } = await client.storage
-            .from('academic-files')
-            .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true, cacheControl: '0' });
-
-        if (uploadErr) {
-            console.error('Supabase storage state upload error:', uploadErr);
-            throw uploadErr;
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+            console.error('Publish state backend error:', errData);
+            throw new Error(errData.message || 'Failed to publish state change through backend');
         }
 
-        // 2. Dual Backup to Supabase Table (public.assignments) as fallback
-        try {
-            await client.from('assignments').upsert({
-                id: '__published_state__',
-                subject_key: 'system',
-                chapter_id: 'config',
-                title: 'Published App State',
-                question_file: 'app_data.json',
-                question_data_url: jsonString,
-                created_at: new Date().toISOString()
-            });
-        } catch (dbErr) {
-            console.warn('DB table state backup error:', dbErr);
-        }
-
-        // 3. Broadcast to all clients
+        // Broadcast to all clients
         if (realtimeChannel) {
             try {
                 await realtimeChannel.send({
@@ -448,25 +433,34 @@
             realtimeChannel = client.channel('academic_hub_realtime', {
                 config: { broadcast: { self: false } }
             });
-
-            realtimeChannel
-                .on('broadcast', { event: 'academic_state_updated' }, async (payload) => {
-                    if (payload && payload.payload && payload.payload.sender === window.clientId) {
-                        return; // Ignore self broadcast
-                    }
-                    await pullLatestStateFromSupabase();
-                    registeredRealtimeCallbacks.forEach(cb => {
-                        try { cb(payload); } catch (e) {}
-                    });
-                })
-                .subscribe();
+            realtimeChannel.on('broadcast', { event: 'academic_state_updated' }, () => {
+                pullLatestStateFromSupabase();
+            });
+            realtimeChannel.subscribe();
         } catch (e) {
             console.warn('Realtime channel init warning:', e);
         }
 
-        // Periodic Fallback Sync Check (every 20 seconds)
+        // Periodic Fallback Sync Check
+        startPeriodicStatePolling();
+    }
+
+    let isCheckingRemoteUpdate = false;
+    function startPeriodicStatePolling() {
         setInterval(async () => {
-            const updated = await checkStateUpdateTimestamp();
+            if (isCheckingRemoteUpdate) return;
+            isCheckingRemoteUpdate = true;
+            try {
+                await checkStateUpdateTimestamp();
+            } catch (e) {
+            } finally {
+                isCheckingRemoteUpdate = false;
+            }
+
+            const hasUnpublished = localStorage.getItem('hasUnpublishedChanges') === 'true';
+            if (hasUnpublished) return;
+
+            const updated = await pullLatestStateFromSupabase();
             if (updated) {
                 registeredRealtimeCallbacks.forEach(cb => {
                     try { cb(); } catch (e) {}
@@ -498,10 +492,16 @@
             };
 
             const filesToRemove = await listAllFiles(folderPath);
-            if (filesToRemove.length > 0) {
-                await client.storage
-                    .from('academic-files')
-                    .remove(filesToRemove);
+            const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+            for (const fileP of filesToRemove) {
+                await fetch('/api/assignments/delete-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || '')
+                    },
+                    body: JSON.stringify({ path: fileP })
+                });
             }
         } catch (err) {
             console.error(`Error deleting Supabase folder "${folderPath}":`, err);

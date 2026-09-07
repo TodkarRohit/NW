@@ -10,6 +10,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
+const assignmentRoutes = require('./routes/assignmentRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorMiddleware');
 
 // Initialize Express App
@@ -45,6 +46,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 // Catch 404 and forward to Centralized Error Handler
 app.use(notFoundHandler);

@@ -27,32 +27,22 @@ ALTER TABLE public.assignments ALTER COLUMN answer_data_url DROP NOT NULL;
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
 
--- 1. Public Read Policy: Allow anyone to read assignments
+-- 1. Public Read Policy: Allow anyone to read assignments (SELECT)
 DROP POLICY IF EXISTS "Public Read Assignments" ON public.assignments;
 CREATE POLICY "Public Read Assignments" 
 ON public.assignments FOR SELECT 
 USING (true);
 
--- 2. Public Update Policy: Allow anyone to update assignments (required for views, downloads, comments, and state upsert)
+-- 2. Drop all public write policies (INSERT, UPDATE, DELETE)
+-- Writes MUST go through Express backend service_role key
 DROP POLICY IF EXISTS "Admin Update Assignments" ON public.assignments;
 DROP POLICY IF EXISTS "Public Update Assignments" ON public.assignments;
-CREATE POLICY "Public Update Assignments" 
-ON public.assignments FOR UPDATE 
-USING (true)
-WITH CHECK (true);
 
--- 3. Public Insert Policy: Allow inserting assignments and published state
 DROP POLICY IF EXISTS "Admin Insert Assignments" ON public.assignments;
 DROP POLICY IF EXISTS "Public Insert Assignments" ON public.assignments;
-CREATE POLICY "Public Insert Assignments" 
-ON public.assignments FOR INSERT 
-WITH CHECK (true);
 
--- 4. Delete Policy: Allow deleting assignments
 DROP POLICY IF EXISTS "Admin Delete Assignments" ON public.assignments;
 DROP POLICY IF EXISTS "Public Delete Assignments" ON public.assignments;
-CREATE POLICY "Public Delete Assignments" 
-ON public.assignments FOR DELETE 
-USING (true);
+
 
 

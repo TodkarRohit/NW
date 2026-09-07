@@ -22,7 +22,8 @@ const register = async (req, res, next) => {
         // Create new user (password is automatically hashed via User model pre-save hook)
         const user = await User.create({
             username,
-            password
+            password,
+            role: 'user'
         });
 
         // Generate JWT Token
@@ -35,6 +36,7 @@ const register = async (req, res, next) => {
             user: {
                 id: user._id,
                 username: user.username,
+                role: user.role,
                 createdAt: user.createdAt
             }
         });
@@ -80,6 +82,7 @@ const login = async (req, res, next) => {
             user: {
                 id: user._id,
                 username: user.username,
+                role: user.role,
                 createdAt: user.createdAt
             }
         });

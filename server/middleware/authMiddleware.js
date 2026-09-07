@@ -74,7 +74,22 @@ const optionalAuth = async (req, res, next) => {
     next();
 };
 
+/**
+ * RequireAdmin middleware: Validates that req.user has role === 'admin'
+ */
+const requireAdmin = (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Admin access required.'
+        });
+    }
+    next();
+};
+
 module.exports = {
     protect,
-    optionalAuth
+    optionalAuth,
+    requireAdmin
 };
+

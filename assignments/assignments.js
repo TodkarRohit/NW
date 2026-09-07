@@ -363,7 +363,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!path) return;
             try {
                 console.log('Cleaning up old storage file to free space:', path);
-                await window.supabaseClient.storage.from('academic-files').remove([path]);
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                await fetch('/api/assignments/delete-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || '')
+                    },
+                    body: JSON.stringify({ path })
+                });
             } catch (e) {
                 console.warn('Storage file deletion error:', path, e);
             }
@@ -380,17 +388,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         static async uploadWithFallback(bucket, path, file) {
             try {
-                const { error } = await window.supabaseClient.storage
-                    .from(bucket)
-                    .upload(path, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                const formData = new FormData();
+                formData.append('path', path);
+                formData.append('file', file);
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
 
-                if (error) {
-                    console.warn('Supabase storage upload error, falling back to DataURL:', error);
-                    return await StorageManager.fileToDataUrl(file);
+                const res = await fetch('/api/assignments/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + (token || '')
+                    },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const resJson = await res.json();
+                    if (resJson.publicUrl) return resJson.publicUrl;
                 }
-
-                const { data } = window.supabaseClient.storage.from(bucket).getPublicUrl(path);
-                return (data && data.publicUrl) ? data.publicUrl : await StorageManager.fileToDataUrl(file);
+                return await StorageManager.fileToDataUrl(file);
             } catch (e) {
                 console.warn('Storage exception, falling back to DataURL:', e);
                 return await StorageManager.fileToDataUrl(file);
@@ -537,25 +552,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             try {
-                await window.supabaseClient.from('assignments').insert([{
-                    id: newAssId,
-                    subject_key: targetSubjectKey,
-                    chapter_id: targetChapterId,
-                    unit: newAssignment.unit,
-                    chapter_title: newAssignment.chapterTitle,
-                    num: assNum,
-                    title: assTitle,
-                    question_file: qFile.name,
-                    answer_file: safeAnswerFile,
-                    question_data_url: safeQuestionDataUrl,
-                    answer_data_url: safeAnswerDataUrl,
-                    question_preview: newAssignment.questionPreview,
-                    answer_preview: newAssignment.answerPreview,
-                    views: 1,
-                    downloads: 0,
-                    is_custom: true,
-                    comments: []
-                }]);
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                await fetch('/api/assignments/upsert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || '')
+                    },
+                    body: JSON.stringify({
+                        id: newAssId,
+                        subject_key: targetSubjectKey,
+                        chapter_id: targetChapterId,
+                        unit: newAssignment.unit,
+                        chapter_title: newAssignment.chapterTitle,
+                        num: assNum,
+                        title: assTitle,
+                        question_file: qFile.name,
+                        answer_file: safeAnswerFile,
+                        question_data_url: safeQuestionDataUrl,
+                        answer_data_url: safeAnswerDataUrl,
+                        question_preview: newAssignment.questionPreview,
+                        answer_preview: newAssignment.answerPreview,
+                        views: 1,
+                        downloads: 0,
+                        is_custom: true,
+                        comments: []
+                    })
+                });
             } catch (dbErr) {
                 console.error('Database Insert Error:', dbErr);
             }
@@ -586,11 +609,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
 
             try {
-                await window.supabaseClient.from('assignments').update({
-                    answer_file: aFile.name,
-                    answer_data_url: newUrl,
-                    answer_preview: newPreview
-                }).eq('id', assId);
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                await fetch('/api/assignments/upsert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || '')
+                    },
+                    body: JSON.stringify({
+                        id: assId,
+                        subject_key: this.subjectKey,
+                        chapter_id: targetChapterId,
+                        title: targetItem.title,
+                        question_file: targetItem.questionFile,
+                        question_data_url: targetItem.questionDataUrl,
+                        answer_file: aFile.name,
+                        answer_data_url: newUrl,
+                        answer_preview: newPreview
+                    })
+                });
             } catch (dbErr) {
                 console.error('Database update solution error:', dbErr);
             }
@@ -614,7 +651,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             try {
-                await window.supabaseClient.from('assignments').delete().eq('id', assId);
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                await fetch('/api/assignments/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (token || '')
+                    },
+                    body: JSON.stringify({ id: assId })
+                });
             } catch (e) {
                 console.error('Database delete assignment error:', e);
             }
@@ -1560,9 +1605,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (assObj && assObj.isCustom) {
                 assObj.comments = comments;
                 try {
-                    await window.supabaseClient.from('assignments')
-                        .update({ comments: comments })
-                        .eq('id', activeCommentAssId);
+                    const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                    await fetch('/api/assignments/upsert', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + (token || '')
+                        },
+                        body: JSON.stringify({
+                            id: activeCommentAssId,
+                            comments: comments
+                        })
+                    });
                 } catch (err) {
                     console.error('Error updating comments in Supabase:', err);
                 }
