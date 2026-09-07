@@ -846,20 +846,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Auto Publish State to Supabase
-    async function autoPublishState() {
+    // Mark State as Modified / Unpublished
+    function autoPublishState() {
         if (typeof window.markUnpublishedChanges === 'function') {
             window.markUnpublishedChanges();
-        }
-        if (window.supabaseRealtime && typeof window.supabaseRealtime.pushAndBroadcast === 'function') {
-            try {
-                await window.supabaseRealtime.pushAndBroadcast();
-            } catch (err) {
-                console.error('Auto publish state error:', err);
-                if (typeof showToast === 'function') {
-                    showToast('Failed to publish changes to cloud: ' + (err.message || err));
-                }
-            }
         }
     }
 

@@ -1357,14 +1357,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function autoPublishState() {
+    function autoPublishState() {
         if (typeof window.markUnpublishedChanges === 'function') {
             window.markUnpublishedChanges();
         }
-        if (!window.supabaseRealtime || typeof window.supabaseRealtime.pushAndBroadcast !== 'function') {
-            throw new Error('Supabase Realtime sync service is unavailable.');
-        }
-        await window.supabaseRealtime.pushAndBroadcast();
     }
 
     const publishBtn = document.getElementById('publishBtn');

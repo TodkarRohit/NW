@@ -471,6 +471,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveLocalCache() {
             try {
                 localStorage.setItem(`custom_assignments_${this.subjectKey}`, JSON.stringify(this.dbAssignments));
+                if (typeof window.markUnpublishedChanges === 'function') {
+                    window.markUnpublishedChanges();
+                }
             } catch (e) {}
         }
 
