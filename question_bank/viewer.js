@@ -982,8 +982,9 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('path', fileName);
             formData.append('file', file);
             const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+            const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
 
-            const uploadRes = await fetch('/api/assignments/upload', {
+            const uploadRes = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + (token || '')

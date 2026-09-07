@@ -640,7 +640,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const relativePath = docData.data.split('academic-files/')[1];
                                 if (relativePath) {
                                     const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                                    await fetch('/api/assignments/delete-file', {
+                                    const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
+                                    await fetch(apiUrl, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -1013,8 +1014,9 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('path', fileName);
             formData.append('file', file);
             const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+            const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
 
-            const uploadRes = await fetch('/api/assignments/upload', {
+            const uploadRes = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + (token || '')

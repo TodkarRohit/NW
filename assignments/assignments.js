@@ -364,7 +364,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 console.log('Cleaning up old storage file to free space:', path);
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                await fetch('/api/assignments/delete-file', {
+                const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
+                await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -393,7 +394,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 formData.append('file', file);
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
 
-                const res = await fetch('/api/assignments/upload', {
+                const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer ' + (token || '')
@@ -553,7 +555,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                await fetch('/api/assignments/upsert', {
+                const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
+                await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -610,7 +613,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                await fetch('/api/assignments/upsert', {
+                const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
+                await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -652,7 +656,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                await fetch('/api/assignments/delete', {
+                const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/delete') : '/api/assignments/delete';
+                await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1606,7 +1611,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 assObj.comments = comments;
                 try {
                     const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                    await fetch('/api/assignments/upsert', {
+                    const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
+                    await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

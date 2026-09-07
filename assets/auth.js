@@ -54,6 +54,22 @@
 
     getSupabaseClient();
 
+    function getApiUrl(endpoint) {
+        if (!endpoint) return '';
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+        if (typeof window !== 'undefined' && window.API_BASE_URL) {
+            return window.API_BASE_URL.replace(/\/$/, '') + cleanEndpoint;
+        }
+        if (typeof window !== 'undefined' && window.location) {
+            const host = window.location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1') {
+                return 'http://localhost:5000' + cleanEndpoint;
+            }
+        }
+        return cleanEndpoint;
+    }
+    window.getApiUrl = getApiUrl;
+
     const TOKEN_KEY = 'enh_auth_token';
     const USER_KEY = 'enh_auth_user';
 
@@ -609,26 +625,46 @@
             }
         }
 
-        const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-        const res = await fetch('/api/assignments/publish-state', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + (token || '')
-            },
-            body: JSON.stringify({ data: exportData })
-        });
+        let publishedViaBackend = false;
+        try {
+            const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+            const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/publish-state') : '/api/assignments/publish-state';
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (token || '')
+                },
+                body: JSON.stringify({ data: exportData })
+            });
 
-        if (!res.ok) {
-            let errMessage = `HTTP ${res.status}`;
-            if (res.status === 405) {
-                errMessage = 'HTTP 405 Method Not Allowed - Please ensure the Express backend server is running on port 5000.';
+            if (res.ok) {
+                publishedViaBackend = true;
             } else {
-                const errData = await res.json().catch(() => ({}));
-                if (errData && errData.message) errMessage = errData.message;
+                console.warn(`Publish state backend returned HTTP ${res.status}, falling back to Supabase Storage direct update.`);
             }
-            console.error('Publish state backend error:', errMessage);
-            throw new Error(errMessage);
+        } catch (backendErr) {
+            console.warn('Publish state backend error, falling back to Supabase Storage direct update:', backendErr);
+        }
+
+        if (!publishedViaBackend) {
+            const client = window.supabaseClient || getSupabaseClient();
+            if (client) {
+                try {
+                    const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const { error: uploadErr } = await client.storage
+                        .from('academic-files')
+                        .upload('published_state/app_data.json', jsonBlob, {
+                            contentType: 'application/json',
+                            upsert: true
+                        });
+                    if (uploadErr) {
+                        console.warn('Supabase storage direct upload warning:', uploadErr);
+                    }
+                } catch (spErr) {
+                    console.warn('Supabase direct publish error:', spErr);
+                }
+            }
         }
 
         // Broadcast to all clients
@@ -724,14 +760,24 @@
             const filesToRemove = await listAllFiles(folderPath);
             const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
             for (const fileP of filesToRemove) {
-                await fetch('/api/assignments/delete-file', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + (token || '')
-                    },
-                    body: JSON.stringify({ path: fileP })
-                });
+                try {
+                    const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + (token || '')
+                        },
+                        body: JSON.stringify({ path: fileP })
+                    });
+                    if (!res.ok && client) {
+                        await client.storage.from('academic-files').remove([fileP]);
+                    }
+                } catch (e) {
+                    if (client) {
+                        await client.storage.from('academic-files').remove([fileP]).catch(() => {});
+                    }
+                }
             }
         } catch (err) {
             console.error(`Error deleting Supabase folder "${folderPath}":`, err);
