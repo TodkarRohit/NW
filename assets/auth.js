@@ -70,6 +70,20 @@
     }
     window.getApiUrl = getApiUrl;
 
+    async function hashSHA256(text) {
+        if (!text) return '';
+        try {
+            if (typeof crypto !== 'undefined' && crypto.subtle) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+        } catch (e) {}
+        return String(text);
+    }
+
     const TOKEN_KEY = 'enh_auth_token';
     const USER_KEY = 'enh_auth_user';
 
@@ -128,22 +142,29 @@
             const cleanId = String(usernameOrEmail || '').trim();
             const lowerId = cleanId.toLowerCase();
 
-            // 1. Primary: Try Express backend API first
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: cleanId, password })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.success && data.token) {
-                        this.saveSession(data.token, data.user);
-                        return data;
+            if (!cleanId) {
+                throw new Error('Please enter your username or email address.');
+            }
+
+            // 1. Primary: Try Express backend API first if running locally or API_BASE_URL set
+            if (typeof window !== 'undefined' && (window.API_BASE_URL || (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')))) {
+                try {
+                    const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/auth/login') : '/api/auth/login';
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: cleanId, password })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.success && data.token) {
+                            this.saveSession(data.token, data.user);
+                            return data;
+                        }
                     }
+                } catch (err) {
+                    console.warn('Express backend login unavailable, switching to Supabase auth...', err);
                 }
-            } catch (err) {
-                console.warn('Express backend login unavailable, switching to Supabase auth...', err);
             }
 
             // 2. Secondary: Direct Supabase public.users query fallback (for static GitHub Pages hosting)
@@ -198,11 +219,13 @@
 
                             return { success: true, token, user: sessionUser };
                         } else {
-                            throw new Error('Invalid username or password.');
+                            throw new Error('Invalid password. Please check your password.');
                         }
+                    } else {
+                        throw new Error(`User "${cleanId}" not found. Please click Register to create a new account.`);
                     }
                 } catch (sbErr) {
-                    if (sbErr.message && sbErr.message.includes('Invalid username or password')) {
+                    if (sbErr.message && (sbErr.message.includes('Invalid password') || sbErr.message.includes('not found'))) {
                         throw sbErr;
                     }
                     console.warn('Supabase auth fallback error:', sbErr);
@@ -234,23 +257,29 @@
             if (!cleanUname) {
                 throw new Error('Username is required.');
             }
+            if (!password || password.length < 6) {
+                throw new Error('Password must be at least 6 characters long.');
+            }
 
-            // 1. Primary: Try Express backend API first
-            try {
-                const res = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: cleanUname, password, name: cleanName, email: cleanEmail })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.success && data.token) {
-                        this.saveSession(data.token, data.user);
-                        return data;
+            // 1. Primary: Try Express backend API first if running locally or API_BASE_URL set
+            if (typeof window !== 'undefined' && (window.API_BASE_URL || (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')))) {
+                try {
+                    const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/auth/register') : '/api/auth/register';
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: cleanUname, password, name: cleanName, email: cleanEmail })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.success && data.token) {
+                            this.saveSession(data.token, data.user);
+                            return data;
+                        }
                     }
+                } catch (err) {
+                    console.warn('Express backend register unavailable, switching to Supabase auth...', err);
                 }
-            } catch (err) {
-                console.warn('Express backend register unavailable, switching to Supabase auth...', err);
             }
 
             // 2. Secondary: Direct Supabase public.users insertion (for static GitHub Pages hosting)
@@ -258,13 +287,13 @@
             if (client) {
                 try {
                     // Check duplicate username or email
-                    const { data: existing } = await client
+                    const { data: existing, error: checkErr } = await client
                         .from('users')
                         .select('username, email')
                         .or(`username.eq.${cleanUname},email.eq.${cleanEmail}`);
 
-                    if (existing && existing.length > 0) {
-                        throw new Error('Username or email is already registered. Please login or use a different handle.');
+                    if (!checkErr && existing && existing.length > 0) {
+                        throw new Error('Username or email is already registered. Please click Login instead.');
                     }
 
                     const passHash = await hashSHA256(password);
@@ -283,7 +312,16 @@
                         last_login_at: new Date().toISOString()
                     };
 
-                    await client.from('users').insert([newUserRow]);
+                    const { error: insertErr } = await client
+                        .from('users')
+                        .insert([newUserRow]);
+
+                    if (insertErr) {
+                        console.error('Supabase insert user error:', insertErr);
+                        if (insertErr.message && (insertErr.message.includes('duplicate') || insertErr.message.includes('unique'))) {
+                            throw new Error('Username or email is already registered. Please click Login instead.');
+                        }
+                    }
 
                     const sessionUser = {
                         id: cleanUname,
@@ -298,10 +336,10 @@
                     this.saveSession(token, sessionUser);
                     return { success: true, token, user: sessionUser };
                 } catch (sbErr) {
-                    if (sbErr.message && sbErr.message.includes('already registered')) {
+                    if (sbErr.message && (sbErr.message.includes('already registered') || sbErr.message.includes('already taken'))) {
                         throw sbErr;
                     }
-                    console.warn('Supabase register fallback warning:', sbErr);
+                    console.warn('Supabase register warning:', sbErr);
                 }
             }
 
