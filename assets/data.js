@@ -113,19 +113,19 @@ function loadCustomSubjectsIntoData() {
             }
         });
 
-        const modifiedData = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-        for (const id in modifiedData) {
-            if (subjectsData[id] && !deletedList.includes(id)) {
-                Object.assign(subjectsData[id], modifiedData[id]);
-            }
-        }
-
         const customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
         customList.forEach(subj => {
             if (subj && subj.id && !deletedList.includes(subj.id)) {
                 subjectsData[subj.id] = subj;
             }
         });
+
+        const modifiedData = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+        for (const id in modifiedData) {
+            if (subjectsData[id] && !deletedList.includes(id)) {
+                Object.assign(subjectsData[id], modifiedData[id]);
+            }
+        }
 
         // Ensure all subjects have branches property and purge deleted ones
         for (const key in subjectsData) {
@@ -353,3 +353,4 @@ class NavigationManager {
     }
 }
 window.NavigationManager = NavigationManager;
+window.subjectsData = subjectsData;

@@ -835,9 +835,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (err) {}
                 modifiedSubjects[editId] = { title, semester, branches: selectedBranches, resources: resourcesObj, customLinks: customLinksArr };
                 localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
+
+                let customSubjects = [];
+                try {
+                    customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+                } catch (err) {}
+                const cIdx = customSubjects.findIndex(s => s && (s.id === editId || s.id === code));
+                if (cIdx !== -1) {
+                    customSubjects[cIdx] = Object.assign({}, customSubjects[cIdx], {
+                        title,
+                        semester,
+                        branches: selectedBranches,
+                        resources: resourcesObj,
+                        customLinks: customLinksArr
+                    });
+                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+                }
             }
 
-            subjectsData[code] = subjObj;
+            const targetKey = editId || code;
+            subjectsData[targetKey] = subjObj;
             if (typeof window.loadCustomSubjectsIntoData === 'function') {
                 window.loadCustomSubjectsIntoData();
             }
