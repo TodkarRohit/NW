@@ -1827,11 +1827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         window.addEventListener('academicStateRefreshed', () => {
-            if (typeof window.loadCustomSubjectsIntoData === 'function') {
-                window.loadCustomSubjectsIntoData();
-            }
-            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
-            loadItemContent(activeIndex);
+            refreshDataAndUI();
         });
     }
 

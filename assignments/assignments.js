@@ -2055,6 +2055,16 @@ renderDrawerComments(activeCommentAssId);
 
     initAssignmentsPage();
 
+    window.addEventListener('academicStateRefreshed', () => {
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
+        fetchAssignments().then(() => {
+            renderChapterNav();
+            renderAssignments(searchInput ? searchInput.value : '');
+        });
+    });
+
     if (window.supabaseRealtime) {
         window.supabaseRealtime.subscribe(() => {
             fetchAssignments().then(() => {
