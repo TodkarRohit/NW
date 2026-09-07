@@ -1524,7 +1524,15 @@ document.addEventListener('DOMContentLoaded', () => {
             publishBtn.disabled = true;
 
             try {
-                await autoPublishState();
+                if (window.supabaseRealtime && typeof window.supabaseRealtime.pushAndBroadcast === 'function') {
+                    await window.supabaseRealtime.pushAndBroadcast();
+                } else if (typeof pushAndBroadcastStateChange === 'function') {
+                    await pushAndBroadcastStateChange();
+                }
+                localStorage.setItem('hasUnpublishedChanges', 'false');
+                if (typeof window.updateUnpublishedBanner === 'function') {
+                    window.updateUnpublishedBanner();
+                }
                 if (typeof showToast === 'function') {
                     showToast('Changes published successfully to all users!');
                 } else {

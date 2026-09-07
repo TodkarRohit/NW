@@ -99,6 +99,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await window.supabaseRealtime.cleanOrphans();
                 }
                 await window.supabaseRealtime.pushAndBroadcast();
+                localStorage.setItem('hasUnpublishedChanges', 'false');
+                if (typeof window.updateUnpublishedBanner === 'function') {
+                    window.updateUnpublishedBanner();
+                }
                 showToast('Published all changes live to Supabase Cloud!');
             } catch (err) {
                 console.error('Publish error:', err);

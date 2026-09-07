@@ -485,6 +485,10 @@
                 badge.style.display = 'none';
             }
         });
+
+        document.querySelectorAll('.unpublished-banner-badge').forEach(badge => {
+            badge.style.display = hasUnpublished ? 'inline-flex' : 'none';
+        });
     }
     window.updateUnpublishedBanner = updateUnpublishedBanner;
 
