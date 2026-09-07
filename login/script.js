@@ -380,76 +380,89 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (noResultsMessage) noResultsMessage.style.display = 'none';
         }
 
-        // Render HTML for matching subjects
-        subjectsContainer.innerHTML = visibleSubjects.map(subj => {
-            const branchesDisplay = (subj.branches || ['ALL']).join(', ');
-            const res = subj.resources || { notes: true, qb: true, assignments: true };
-            const customLinks = subj.customLinks || [];
+class SubjectCard {
+    constructor(subj) {
+        this.id = subj.id;
+        this.title = subj.title || '';
+        this.semester = subj.semester || 'Semester 2';
+        this.branches = subj.branches || ['ALL'];
+        this.resources = subj.resources || { notes: true, qb: true, assignments: true };
+        this.customLinks = subj.customLinks || [];
+    }
 
-            let resourceLinksHTML = '';
+    render(isAdmin = false) {
+        const branchesDisplay = (this.branches || ['ALL']).join(', ');
+        const res = this.resources || { notes: true, qb: true, assignments: true };
+        const customLinks = this.customLinks || [];
 
-            const notesUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getNotesUrl(subj.id) : `../notes/viewer.html?subject=${subj.id}&type=notes`;
-            const qbUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getQuestionBankUrl(subj.id) : `../question_bank/viewer.html?subject=${subj.id}&type=qb`;
-            const assUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getAssignmentsUrl(subj.id) : `../assignments/assignments.html?subject=${subj.id}`;
+        let resourceLinksHTML = '';
 
-            if (res.notes !== false) {
-                resourceLinksHTML += `
-                    <a href="${notesUrl}" class="btn btn-notes">
-                        <i class="fa-solid fa-book-open"></i> Study Notes
-                    </a>
-                `;
-            }
-            if (res.qb !== false) {
-                resourceLinksHTML += `
-                    <a href="${qbUrl}" class="btn btn-qb">
-                        <i class="fa-solid fa-circle-question"></i> Question Banks
-                    </a>
-                `;
-            }
-            if (res.assignments !== false) {
-                resourceLinksHTML += `
-                    <a href="${assUrl}" class="btn btn-assignments">
-                        <i class="fa-solid fa-folder-open"></i> Assignments
-                    </a>
-                `;
-            }
+        const notesUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getNotesUrl(this.id) : `../notes/viewer.html?subject=${this.id}&type=notes`;
+        const qbUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getQuestionBankUrl(this.id) : `../question_bank/viewer.html?subject=${this.id}&type=qb`;
+        const assUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getAssignmentsUrl(this.id) : `../assignments/assignments.html?subject=${this.id}`;
 
-
-            customLinks.forEach(link => {
-                if (link && link.title && link.url) {
-                    resourceLinksHTML += `
-                        <a href="${escapeHTML(link.url)}" target="_blank" class="btn btn-notes" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3);">
-                            <i class="${escapeHTML(link.icon || 'fa-solid fa-link')}"></i> ${escapeHTML(link.title)}
-                        </a>
-                    `;
-                }
-            });
-
-            return `
-                <div class="subject-card" data-subject="${subj.id}">
-                    <div class="card-header" style="position: relative; padding-right: 70px;">
-                        <h2>${escapeHTML(subj.title)}</h2>
-                        <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
-                            <span class="semester-tag">${escapeHTML(subj.semester || 'Semester 2')}</span>
-                            <span class="semester-tag" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">${escapeHTML(branchesDisplay)}</span>
-                        </div>
-                        ${isAdmin ? `
-                            <div class="card-admin-actions" style="position: absolute; top: 12px; right: 12px; display: flex; gap: 6px;">
-                                <button type="button" class="edit-subject-btn" data-id="${subj.id}" style="background: rgba(14, 165, 233, 0.1); border: none; color: #0ea5e9; padding: 6px 8px; border-radius: 6px; cursor: pointer;" title="Edit Subject">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <button type="button" class="delete-subject-btn" data-id="${subj.id}" style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; padding: 6px 8px; border-radius: 6px; cursor: pointer;" title="Delete Subject">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="resource-links">
-                        ${resourceLinksHTML}
-                    </div>
-                </div>
+        if (res.notes !== false) {
+            resourceLinksHTML += `
+                <a href="${notesUrl}" class="btn btn-notes">
+                    <i class="fa-solid fa-book-open"></i> Study Notes
+                </a>
             `;
-        }).join('');
+        }
+        if (res.qb !== false) {
+            resourceLinksHTML += `
+                <a href="${qbUrl}" class="btn btn-qb">
+                    <i class="fa-solid fa-circle-question"></i> Question Banks
+                </a>
+            `;
+        }
+        if (res.assignments !== false) {
+            resourceLinksHTML += `
+                <a href="${assUrl}" class="btn btn-assignments">
+                    <i class="fa-solid fa-folder-open"></i> Assignments
+                </a>
+            `;
+        }
+
+        customLinks.forEach(link => {
+            if (link && link.title && link.url) {
+                resourceLinksHTML += `
+                    <a href="${escapeHTML(link.url)}" target="_blank" class="btn btn-notes" style="background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3);">
+                        <i class="${escapeHTML(link.icon || 'fa-solid fa-link')}"></i> ${escapeHTML(link.title)}
+                    </a>
+                `;
+            }
+        });
+
+        return `
+            <div class="subject-card" data-subject="${this.id}">
+                <div class="card-header" style="position: relative; padding-right: 70px;">
+                    <h2>${escapeHTML(this.title)}</h2>
+                    <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+                        <span class="semester-tag">${escapeHTML(this.semester || 'Semester 2')}</span>
+                        <span class="semester-tag" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">${escapeHTML(branchesDisplay)}</span>
+                    </div>
+                    ${isAdmin ? `
+                        <div class="card-admin-actions" style="position: absolute; top: 12px; right: 12px; display: flex; gap: 6px;">
+                            <button type="button" class="edit-subject-btn" data-id="${this.id}" style="background: rgba(14, 165, 233, 0.1); border: none; color: #0ea5e9; padding: 6px 8px; border-radius: 6px; cursor: pointer;" title="Edit Subject">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="delete-subject-btn" data-id="${this.id}" style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; padding: 6px 8px; border-radius: 6px; cursor: pointer;" title="Delete Subject">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="resource-links">
+                    ${resourceLinksHTML}
+                </div>
+            </div>
+        `;
+    }
+}
+window.SubjectCard = SubjectCard;
+
+        // Render HTML for matching subjects using SubjectCard class
+        subjectsContainer.innerHTML = visibleSubjects.map(subj => new SubjectCard(subj).render(isAdmin)).join('');
 
         // Attach Edit & Delete Listeners for Subject Cards
         if (isAdmin) {

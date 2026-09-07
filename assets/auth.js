@@ -839,5 +839,11 @@
         authService.updateHeaderUI();
         initSupabaseRealtime();
         updateUnpublishedBanner();
+
+        if (localStorage.getItem('hasUnpublishedChanges') !== 'true') {
+            try {
+                await pullLatestStateFromSupabase(true);
+            } catch (e) {}
+        }
     });
 })();

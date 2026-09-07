@@ -288,6 +288,54 @@ document.addEventListener('DOMContentLoaded', () => {
         return `doc_upload_${subjectKey}_${resourceType}_${itemId}`;
     }
 
+    async function fetchCloudDocData(index, viewType = null) {
+        if (!items || !items[index]) return null;
+        const item = items[index];
+        const itemId = item.id || `unit_${index}`;
+        const targetView = viewType || currentQBView || 'questions';
+
+        let folderPath = '';
+        if (isQB) {
+            folderPath = `question_bank/${subjectKey}/${itemId}/${targetView}`;
+        } else if (isAss) {
+            folderPath = `assignments/${subjectKey}/${itemId}/${targetView}`;
+        } else {
+            folderPath = `notes/${subjectKey}/${itemId}`;
+        }
+
+        const client = window.supabaseClient || (typeof getSupabaseClient === 'function' ? getSupabaseClient() : null);
+        if (!client) return null;
+
+        try {
+            const { data: fileList, error: listErr } = await client.storage
+                .from('academic-files')
+                .list(folderPath, { limit: 10, sortBy: { column: 'created_at', order: 'desc' } });
+
+            if (!listErr && fileList && fileList.length > 0) {
+                const file = fileList.find(f => f && f.name && !f.name.startsWith('.'));
+                if (file) {
+                    const fullPath = `${folderPath}/${file.name}`;
+                    const { data: urlData } = client.storage.from('academic-files').getPublicUrl(fullPath);
+                    if (urlData && urlData.publicUrl) {
+                        const docData = {
+                            name: file.name.replace(/^\d+_/, ''),
+                            size: file.metadata ? file.metadata.size : (file.size || 1024),
+                            type: (file.metadata && file.metadata.mimetype) || 'application/pdf',
+                            date: file.created_at ? new Date(file.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : new Date().toLocaleDateString(),
+                            data: urlData.publicUrl
+                        };
+                        const sKey = getStorageKey(index, targetView);
+                        localStorage.setItem(sKey, JSON.stringify(docData));
+                        return docData;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Cloud storage doc fetch notice:', e);
+        }
+        return null;
+    }
+
     // 5. Render Sidebar Items List
     function renderItemList(filterText = '') {
         chapterList.innerHTML = '';
@@ -536,7 +584,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check if an uploaded document exists for current view
         const storageKey = getStorageKey(index, isQB ? currentQBView : null);
-        const storedDocJSON = localStorage.getItem(storageKey);
+        let storedDocJSON = localStorage.getItem(storageKey);
+
+        if (!storedDocJSON) {
+            fetchCloudDocData(index, isQB ? currentQBView : null).then(cloudDoc => {
+                if (cloudDoc) {
+                    renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+                    loadItemContent(index);
+                }
+            });
+        }
 
         if (storedDocJSON) {
             const docData = JSON.parse(storedDocJSON);
