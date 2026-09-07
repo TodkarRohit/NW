@@ -150,6 +150,37 @@ function loadCustomSubjectsIntoData() {
             });
         }
 
+        // Purge deleted units across all subjects with alias key support
+        for (const key in subjectsData) {
+            const subj = subjectsData[key];
+            if (!subj) continue;
+
+            const targetKeys = new Set([
+                key,
+                key.replace(/_/g, '-'),
+                key.replace(/-/g, '_')
+            ]);
+            if (key === 'math' || key === 'maths') { targetKeys.add('math'); targetKeys.add('maths'); }
+            if (key === 'coa' || key === 'hardware') { targetKeys.add('coa'); targetKeys.add('hardware'); }
+
+            let allDelUnits = [];
+            targetKeys.forEach(tKey => {
+                ['notes', 'question_bank', 'qb', 'assignments'].forEach(rType => {
+                    const delKey = `deleted_units_${tKey}_${rType}`;
+                    try {
+                        const list = JSON.parse(localStorage.getItem(delKey)) || [];
+                        allDelUnits.push(...list);
+                    } catch (e) {}
+                });
+            });
+
+            if (allDelUnits.length > 0) {
+                if (subj.chapters) subj.chapters = subj.chapters.filter(u => u && (!u.id || !allDelUnits.includes(u.id)) && (!u.title || !allDelUnits.includes(u.title)));
+                if (subj.questionBanks) subj.questionBanks = subj.questionBanks.filter(u => u && (!u.id || !allDelUnits.includes(u.id)) && (!u.title || !allDelUnits.includes(u.title)));
+                if (subj.assignments) subj.assignments = subj.assignments.filter(u => u && (!u.id || !allDelUnits.includes(u.id)) && (!u.title || !allDelUnits.includes(u.title)));
+            }
+        }
+
         // Ensure all subjects have branches property and purge deleted ones
         for (const key in subjectsData) {
             if (deletedList.includes(key)) {

@@ -174,12 +174,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const items = JSON.parse(JSON.stringify(rawItems));
 
-    // Filter out deleted units
-    const deletedUnitsKey = `deleted_units_${subjectKey}_${resourceType}`;
+    // Filter out deleted units across all alias keys
+    const normKey = subjectKey.toLowerCase();
+    const altKey1 = normKey.replace(/-/g, '_');
+    const altKey2 = normKey.replace(/_/g, '-');
+    const aliasKey = normKey === 'math' ? 'maths' : (normKey === 'maths' ? 'math' : (normKey === 'coa' ? 'hardware' : (normKey === 'hardware' ? 'coa' : normKey)));
+    const keysToLook = Array.from(new Set([subjectKey, normKey, altKey1, altKey2, aliasKey]));
+
     let deletedUnitsList = [];
-    try {
-        deletedUnitsList = JSON.parse(localStorage.getItem(deletedUnitsKey)) || [];
-    } catch (e) {}
+    keysToLook.forEach(sKey => {
+        ['notes', 'qb', 'question_bank', 'assignments'].forEach(rType => {
+            const delKey = `deleted_units_${sKey}_${rType}`;
+            try {
+                const list = JSON.parse(localStorage.getItem(delKey)) || [];
+                deletedUnitsList.push(...list);
+            } catch (e) {}
+        });
+    });
 
     // Load any custom items from localStorage on startup
     const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
@@ -198,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) { }
 
     if (deletedUnitsList.length > 0) {
-        const filtered = items.filter(it => it && (!it.id || !deletedUnitsList.includes(it.id)));
+        const filtered = items.filter(it => it && (!it.id || !deletedUnitsList.includes(it.id)) && (!it.title || !deletedUnitsList.includes(it.title)));
         items.length = 0;
         items.push(...filtered);
     }
@@ -415,44 +426,93 @@ document.addEventListener('DOMContentLoaded', () => {
                     deleteBtn.addEventListener('click', async (e) => {
                         e.stopPropagation(); // prevent selecting the item
                         if (await customConfirm(`Are you sure you want to delete "${item.title || item.name}"?`)) {
-                            const itemId = item.id;
-                            if (itemId) {
-                                const deletedUnitsKey = `deleted_units_${subjectKey}_${resourceType}`;
-                                let deletedUnits = JSON.parse(localStorage.getItem(deletedUnitsKey)) || [];
-                                if (!deletedUnits.includes(itemId)) {
-                                    deletedUnits.push(itemId);
+                            const itemId = item.id || `${subjectKey}-u${index + 1}-${Date.now()}`;
+                            item.id = itemId;
+
+                            const normKey = subjectKey.toLowerCase();
+                            const altKey1 = normKey.replace(/-/g, '_');
+                            const altKey2 = normKey.replace(/_/g, '-');
+                            const aliasKey = normKey === 'math' ? 'maths' : (normKey === 'maths' ? 'math' : (normKey === 'coa' ? 'hardware' : (normKey === 'hardware' ? 'coa' : normKey)));
+                            const keysToUpdate = Array.from(new Set([subjectKey, normKey, altKey1, altKey2, aliasKey]));
+
+                            // 1. Record in deleted_units_ for all alias keys and resource types
+                            keysToUpdate.forEach(sKey => {
+                                ['notes', 'qb', 'question_bank', 'assignments'].forEach(rType => {
+                                    const deletedUnitsKey = `deleted_units_${sKey}_${rType}`;
+                                    let deletedUnits = [];
+                                    try {
+                                        deletedUnits = JSON.parse(localStorage.getItem(deletedUnitsKey)) || [];
+                                    } catch (err) {}
+                                    if (!deletedUnits.includes(itemId)) {
+                                        deletedUnits.push(itemId);
+                                    }
+                                    if (item.title && !deletedUnits.includes(item.title)) {
+                                        deletedUnits.push(item.title);
+                                    }
                                     localStorage.setItem(deletedUnitsKey, JSON.stringify(deletedUnits));
-                                }
-                            }
+                                });
+                            });
 
-                            // Find and remove from customItems if it's a custom item
-                            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
-                            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
-                            customItems = customItems.filter(ci => ci && ci.id !== item.id);
-                            localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                            // 2. Remove from custom_items_
+                            keysToUpdate.forEach(sKey => {
+                                ['notes', 'qb', 'question_bank', 'assignments'].forEach(rType => {
+                                    const customItemsKey = `custom_items_${sKey}_${rType}`;
+                                    let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+                                    const origLen = customItems.length;
+                                    customItems = customItems.filter(ci => ci && ci.id !== itemId && ci.title !== item.title);
+                                    if (customItems.length !== origLen) {
+                                        localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                                    }
+                                });
+                            });
 
-                            // Update subjectsData in memory & localStorage
-                            if (typeof subjectsData !== 'undefined' && subjectsData[subjectKey]) {
-                                const subj = subjectsData[subjectKey];
-                                const prop = isQB ? 'questionBanks' : (isAss ? 'assignments' : 'chapters');
-                                if (subj[prop] && Array.isArray(subj[prop])) {
-                                    subj[prop] = subj[prop].filter(u => u && u.id !== item.id);
+                            // 3. Update subjectsData in memory
+                            keysToUpdate.forEach(sKey => {
+                                if (typeof subjectsData !== 'undefined' && subjectsData[sKey]) {
+                                    const subj = subjectsData[sKey];
+                                    if (subj.chapters) subj.chapters = subj.chapters.filter(u => u && u.id !== itemId && u.title !== item.title);
+                                    if (subj.questionBanks) subj.questionBanks = subj.questionBanks.filter(u => u && u.id !== itemId && u.title !== item.title);
+                                    if (subj.assignments) subj.assignments = subj.assignments.filter(u => u && u.id !== itemId && u.title !== item.title);
                                 }
-                                let modifiedSubjects = {};
-                                try {
-                                    modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-                                } catch (err) {}
-                                modifiedSubjects[subjectKey] = Object.assign({}, modifiedSubjects[subjectKey] || {}, {
-                                    title: subj.title,
-                                    semester: subj.semester,
-                                    branches: subj.branches,
-                                    resources: subj.resources,
-                                    customLinks: subj.customLinks,
-                                    chapters: subj.chapters,
-                                    questionBanks: subj.questionBanks
+                            });
+
+                            // 4. Update custom_subjects_list in localStorage
+                            try {
+                                let customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+                                let customUpdated = false;
+                                customSubjects.forEach(cSubj => {
+                                    if (cSubj && (keysToUpdate.includes(cSubj.id) || keysToUpdate.includes(cSubj.id.replace(/_/g, '-')) || keysToUpdate.includes(cSubj.id.replace(/-/g, '_')))) {
+                                        if (cSubj.chapters) cSubj.chapters = cSubj.chapters.filter(u => u && u.id !== itemId && u.title !== item.title);
+                                        if (cSubj.questionBanks) cSubj.questionBanks = cSubj.questionBanks.filter(u => u && u.id !== itemId && u.title !== item.title);
+                                        if (cSubj.assignments) cSubj.assignments = cSubj.assignments.filter(u => u && u.id !== itemId && u.title !== item.title);
+                                        customUpdated = true;
+                                    }
+                                });
+                                if (customUpdated) {
+                                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+                                }
+                            } catch (err) {}
+
+                            // 5. Update modified_subjects_data in localStorage
+                            try {
+                                let modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+                                keysToUpdate.forEach(sKey => {
+                                    if (typeof subjectsData !== 'undefined' && subjectsData[sKey]) {
+                                        const subj = subjectsData[sKey];
+                                        modifiedSubjects[sKey] = Object.assign({}, modifiedSubjects[sKey] || {}, {
+                                            title: subj.title,
+                                            semester: subj.semester,
+                                            branches: subj.branches,
+                                            resources: subj.resources,
+                                            customLinks: subj.customLinks,
+                                            chapters: subj.chapters,
+                                            questionBanks: subj.questionBanks,
+                                            assignments: subj.assignments
+                                        });
+                                    }
                                 });
                                 localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
-                            }
+                            } catch (err) {}
 
                             items.splice(index, 1);
 
@@ -1561,6 +1621,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.name = modifiedItems[item.id].name;
             }
         });
+
+        // Apply deleted units filter during UI refresh across all alias keys
+        const normKey = subjectKey.toLowerCase();
+        const altKey1 = normKey.replace(/-/g, '_');
+        const altKey2 = normKey.replace(/_/g, '-');
+        const aliasKey = normKey === 'math' ? 'maths' : (normKey === 'maths' ? 'math' : (normKey === 'coa' ? 'hardware' : (normKey === 'hardware' ? 'coa' : normKey)));
+        const keysToLook = Array.from(new Set([subjectKey, normKey, altKey1, altKey2, aliasKey]));
+
+        let delUnitsRefreshed = [];
+        keysToLook.forEach(sKey => {
+            ['notes', 'qb', 'question_bank', 'assignments'].forEach(rType => {
+                const delKey = `deleted_units_${sKey}_${rType}`;
+                try {
+                    const list = JSON.parse(localStorage.getItem(delKey)) || [];
+                    delUnitsRefreshed.push(...list);
+                } catch (e) {}
+            });
+        });
+
+        if (delUnitsRefreshed.length > 0) {
+            const filtered = items.filter(it => it && (!it.id || !delUnitsRefreshed.includes(it.id)) && (!it.title || !delUnitsRefreshed.includes(it.title)));
+            items.length = 0;
+            items.push(...filtered);
+        }
         chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
 
         let initialIndex = activeIndex || 0;
