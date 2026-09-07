@@ -1626,7 +1626,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initSidebarToggle();
         initPdfViewModeSwitcher();
 
-        const itemListEl = document.getElementById('itemList');
+        const itemListEl = document.getElementById('chapterList') || document.getElementById('notesDocument');
         if (itemListEl) {
             itemListEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest notes from Supabase...</p></div>';
         }

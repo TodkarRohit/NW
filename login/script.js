@@ -984,7 +984,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         checkAdminState();
         renderBranchesSidebar();
 
-        const subjectsGridEl = document.getElementById('subjectsGrid');
+        const subjectsGridEl = document.getElementById('subjectsContainer') || document.getElementById('subjectsGrid');
         if (subjectsGridEl) {
             subjectsGridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest data from Supabase...</p></div>';
         }
