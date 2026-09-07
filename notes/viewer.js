@@ -1358,9 +1358,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function autoPublishState() {
-        if (window.supabaseRealtime && window.supabaseRealtime.pushAndBroadcast) {
-            await window.supabaseRealtime.pushAndBroadcast();
+        if (typeof window.markUnpublishedChanges === 'function') {
+            window.markUnpublishedChanges();
         }
+        if (!window.supabaseRealtime || typeof window.supabaseRealtime.pushAndBroadcast !== 'function') {
+            throw new Error('Supabase Realtime sync service is unavailable.');
+        }
+        await window.supabaseRealtime.pushAndBroadcast();
     }
 
     const publishBtn = document.getElementById('publishBtn');
@@ -1618,10 +1622,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    function init() {
+    async function init() {
         initSidebarToggle();
         initPdfViewModeSwitcher();
-        // Synchronously render UI first
+
+        const itemListEl = document.getElementById('itemList');
+        if (itemListEl) {
+            itemListEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest notes from Supabase...</p></div>';
+        }
+
+        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
+            try {
+                await window.supabaseRealtime.pullLatest();
+            } catch (e) {
+                console.warn('Initial cloud pull:', e);
+            }
+        }
+
         refreshDataAndUI();
 
         if (window.supabaseRealtime) {
@@ -1629,9 +1646,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshDataAndUI();
             });
         }
-
-        // Asynchronously sync cloud state in background
-        syncCloudState();
     }
 
     window.addEventListener('auth_state_changed', () => {

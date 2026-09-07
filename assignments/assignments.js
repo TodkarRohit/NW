@@ -1761,6 +1761,200 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function escapeHtml(str) {
         if (!str) return '';
+renderDrawerComments(activeCommentAssId);
+            renderAssignments(searchInput ? searchInput.value : '');
+
+            textInput.value = '';
+            showToast('Comment posted successfully!');
+        });
+    }
+
+    // ---------------------------------------------------------
+    // 16. Header Admin Upload Modal (Popup Alternative)
+    // ---------------------------------------------------------
+    const uploadModalBackdrop = document.getElementById('uploadModalBackdrop');
+    const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
+    const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+    const adminUploadForm = document.getElementById('adminUploadForm');
+    const uploadQuestionPdfInput = document.getElementById('uploadQuestionPdf');
+    const uploadAnswerPdfInput = document.getElementById('uploadAnswerPdf');
+    const qPdfNameDisplay = document.getElementById('qPdfName');
+    const aPdfNameDisplay = document.getElementById('aPdfName');
+
+    if (openUploadModalBtn) {
+        openUploadModalBtn.addEventListener('click', () => {
+            if (!isAdminMode) {
+                if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
+                return;
+            }
+            if (uploadModalBackdrop) {
+                const selectSub = document.getElementById('uploadSubjectSelect');
+                if (selectSub) selectSub.value = subjectKey;
+                updateUploadChapterDropdown(selectSub ? selectSub.value : subjectKey);
+                uploadModalBackdrop.classList.add('active');
+            }
+        });
+    }
+
+    function closeUploadModal() {
+        if (uploadModalBackdrop) uploadModalBackdrop.classList.remove('active');
+        if (adminUploadForm) adminUploadForm.reset();
+        if (qPdfNameDisplay) qPdfNameDisplay.textContent = 'Choose Question PDF...';
+        if (aPdfNameDisplay) aPdfNameDisplay.textContent = 'Choose Solution PDF (Optional)...';
+    }
+
+    if (closeUploadModalBtn) closeUploadModalBtn.addEventListener('click', closeUploadModal);
+    if (cancelUploadBtn) cancelUploadBtn.addEventListener('click', closeUploadModal);
+    if (uploadModalBackdrop) {
+        uploadModalBackdrop.addEventListener('click', (e) => {
+            if (e.target === uploadModalBackdrop) closeUploadModal();
+        });
+    }
+
+    if (uploadQuestionPdfInput && qPdfNameDisplay) {
+        uploadQuestionPdfInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                qPdfNameDisplay.textContent = '📄 ' + file.name;
+
+                const titleInput = document.getElementById('uploadAssTitle');
+                const numInput = document.getElementById('uploadAssNum');
+
+                // Extract assignment number if present (e.g. "Assignment_1" -> 1)
+                const numMatch = file.name.match(/(?:assignment|ass|a)[_\s-]*(\d+)/i) || file.name.match(/(\d+)/);
+                if (numMatch && numInput && !numInput.value) {
+                    numInput.value = parseInt(numMatch[1], 10);
+                }
+
+                if (titleInput && (!titleInput.value || titleInput.value.trim() === '')) {
+                    // Clean filename into title (e.g., "Assignment_1_Matrices.pdf" -> "ASSIGNMENT 1: Matrices")
+                    let cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ').trim();
+                    titleInput.value = cleanName;
+                }
+            }
+        });
+    }
+
+    if (uploadAnswerPdfInput && aPdfNameDisplay) {
+        uploadAnswerPdfInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                aPdfNameDisplay.textContent = '📄 ' + e.target.files[0].name;
+            }
+        });
+    }
+
+    if (adminUploadForm) {
+        adminUploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!isAdminMode) {
+                if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
+                return;
+            }
+
+            const targetSubjectKey = document.getElementById('uploadSubjectSelect').value;
+            const targetChapterId = document.getElementById('uploadChapterSelect').value;
+            const assNum = parseInt(document.getElementById('uploadAssNum').value, 10);
+            const assTitle = document.getElementById('uploadAssTitle').value.trim();
+            const qNotes = document.getElementById('uploadQuestionNotes').value.trim();
+            const aNotes = document.getElementById('uploadAnswerNotes').value.trim();
+
+            const qFile = uploadQuestionPdfInput ? uploadQuestionPdfInput.files[0] : null;
+            const aFile = uploadAnswerPdfInput ? uploadAnswerPdfInput.files[0] : null;
+
+            if (!qFile) {
+                showToast('Please select a Question PDF file!');
+                return;
+            }
+
+            try {
+                showToast('Uploading assignment PDF files...');
+                let normKey = targetSubjectKey ? targetSubjectKey.toLowerCase() : 'maths';
+                if (normKey === 'math') normKey = 'maths';
+                if (normKey === 'coa') normKey = 'hardware';
+
+                let targetChObj = null;
+                if (typeof subjectsData !== 'undefined' && subjectsData[normKey] && subjectsData[normKey].chapters) {
+                    targetChObj = subjectsData[normKey].chapters.find(c => c.id === targetChapterId);
+                }
+                if (!targetChObj) {
+                    targetChObj = subjectChapters.find(c => c.id === targetChapterId) || { unit: 'Unit 1', title: 'Unit 1' };
+                }
+
+                await assignmentService.publishAssignment({
+                    targetSubjectKey: targetSubjectKey,
+                    targetChapterId: targetChapterId,
+                    targetChObj: targetChObj,
+                    assNum: assNum,
+                    assTitle: assTitle,
+                    qFile: qFile,
+                    aFile: aFile,
+                    qNotes: qNotes,
+                    aNotes: aNotes
+                });
+
+                closeUploadModal();
+                showToast('Assignment Published Successfully!');
+
+                if (targetSubjectKey === subjectKey || (targetSubjectKey === 'maths' && subjectKey === 'math') || (targetSubjectKey === 'math' && subjectKey === 'maths')) {
+                    activeChapterId = 'all';
+                    renderChapterNav();
+                    renderAssignments(searchInput ? searchInput.value : '');
+                } else {
+                    window.location.search = `?subject=${targetSubjectKey}`;
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error processing PDF file upload.', true);
+            }
+        });
+    }
+
+    // ---------------------------------------------------------
+    // 17. Live Online Users Counter & Toast Helper
+    // ---------------------------------------------------------
+    const onlineUsersCountEl = document.getElementById('onlineUsersCount');
+    if (onlineUsersCountEl) {
+        let baseCount = parseInt(sessionStorage.getItem('online_users_count')) || Math.floor(Math.random() * 12) + 16;
+        sessionStorage.setItem('online_users_count', baseCount);
+        onlineUsersCountEl.textContent = baseCount;
+
+        setInterval(() => {
+            const delta = Math.floor(Math.random() * 3) - 1;
+            baseCount = Math.max(12, Math.min(36, baseCount + delta));
+            sessionStorage.setItem('online_users_count', baseCount);
+            onlineUsersCountEl.textContent = baseCount;
+        }, 5000);
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        if (!toast || !toastMessage) return;
+
+        const icon = toast.querySelector('i');
+        if (icon) {
+            icon.className = isError ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check';
+        }
+
+        toastMessage.textContent = message;
+        toast.style.background = isError ? '#ef4444' : '#0f172a';
+        toast.style.display = 'flex';
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => { toast.style.display = 'none'; }, 300);
+        }, 3200);
+    }
+
+    function customConfirm(message) {
+        if (typeof window.customConfirm === 'function') {
+            return window.customConfirm(message);
+        }
+        return Promise.resolve(confirm(message));
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
         return String(str)
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
@@ -1769,16 +1963,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, "&#039;");
     }
 
-    // Initial Load & Realtime Sync (Instant Paint + Async Fetch)
-    renderChapterNav();
-    renderAssignments(searchInput ? searchInput.value : '');
-    updateAdminUI();
+    // Initial Load & Realtime Sync (Awaited Cloud Pull Before Rendering)
+    async function initAssignmentsPage() {
+        updateAdminUI();
+        const assignmentsListEl = document.getElementById('assignmentsList');
+        if (assignmentsListEl) {
+            assignmentsListEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest assignments from Supabase...</p></div>';
+        }
 
-    // Background Async Fetch (Non-blocking)
-    fetchAssignments().then(() => {
+        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
+            try {
+                await window.supabaseRealtime.pullLatest();
+            } catch (e) {
+                console.warn('Initial assignment storage pull:', e);
+            }
+        }
+
+        try {
+            await fetchAssignments();
+        } catch (e) {
+            console.warn('Background assignment fetch:', e);
+        }
+
         renderChapterNav();
         renderAssignments(searchInput ? searchInput.value : '');
-    }).catch(e => console.warn('Background assignment fetch:', e));
+        updateAdminUI();
+    }
+
+    initAssignmentsPage();
 
     if (window.supabaseRealtime) {
         window.supabaseRealtime.subscribe(() => {

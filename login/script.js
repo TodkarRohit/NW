@@ -92,14 +92,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('Syncing changes & cleaning Cloud storage...');
 
             try {
-                if (window.supabaseRealtime) {
-                    if (window.supabaseRealtime.cleanOrphans) {
-                        await window.supabaseRealtime.cleanOrphans();
-                    }
-                    if (window.supabaseRealtime.pushAndBroadcast) {
-                        await window.supabaseRealtime.pushAndBroadcast();
-                    }
+                if (!window.supabaseRealtime || typeof window.supabaseRealtime.pushAndBroadcast !== 'function') {
+                    throw new Error('Supabase Realtime sync service is unavailable.');
                 }
+                if (window.supabaseRealtime.cleanOrphans) {
+                    await window.supabaseRealtime.cleanOrphans();
+                }
+                await window.supabaseRealtime.pushAndBroadcast();
                 showToast('Published all changes live to Supabase Cloud!');
             } catch (err) {
                 console.error('Publish error:', err);
@@ -849,8 +848,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Auto Publish State to Supabase
     async function autoPublishState() {
-        if (window.supabaseRealtime && window.supabaseRealtime.pushAndBroadcast) {
-            await window.supabaseRealtime.pushAndBroadcast();
+        if (typeof window.markUnpublishedChanges === 'function') {
+            window.markUnpublishedChanges();
+        }
+        if (window.supabaseRealtime && typeof window.supabaseRealtime.pushAndBroadcast === 'function') {
+            try {
+                await window.supabaseRealtime.pushAndBroadcast();
+            } catch (err) {
+                console.error('Auto publish state error:', err);
+                if (typeof showToast === 'function') {
+                    showToast('Failed to publish changes to cloud: ' + (err.message || err));
+                }
+            }
         }
     }
 
@@ -970,21 +979,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderSubjectsGrid(searchInput ? searchInput.value : '');
     });
 
-    // Initial Load & Cloud Sync (Instant Paint + Async Background Sync)
-    function init() {
-        // 1. Render immediately from local cache (0ms latency paint)
+    // Initial Load & Cloud Sync (Awaited Cloud Pull Before Rendering)
+    async function init() {
         checkAdminState();
         renderBranchesSidebar();
-        renderSubjectsGrid();
 
-        // 2. Sync latest cloud state in background without blocking load
-        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
-            window.supabaseRealtime.pullLatest().then(() => {
-                checkAdminState();
-                renderBranchesSidebar();
-                renderSubjectsGrid(searchInput ? searchInput.value : '');
-            }).catch(e => console.warn('Background sync:', e));
+        const subjectsGridEl = document.getElementById('subjectsGrid');
+        if (subjectsGridEl) {
+            subjectsGridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest data from Supabase...</p></div>';
         }
+
+        if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
+            try {
+                await window.supabaseRealtime.pullLatest();
+            } catch (e) {
+                console.warn('Initial cloud pull error:', e);
+            }
+        }
+
+        checkAdminState();
+        renderBranchesSidebar();
+        renderSubjectsGrid(searchInput ? searchInput.value : '');
     }
     init();
 

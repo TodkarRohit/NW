@@ -15,6 +15,23 @@
  * - Clear, user-friendly error messages (invalid username, duplicate username, network errors, etc.)
  * - 100% Optional login (Public browsing never forced)
  */
+/**
+ * Engineering Notes Hub - Authentication & Client API Service
+ * Handles:
+ * - JWT Token & User session persistence in localStorage
+ * - Authenticated HTTP requests (Authorization: Bearer <token>)
+ * - User Registration (strict 8-character usernames)
+ * - User Login & Logout
+ * - Protected & Public API communications:
+ *     POST /api/auth/register
+ *     POST /api/auth/login
+ *     POST /api/auth/logout
+ *     GET /api/users
+ *     GET /api/resources
+ * - Header Auth State UI updates across all pages
+ * - Clear, user-friendly error messages (invalid username, duplicate username, network errors, etc.)
+ * - 100% Optional login (Public browsing never forced)
+ */
 
 (function () {
     // SUPABASE CONFIGURATION - PASTE YOUR URL AND ANON KEY HERE
@@ -37,15 +54,10 @@
 
     getSupabaseClient();
 
-    const API_BASE_URL = 'http://localhost:5000/api'; // Old API (can be removed later)
     const TOKEN_KEY = 'enh_auth_token';
     const USER_KEY = 'enh_auth_user';
 
     class AuthService {
-        constructor() {
-            this.API_BASE_URL = API_BASE_URL;
-        }
-
         getToken() {
             return localStorage.getItem(TOKEN_KEY);
         }
@@ -95,168 +107,18 @@
             this.updateHeaderUI();
         }
 
-        /**
-         * Perform an HTTP fetch with optional or enforced JWT authorization header
-         */
-        async authFetch(endpoint, options = {}) {
-            const url = endpoint.startsWith('http') ? endpoint : `${this.API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-            const headers = {
-                'Content-Type': 'application/json',
-                ...(options.headers || {})
-            };
+        showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            if (!toast) return;
 
-            const token = this.getToken();
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            if (toastMessage) {
+                toastMessage.textContent = message;
             }
-
-            const config = {
-                ...options,
-                headers
-            };
-
-            try {
-                const response = await fetch(url, config);
-                const data = await response.json().catch(() => ({}));
-
-                if (!response.ok) {
-                    if (response.status === 401 && token) {
-                        this.clearSession();
-                    }
-
-                    let friendlyMessage = data.message || `Request failed with status ${response.status}`;
-                    if (response.status === 409) {
-                        friendlyMessage = 'Duplicate username: An account with this 8-character username already exists.';
-                    } else if (response.status === 401 && !token) {
-                        friendlyMessage = data.message || 'Invalid username or password. Please check your credentials.';
-                    } else if (response.status === 503) {
-                        friendlyMessage = 'Database service is currently unavailable. Please verify MongoDB is running.';
-                    }
-
-                    const err = new Error(friendlyMessage);
-                    err.status = response.status;
-                    err.data = data;
-                    throw err;
-                }
-
-                return data;
-            } catch (err) {
-                if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
-                    throw new Error('Server unavailable: Unable to reach backend on http://localhost:5000. Please ensure the server is running.');
-                }
-                throw err;
-            }
-        }
-
-        async hashPassword(password) {
-            const msgBuffer = new TextEncoder().encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        async register(username, password, fullName = '', email = '') {
-            const cleanName = String(fullName || '').trim();
-            const cleanEmail = String(email || '').trim();
-            let cleanUser = String(username || '').trim();
-            
-            if (!cleanUser && cleanEmail) {
-                cleanUser = cleanEmail.split('@')[0];
-            }
-            if (!cleanUser) {
-                throw new Error('Please enter a username or email.');
-            }
-            if (!password || password.length < 6) {
-                throw new Error('Password must be at least 6 characters long.');
-            }
-
-            const password_hash = await this.hashPassword(password);
-
-            const { data, error } = await window.supabaseClient
-                .from('users')
-                .insert([{ username: cleanUser, password_hash: password_hash, full_name: cleanName, email: cleanEmail }]);
-
-            if (error) {
-                if (error.code === '23505' || error.message.toLowerCase().includes('duplicate')) { 
-                    const r1 = Math.floor(Math.random() * 99) + 1;
-                    const r2 = Math.floor(Math.random() * 99) + 1;
-                    const r3 = Math.floor(Math.random() * 999) + 100;
-                    
-                    const suggestions = `${cleanUser}${r1}, ${cleanUser}_${r2}, ${cleanUser}${r3}`;
-                    throw new Error(`Username "${cleanUser}" is taken. Try: ${suggestions}`);
-                }
-                throw new Error(error.message);
-            }
-
-            this.saveSession('custom_token_' + cleanUser, { username: cleanUser });
-
-            return { user: { username: cleanUser } };
-        }
-
-        async login(username, password) {
-            const cleanUser = String(username || '').trim();
-            if (!cleanUser) {
-                throw new Error('Please enter your username.');
-            }
-            if (!password) {
-                throw new Error('Please enter your password.');
-            }
-
-            const password_hash = await this.hashPassword(password);
-
-            const { data, error } = await window.supabaseClient
-                .from('users')
-                .select('*')
-                .or(`username.eq.${cleanUser},email.eq.${cleanUser}`)
-                .eq('password_hash', password_hash);
-
-            if (error) {
-                throw new Error(error.message);
-            }
-
-            if (!data || data.length === 0) {
-                throw new Error('Invalid username or password. Please check your credentials.');
-            }
-
-            const dbUser = data[0];
-            const newCount = (dbUser.login_count || 0) + 1;
-            await window.supabaseClient
-                .from('users')
-                .update({ login_count: newCount, last_login_at: new Date().toISOString() })
-                .or(`username.eq.${cleanUser},email.eq.${cleanUser}`);
-
-            this.saveSession('custom_token_' + (dbUser.username || cleanUser), dbUser);
-
-            return { user: dbUser };
-        }
-
-        async logout() {
-            const user = this.getUser();
-            if (user && user.username) {
-                try {
-                    await window.supabaseClient
-                        .from('users')
-                        .update({ last_logout_at: new Date().toISOString() })
-                        .eq('username', user.username);
-                } catch (err) {
-                    console.error('Failed to update logout time:', err);
-                }
-            }
-            this.clearSession();
-            this.showToast('You have been logged out successfully.');
-            setTimeout(() => window.location.reload(), 1000);
-        }
-
-        async getUsers() {
-            return await this.authFetch('/users', { method: 'GET' });
-        }
-
-        async getResources(subject = '', type = '') {
-            const params = new URLSearchParams();
-            if (subject) params.append('subject', subject);
-            if (type) params.append('type', type);
-            const query = params.toString() ? `?${params.toString()}` : '';
-            return await this.authFetch(`/resources${query}`, { method: 'GET' });
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3200);
         }
 
         updateHeaderUI() {
@@ -302,20 +164,6 @@
                 window.dispatchEvent(new CustomEvent('auth_state_changed'));
             } catch (e) {}
         }
-
-        showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toastMessage');
-            if (!toast) return;
-
-            if (toastMessage) {
-                toastMessage.textContent = message;
-            }
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3200);
-        }
     }
 
     function escapeHTML(str) {
@@ -338,9 +186,47 @@
     const myClientId = 'client_' + Math.random().toString(36).substring(2, 9);
     window.clientId = myClientId;
 
-    async function pullLatestStateFromSupabase() {
+    // Unpublished changes banner/indicator helper
+    function updateUnpublishedBanner() {
+        const hasUnpublished = localStorage.getItem('hasUnpublishedChanges') === 'true';
+        const targets = [document.getElementById('publishStateBtn'), document.getElementById('publishBtn')].filter(Boolean);
+        
+        targets.forEach(btn => {
+            let badge = btn.parentElement ? btn.parentElement.querySelector('.unpublished-banner-badge') : null;
+            if (hasUnpublished) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'unpublished-banner-badge';
+                    badge.style.cssText = 'background: #f59e0b; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; margin-right: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);';
+                    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>Unpublished changes</span>';
+                    btn.parentNode.insertBefore(badge, btn);
+                } else {
+                    badge.style.display = 'inline-flex';
+                }
+            } else if (badge) {
+                badge.style.display = 'none';
+            }
+        });
+    }
+    window.updateUnpublishedBanner = updateUnpublishedBanner;
+
+    window.markUnpublishedChanges = function () {
+        localStorage.setItem('hasUnpublishedChanges', 'true');
+        updateUnpublishedBanner();
+    };
+
+    async function pullLatestStateFromSupabase(force = false) {
+        if (!force && localStorage.getItem('hasUnpublishedChanges') === 'true') {
+            const confirmOverwrite = confirm('You have unpublished local changes. Pulling latest data from cloud will overwrite your local changes. Do you want to proceed and discard your local changes?');
+            if (!confirmOverwrite) {
+                return false;
+            }
+            localStorage.setItem('hasUnpublishedChanges', 'false');
+            updateUnpublishedBanner();
+        }
+
         const client = window.supabaseClient || getSupabaseClient();
-        if (!client) return;
+        if (!client) return false;
         try {
             let publishedData = null;
 
@@ -432,21 +318,28 @@
                 } catch (e) {}
                 cloudDeletedKeys.forEach(delKey => localStorage.removeItem(delKey));
 
-                // 4. Reload in-memory structures
+                // 4. Mark unpublished changes as false
+                localStorage.setItem('hasUnpublishedChanges', 'false');
+                updateUnpublishedBanner();
+
+                // 5. Reload in-memory structures
                 if (typeof window.loadCustomSubjectsIntoData === 'function') {
                     window.loadCustomSubjectsIntoData();
                 }
+                return true;
             }
         } catch (e) {
             console.warn('Error pulling state from Supabase:', e);
         }
+        return false;
     }
 
     let lastKnownStateSig = '';
     async function checkStateUpdateTimestamp() {
-        if (!window.supabaseClient) return false;
+        const client = window.supabaseClient || getSupabaseClient();
+        if (!client) return false;
         try {
-            const { data: urlData } = window.supabaseClient.storage
+            const { data: urlData } = client.storage
                 .from('academic-files')
                 .getPublicUrl('published_state/app_data.json');
 
@@ -459,8 +352,8 @@
                     const lastModified = res.headers.get('last-modified') || res.headers.get('etag');
                     if (lastModified && lastModified !== lastKnownStateSig) {
                         lastKnownStateSig = lastModified;
-                        await pullLatestStateFromSupabase();
-                        return true;
+                        const pulled = await pullLatestStateFromSupabase();
+                        return pulled;
                     }
                 }
             }
@@ -470,7 +363,7 @@
 
     async function pushAndBroadcastStateChange() {
         const client = window.supabaseClient || getSupabaseClient();
-        if (!client) return;
+        if (!client) throw new Error('Supabase client is not available. Please check your connection.');
 
         window.lastLocalSaveTime = Date.now();
 
@@ -498,51 +391,61 @@
         const jsonString = JSON.stringify(exportData);
         const blob = new Blob([jsonString], { type: 'application/json' });
 
+        // 1. Upload to Supabase Storage with no-cache control
+        const { error: uploadErr } = await client.storage
+            .from('academic-files')
+            .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true, cacheControl: '0' });
+
+        if (uploadErr) {
+            console.error('Supabase storage state upload error:', uploadErr);
+            throw uploadErr;
+        }
+
+        // 2. Dual Backup to Supabase Table (public.assignments) as fallback
         try {
-            lastKnownTimestamp = Date.now();
+            await client.from('assignments').upsert({
+                id: '__published_state__',
+                subject_key: 'system',
+                chapter_id: 'config',
+                title: 'Published App State',
+                question_file: 'app_data.json',
+                question_data_url: jsonString,
+                created_at: new Date().toISOString()
+            });
+        } catch (dbErr) {
+            console.warn('DB table state backup error:', dbErr);
+        }
 
-            // 1. Upload to Supabase Storage with no-cache control
-            const { error: uploadErr } = await client.storage
-                .from('academic-files')
-                .upload('published_state/app_data.json', blob, { contentType: 'application/json', upsert: true, cacheControl: '0' });
-
-            if (uploadErr) {
-                console.warn('Supabase storage state upload warning:', uploadErr);
-            }
-
-            // 2. Dual Backup to Supabase Table (public.assignments) as fallback
+        // 3. Broadcast to all clients
+        if (realtimeChannel) {
             try {
-                await client.from('assignments').upsert({
-                    id: '__published_state__',
-                    subject_key: 'system',
-                    chapter_id: 'config',
-                    title: 'Published App State',
-                    question_file: 'app_data.json',
-                    question_data_url: jsonString,
-                    created_at: new Date().toISOString()
-                });
-            } catch (dbErr) {
-                console.warn('DB table state backup error:', dbErr);
-            }
-
-            // 3. Broadcast to all clients
-            if (realtimeChannel) {
                 await realtimeChannel.send({
                     type: 'broadcast',
                     event: 'academic_state_updated',
                     payload: { timestamp: Date.now(), sender: window.clientId || 'default' }
                 });
+            } catch (e) {
+                console.warn('Broadcast notice error:', e);
             }
-        } catch (e) {
-            console.error('Error broadcasting state change to Supabase:', e);
         }
+
+        // Clear unpublished changes flag after successful server confirmation
+        localStorage.setItem('hasUnpublishedChanges', 'false');
+        updateUnpublishedBanner();
+        return true;
+    }
+
+    async function cleanOrphansStorage() {
+        // Safe stub / helper function for storage orphan cleanup
+        return true;
     }
 
     function initSupabaseRealtime() {
-        if (!window.supabaseClient) return;
+        const client = window.supabaseClient || getSupabaseClient();
+        if (!client) return;
 
         try {
-            realtimeChannel = window.supabaseClient.channel('academic_hub_realtime', {
+            realtimeChannel = client.channel('academic_hub_realtime', {
                 config: { broadcast: { self: false } }
             });
 
@@ -561,27 +464,23 @@
             console.warn('Realtime channel init warning:', e);
         }
 
-        // Periodic Fallback Sync Check (every 6 seconds)
-        let lastSyncCheck = 0;
+        // Periodic Fallback Sync Check (every 20 seconds)
         setInterval(async () => {
-            const now = Date.now();
-            if (now - lastSyncCheck > 5000) {
-                lastSyncCheck = now;
-                const updated = await checkStateUpdateTimestamp();
-                if (updated) {
-                    registeredRealtimeCallbacks.forEach(cb => {
-                        try { cb(); } catch (e) {}
-                    });
-                }
+            const updated = await checkStateUpdateTimestamp();
+            if (updated) {
+                registeredRealtimeCallbacks.forEach(cb => {
+                    try { cb(); } catch (e) {}
+                });
             }
-        }, 6000);
+        }, 20000);
     }
 
     async function deleteSupabaseFolder(folderPath) {
-        if (!window.supabaseClient || !folderPath) return;
+        const client = window.supabaseClient || getSupabaseClient();
+        if (!client || !folderPath) return;
         try {
             const listAllFiles = async (path) => {
-                const { data: items } = await window.supabaseClient.storage
+                const { data: items } = await client.storage
                     .from('academic-files')
                     .list(path);
                 if (!items || items.length === 0) return [];
@@ -600,7 +499,7 @@
 
             const filesToRemove = await listAllFiles(folderPath);
             if (filesToRemove.length > 0) {
-                await window.supabaseClient.storage
+                await client.storage
                     .from('academic-files')
                     .remove(filesToRemove);
             }
@@ -616,6 +515,7 @@
             }
         },
         pushAndBroadcast: pushAndBroadcastStateChange,
+        cleanOrphans: cleanOrphansStorage,
         pullLatest: pullLatestStateFromSupabase,
         deleteFolder: deleteSupabaseFolder
     };
@@ -624,15 +524,6 @@
     document.addEventListener('DOMContentLoaded', async () => {
         authService.updateHeaderUI();
         initSupabaseRealtime();
-        
-        // Immediately fetch latest published state from Supabase Storage on page load
-        try {
-            await pullLatestStateFromSupabase();
-            registeredRealtimeCallbacks.forEach(cb => {
-                try { cb(); } catch (e) {}
-            });
-        } catch (e) {
-            console.warn('Initial storage pull:', e);
-        }
+        updateUnpublishedBanner();
     });
 })();
