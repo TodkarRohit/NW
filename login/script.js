@@ -819,7 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
                 } catch (err) {}
-                customSubjects = customSubjects.filter(s => s && s.id !== code);
+                customSubjects = customSubjects.filter(s => s && s.id !== code && s.id !== code.replace(/_/g, '-') && s.id !== code.replace(/-/g, '_'));
                 customSubjects.push(subjObj);
                 localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
             } else {
@@ -833,14 +833,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
                 } catch (err) {}
-                modifiedSubjects[editId] = { title, semester, branches: selectedBranches, resources: resourcesObj, customLinks: customLinksArr };
+                const modPayload = { title, semester, branches: selectedBranches, resources: resourcesObj, customLinks: customLinksArr };
+                modifiedSubjects[editId] = modPayload;
+                if (editId === 'math' || editId === 'maths') {
+                    modifiedSubjects['math'] = modPayload;
+                    modifiedSubjects['maths'] = modPayload;
+                }
+                if (editId === 'coa' || editId === 'hardware') {
+                    modifiedSubjects['coa'] = modPayload;
+                    modifiedSubjects['hardware'] = modPayload;
+                }
                 localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
 
                 let customSubjects = [];
                 try {
                     customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
                 } catch (err) {}
-                const cIdx = customSubjects.findIndex(s => s && (s.id === editId || s.id === code));
+                const normEditId = editId.replace(/_/g, '-');
+                const altEditId = editId.replace(/-/g, '_');
+                const normCode = code.replace(/_/g, '-');
+                const altCode = code.replace(/-/g, '_');
+
+                const cIdx = customSubjects.findIndex(s => s && (
+                    s.id === editId || s.id === code ||
+                    s.id === normEditId || s.id === altEditId ||
+                    s.id === normCode || s.id === altCode
+                ));
                 if (cIdx !== -1) {
                     customSubjects[cIdx] = Object.assign({}, customSubjects[cIdx], {
                         title,
@@ -855,6 +873,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const targetKey = editId || code;
             subjectsData[targetKey] = subjObj;
+            if (targetKey === 'math' || targetKey === 'maths') {
+                subjectsData['math'] = subjObj;
+                subjectsData['maths'] = subjObj;
+            }
+            if (targetKey === 'coa' || targetKey === 'hardware') {
+                subjectsData['coa'] = subjObj;
+                subjectsData['hardware'] = subjObj;
+            }
+
             if (typeof window.loadCustomSubjectsIntoData === 'function') {
                 window.loadCustomSubjectsIntoData();
             }

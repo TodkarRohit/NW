@@ -117,14 +117,37 @@ function loadCustomSubjectsIntoData() {
         customList.forEach(subj => {
             if (subj && subj.id && !deletedList.includes(subj.id)) {
                 subjectsData[subj.id] = subj;
+                const normId = subj.id.replace(/_/g, '-');
+                const altId = subj.id.replace(/-/g, '_');
+                if (!deletedList.includes(normId)) subjectsData[normId] = subj;
+                if (!deletedList.includes(altId)) subjectsData[altId] = subj;
             }
         });
 
         const modifiedData = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
         for (const id in modifiedData) {
-            if (subjectsData[id] && !deletedList.includes(id)) {
-                Object.assign(subjectsData[id], modifiedData[id]);
+            const modObj = modifiedData[id];
+            if (!modObj) continue;
+
+            const targetKeys = new Set([
+                id,
+                id.replace(/_/g, '-'),
+                id.replace(/-/g, '_')
+            ]);
+            if (id === 'math' || id === 'maths') {
+                targetKeys.add('math');
+                targetKeys.add('maths');
             }
+            if (id === 'coa' || id === 'hardware') {
+                targetKeys.add('coa');
+                targetKeys.add('hardware');
+            }
+
+            targetKeys.forEach(key => {
+                if (subjectsData[key] && !deletedList.includes(key)) {
+                    Object.assign(subjectsData[key], modObj);
+                }
+            });
         }
 
         // Ensure all subjects have branches property and purge deleted ones
