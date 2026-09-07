@@ -72,7 +72,7 @@
         }
 
         isLoggedIn() {
-            return !!this.getToken();
+            return !!this.getToken() || localStorage.getItem('isAdminMode') === 'true' || !!this.getUser();
         }
 
         saveSession(token, user) {
@@ -104,21 +104,77 @@
             localStorage.removeItem(TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
             localStorage.setItem('isAdminMode', 'false');
+            localStorage.removeItem('isAdminMode');
             this.updateHeaderUI();
+        }
+
+        async login(username, password) {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Invalid username or password.');
+            }
+            this.saveSession(data.token, data.user);
+            return data;
+        }
+
+        async register(username, password, name, email) {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, name, email })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Registration failed.');
+            }
+            this.saveSession(data.token, data.user);
+            return data;
+        }
+
+        async logout() {
+            try {
+                const token = this.getToken();
+                if (token && token !== 'offline_admin_token') {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        }
+                    }).catch(() => {});
+                }
+            } catch (e) {
+                console.warn('Logout API error:', e);
+            } finally {
+                this.clearSession();
+                this.showToast('Logged out successfully.');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 300);
+            }
         }
 
         showToast(message) {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');
-            if (!toast) return;
-
-            if (toastMessage) {
-                toastMessage.textContent = message;
+            if (toast) {
+                if (toastMessage) {
+                    toastMessage.textContent = message;
+                }
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3200);
+            } else if (typeof window.showToast === 'function') {
+                window.showToast(message);
+            } else {
+                console.log('Toast:', message);
             }
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3200);
         }
 
         updateHeaderUI() {
@@ -396,9 +452,15 @@
         });
 
         if (!res.ok) {
-            const errData = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
-            console.error('Publish state backend error:', errData);
-            throw new Error(errData.message || 'Failed to publish state change through backend');
+            let errMessage = `HTTP ${res.status}`;
+            if (res.status === 405) {
+                errMessage = 'HTTP 405 Method Not Allowed - Please ensure the Express backend server is running on port 5000.';
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                if (errData && errData.message) errMessage = errData.message;
+            }
+            console.error('Publish state backend error:', errMessage);
+            throw new Error(errMessage);
         }
 
         // Broadcast to all clients
