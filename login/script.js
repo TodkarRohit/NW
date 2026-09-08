@@ -332,21 +332,29 @@ class SubjectCard {
         const qbUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getQuestionBankUrl(this.id) : `../question_bank/viewer.html?subject=${this.id}&type=qb`;
         const assUrl = typeof NavigationManager !== 'undefined' ? NavigationManager.getAssignmentsUrl(this.id) : `../assignments/assignments.html?subject=${this.id}`;
 
-        if (res.notes !== false) {
+        function isResEnabled(val) {
+            return val !== false && val !== 'false' && val !== 0 && val !== '0' && val !== undefined;
+        }
+
+        const isNotesEnabled = isResEnabled(res.notes);
+        const isQbEnabled = isResEnabled(res.qb);
+        const isAssEnabled = isResEnabled(res.assignments);
+
+        if (isNotesEnabled) {
             resourceLinksHTML += `
                 <a href="${notesUrl}" class="btn btn-notes">
                     <i class="fa-solid fa-book-open"></i> Study Notes
                 </a>
             `;
         }
-        if (res.qb !== false) {
+        if (isQbEnabled) {
             resourceLinksHTML += `
                 <a href="${qbUrl}" class="btn btn-qb">
                     <i class="fa-solid fa-circle-question"></i> Question Banks
                 </a>
             `;
         }
-        if (res.assignments !== false) {
+        if (isAssEnabled) {
             resourceLinksHTML += `
                 <a href="${assUrl}" class="btn btn-assignments">
                     <i class="fa-solid fa-folder-open"></i> Assignments
@@ -427,9 +435,10 @@ class SubjectCard {
         };
 
         // 3. Update subjectsData in memory (including alias keys)
-        subjectsData[this.id] = subjObj;
-        subjectsData[thisNormCode] = subjObj;
-        subjectsData[thisAltCode] = subjObj;
+        const allKeys = Array.from(new Set([this.id, targetId, normCode, altCode, thisNormCode, thisAltCode].filter(Boolean)));
+        allKeys.forEach(k => {
+            subjectsData[k] = subjObj;
+        });
         if (this.id === 'math' || this.id === 'maths') {
             subjectsData['math'] = subjObj;
             subjectsData['maths'] = subjObj;
@@ -445,9 +454,7 @@ class SubjectCard {
             customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
         } catch (err) {}
         customSubjects = customSubjects.filter(s => 
-            s && s.id !== this.id && s.id !== targetId && 
-            s.id !== normCode && s.id !== altCode &&
-            s.id !== thisNormCode && s.id !== thisAltCode
+            s && !allKeys.includes(s.id) && !allKeys.includes((s.id || '').replace(/_/g, '-'))
         );
         customSubjects.push(subjObj);
         localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
@@ -467,8 +474,9 @@ class SubjectCard {
             questionBanks: this.questionBanks,
             assignments: this.assignments
         };
-        modifiedSubjects[this.id] = modPayload;
-        if (targetId) modifiedSubjects[targetId] = modPayload;
+        allKeys.forEach(k => {
+            modifiedSubjects[k] = modPayload;
+        });
         if (this.id === 'math' || this.id === 'maths') {
             modifiedSubjects['math'] = modPayload;
             modifiedSubjects['maths'] = modPayload;
@@ -843,9 +851,10 @@ window.SubjectCard = SubjectCard;
             populateSubjectModalBranches(selectedBranches);
 
             const res = subj.resources || { notes: true, qb: true, assignments: true };
-            if (resNotesCheckbox) resNotesCheckbox.checked = (res.notes !== false);
-            if (resQbCheckbox) resQbCheckbox.checked = (res.qb !== false);
-            if (resAssCheckbox) resAssCheckbox.checked = (res.assignments !== false);
+            const isResCheck = (val) => val !== false && val !== 'false' && val !== 0 && val !== '0' && val !== undefined;
+            if (resNotesCheckbox) resNotesCheckbox.checked = isResCheck(res.notes);
+            if (resQbCheckbox) resQbCheckbox.checked = isResCheck(res.qb);
+            if (resAssCheckbox) resAssCheckbox.checked = isResCheck(res.assignments);
 
             if (subj.customLinks && Array.isArray(subj.customLinks)) {
                 subj.customLinks.forEach(link => {

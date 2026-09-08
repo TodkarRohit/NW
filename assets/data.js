@@ -367,8 +367,10 @@ class NavigationManager {
             res = subjectsData[normKey].resources;
         }
 
+        const isResEnabled = (val) => val !== false && val !== 'false' && val !== 0 && val !== '0' && val !== undefined;
+
         if (notesLink) {
-            if (res.notes !== false) {
+            if (isResEnabled(res.notes)) {
                 notesLink.style.display = 'inline-flex';
                 notesLink.href = this.getNotesUrl(subjectKey);
                 if (activeTab === 'notes') notesLink.classList.add('active');
@@ -378,7 +380,7 @@ class NavigationManager {
             }
         }
         if (qbLink) {
-            if (res.qb !== false) {
+            if (isResEnabled(res.qb)) {
                 qbLink.style.display = 'inline-flex';
                 qbLink.href = this.getQuestionBankUrl(subjectKey);
                 if (activeTab === 'qb') qbLink.classList.add('active');
@@ -388,7 +390,7 @@ class NavigationManager {
             }
         }
         if (assLink) {
-            if (res.assignments !== false) {
+            if (isResEnabled(res.assignments)) {
                 assLink.style.display = 'inline-flex';
                 assLink.href = this.getAssignmentsUrl(subjectKey);
                 if (activeTab === 'assignments') assLink.classList.add('active');
