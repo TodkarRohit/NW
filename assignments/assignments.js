@@ -667,7 +667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
                 const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
-                await fetch(apiUrl, {
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -685,6 +685,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         answer_preview: newPreview
                     })
                 });
+
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({ message: 'Solution update failed' }));
+                    console.warn('[updateAssignmentSolution] Backend returned HTTP ' + res.status + ':', errJson.message);
+                }
             } catch (dbErr) {
                 console.error('Database update solution error:', dbErr);
             }
@@ -710,7 +715,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
                 const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/delete') : '/api/assignments/delete';
-                await fetch(apiUrl, {
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -718,6 +723,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     body: JSON.stringify({ id: assId })
                 });
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({ message: 'Assignment deletion failed' }));
+                    console.warn('[deleteAssignment] Backend returned HTTP ' + res.status + ':', errJson.message);
+                }
             } catch (e) {
                 console.error('Database delete assignment error:', e);
             }
@@ -1665,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
                     const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
-                    await fetch(apiUrl, {
+                    const res = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1676,6 +1685,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             comments: comments
                         })
                     });
+                    if (!res.ok) {
+                        const errJson = await res.json().catch(() => ({ message: 'Comment sync failed' }));
+                        console.warn('[Comment Sync] Backend returned HTTP ' + res.status + ':', errJson.message);
+                    }
                 } catch (err) {
                     console.error('Error updating comments in Supabase:', err);
                 }

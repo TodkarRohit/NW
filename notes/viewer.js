@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (relativePath) {
                                     const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
                                     const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
-                                    await fetch(apiUrl, {
+                                    const res = await fetch(apiUrl, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -802,6 +802,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                         },
                                         body: JSON.stringify({ path: relativePath })
                                     });
+                                    if (!res.ok) {
+                                        const client = window.supabaseClient;
+                                        if (client && client.storage) {
+                                            await client.storage.from('academic-files').remove([relativePath]);
+                                        }
+                                    }
                                 }
                             } catch (err) {
                                 console.error("Storage delete warning:", err);

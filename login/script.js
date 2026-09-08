@@ -528,7 +528,7 @@ class SubjectCard {
                 }
             }
 
-            await fetch(apiUrl, {
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -539,6 +539,11 @@ class SubjectCard {
                     exportData: exportData
                 })
             });
+
+            if (!res.ok) {
+                const errJson = await res.json().catch(() => ({ message: 'Backend upsert failed' }));
+                console.warn('[SubjectCard] Backend upsert call failed:', errJson.message);
+            }
         } catch (e) {
             console.warn('[SubjectCard] Backend upsert call error:', e);
         }
@@ -688,7 +693,7 @@ class SubjectCard {
                 }
             }
 
-            await fetch(apiUrl, {
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -698,8 +703,14 @@ class SubjectCard {
                     id: sId,
                     exportData: exportData
                 })
-            }).catch(e => console.warn('[SubjectCard] Backend proxy notice:', e.message));
-        } catch (e) {}
+            });
+            if (!res.ok) {
+                const errJson = await res.json().catch(() => ({ message: 'Backend delete failed' }));
+                console.warn('[SubjectCard] Backend delete notice:', errJson.message);
+            }
+        } catch (e) {
+            console.warn('[SubjectCard] Backend delete call error:', e);
+        }
 
         // 4. Push authoritative updated state to Supabase Cloud Storage & broadcast
         await SubjectCard.pushToSupabase();

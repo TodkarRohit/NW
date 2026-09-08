@@ -810,6 +810,11 @@
                     console.error('[Publish State] Direct Supabase exception:', spErr);
                 }
             }
+        if (!publishSuccess) {
+            console.warn('[Publish State] Cloud sync could not be completed.');
+            if (typeof showToast === 'function') {
+                showToast('Cloud sync failed: Changes saved locally only. Please check connection.', true);
+            }
         }
 
         // Backup deleted subjects list into Supabase DB table public.assignments for 100% permanent persistence
@@ -916,7 +921,7 @@
             for (const fileP of filesToRemove) {
                 try {
                     const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
-                    await fetch(apiUrl, {
+                    const res = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -924,8 +929,16 @@
                         },
                         body: JSON.stringify({ path: fileP })
                     });
+                    if (!res.ok) {
+                        if (client && client.storage) {
+                            await client.storage.from('academic-files').remove([fileP]);
+                        }
+                    }
                 } catch (e) {
                     console.warn(`Error deleting file "${fileP}":`, e);
+                    if (client && client.storage) {
+                        try { await client.storage.from('academic-files').remove([fileP]); } catch (e2) {}
+                    }
                 }
             }
         } catch (err) {
@@ -948,11 +961,17 @@
                 formData.append('path', keepPath);
 
                 const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
-                await fetch(apiUrl, {
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + (token || '') },
                     body: formData
                 });
+                if (!res.ok) {
+                    const client = window.supabaseClient || getSupabaseClient();
+                    if (client && client.storage) {
+                        await client.storage.from('academic-files').upload(keepPath, dummyContent, { upsert: true });
+                    }
+                }
             } catch (e) {
                 console.warn(`Error creating keep file for folder "${folder}":`, e);
             }
