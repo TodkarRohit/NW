@@ -108,42 +108,26 @@
         isAdmin() {
             const user = this.getUser();
             const token = this.getToken();
-            if (!token && !user) {
+            if (!token || !user) {
                 return false;
             }
-            if (user) {
-                const uname = String(user.username || '').toLowerCase();
-                const uemail = String(user.email || '').toLowerCase();
-                return (
-                    user.is_admin === true ||
-                    user.is_admin === 'true' ||
-                    user.role === 'admin' ||
-                    String(user.role || '').toLowerCase() === 'admin' ||
-                    uname === 'admin' ||
-                    uname === 'rohittodkar92' ||
-                    uname.includes('rohittodkar') ||
-                    uemail.includes('rohittodkar') ||
-                    localStorage.getItem('isAdminMode') === 'true'
-                );
-            }
-            return localStorage.getItem('isAdminMode') === 'true' && !!token;
+            return (
+                user.is_admin === true ||
+                user.is_admin === 'true' ||
+                user.role === 'admin' ||
+                String(user.role || '').toLowerCase() === 'admin'
+            );
         }
 
         saveSession(token, user) {
             if (token) localStorage.setItem(TOKEN_KEY, token);
             if (user) {
                 localStorage.setItem(USER_KEY, JSON.stringify(user));
-                const uname = String(user.username || '').toLowerCase();
-                const uemail = String(user.email || '').toLowerCase();
                 const isAdmin = 
                     user.is_admin === true || 
                     user.is_admin === 'true' || 
                     user.role === 'admin' || 
-                    String(user.role || '').toLowerCase() === 'admin' ||
-                    uname === 'admin' || 
-                    uname === 'rohittodkar92' ||
-                    uname.includes('rohittodkar') ||
-                    uemail.includes('rohittodkar');
+                    String(user.role || '').toLowerCase() === 'admin';
 
                 if (isAdmin) {
                     localStorage.setItem('isAdminMode', 'true');
@@ -218,9 +202,7 @@
                             const isAdmin = (
                                 u.is_admin === true || 
                                 u.is_admin === 'true' || 
-                                String(u.role || '').toLowerCase() === 'admin' || 
-                                String(u.username || '').toLowerCase() === 'rohittodkar92' || 
-                                String(u.email || '').toLowerCase() === 'rohittodkar92@gmail.com'
+                                String(u.role || '').toLowerCase() === 'admin'
                             );
 
                             const sessionUser = {
@@ -321,17 +303,14 @@
                     }
 
                     const passHash = await hashSHA256(password);
-                    const isAdmin = (
-                        cleanUname.toLowerCase() === 'rohittodkar92' || 
-                        cleanEmail.toLowerCase() === 'rohittodkar92@gmail.com'
-                    );
+                    const isAdmin = false;
 
                     const newUserRow = {
                         username: cleanUname,
                         email: cleanEmail,
                         full_name: cleanName,
                         password_hash: passHash,
-                        is_admin: isAdmin,
+                        is_admin: false,
                         login_count: 1,
                         last_login_at: new Date().toISOString()
                     };
@@ -480,8 +459,8 @@
     window.authService = new AuthService();
 
     window.checkIsAdmin = function () {
-        if (!window.authService) return localStorage.getItem('isAdminMode') === 'true' && !!localStorage.getItem('enh_auth_token');
-        return window.authService.isAdmin();
+        if (window.authService) return window.authService.isAdmin();
+        return false;
     };
 
     window.requireAdmin = function (actionName) {

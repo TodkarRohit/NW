@@ -46,22 +46,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper function to check if logged in user is Admin
     function checkIsAdmin() {
-        const user = window.authService ? window.authService.getUser() : null;
-        const uname = user ? String(user.username || '').toLowerCase() : '';
-        const uemail = user ? String(user.email || '').toLowerCase() : '';
-        return (
-            localStorage.getItem('isAdminMode') === 'true' ||
-            (user && (
-                user.is_admin === true ||
-                user.is_admin === 'true' ||
-                user.role === 'admin' ||
-                String(user.role || '').toLowerCase() === 'admin' ||
-                uname === 'rohittodkar92' ||
-                uname === 'admin' ||
-                uname.includes('rohittodkar') ||
-                uemail.includes('rohittodkar')
-            ))
-        );
+        if (typeof window.checkIsAdmin === 'function') {
+            return window.checkIsAdmin();
+        }
+        return window.authService ? window.authService.isAdmin() : false;
+    }
+
+    function requireAdmin(actionName) {
+        if (typeof window.requireAdmin === 'function') {
+            return window.requireAdmin(actionName);
+        }
+        if (!checkIsAdmin()) {
+            const msg = actionName ? `Admin access required to ${actionName}.` : "Admin access required.";
+            if (typeof showToast === 'function') showToast(msg, true);
+            else alert(msg);
+            return false;
+        }
+        return true;
     }
 
     function escapeHTML(str) {
@@ -419,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', async (e) => {
                         e.stopPropagation(); // prevent selecting the item
+                        if (!requireAdmin('delete unit')) return;
                         if (await customConfirm(`Are you sure you want to delete "${item.title || item.name}"?`)) {
                             const itemId = item.id || `${subjectKey}-u${index + 1}-${Date.now()}`;
                             item.id = itemId;
@@ -1459,6 +1461,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (unitForm) {
         unitForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!requireAdmin('save unit')) return;
             const titleInput = document.getElementById('unitModalTitleInput');
             const nameInput = document.getElementById('unitModalNameInput');
             const indexEl = document.getElementById('unitModalIndex');

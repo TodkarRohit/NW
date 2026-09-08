@@ -192,7 +192,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentAuthMode = 'login'; // 'login' | 'register'
 
     function checkIsAdmin() {
-        return localStorage.getItem('isAdminMode') === 'true';
+        if (typeof window.checkIsAdmin === 'function') {
+            return window.checkIsAdmin();
+        }
+        return window.authService ? window.authService.isAdmin() : false;
+    }
+
+    function requireAdmin(actionName) {
+        if (typeof window.requireAdmin === 'function') {
+            return window.requireAdmin(actionName);
+        }
+        if (!checkIsAdmin()) {
+            const msg = actionName ? `Admin access required to ${actionName}.` : "Admin access required.";
+            if (typeof showToast === 'function') showToast(msg, true);
+            else if (typeof window.showToast === 'function') window.showToast(msg, true);
+            else alert(msg);
+            return false;
+        }
+        return true;
     }
 
     let isAdminMode = checkIsAdmin();
@@ -312,16 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         closeAdminLoginModal();
                         showToast(`Welcome back, ${userVal}!`);
                     } catch (apiErr) {
-                        if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
-                            isAdminMode = true;
-                            safeLocalStorageSetItem('isAdminMode', 'true');
-                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'admin' });
-                            updateAdminUI();
-                            closeAdminLoginModal();
-                            showToast('Logged in as Admin (Local Mode).');
-                        } else {
-                            throw apiErr;
-                        }
+                        throw apiErr;
                     }
                 }
             } catch (err) {
@@ -378,6 +386,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         static async removeFile(urlOrPath) {
+            if (typeof window.requireAdmin === 'function' ? !window.requireAdmin('delete files') : !checkIsAdmin()) {
+                return;
+            }
             const path = StorageManager.extractPath(urlOrPath);
             if (!path) return;
             try {
@@ -416,6 +427,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         static async uploadWithFallback(bucket, path, file) {
+            if (typeof window.requireAdmin === 'function' ? !window.requireAdmin('upload files') : !checkIsAdmin()) {
+                throw new Error('Admin access required for file upload.');
+            }
             try {
                 const formData = new FormData();
                 formData.append('path', path);

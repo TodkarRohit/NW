@@ -69,13 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const publishStateBtn = document.getElementById('publishStateBtn');
 
     function checkAdminState() {
-        const user = window.authService ? window.authService.getUser() : null;
-        const uname = user ? String(user.username || '').toLowerCase() : '';
-        const uemail = user ? String(user.email || '').toLowerCase() : '';
-        const isAdmin = (
-            localStorage.getItem('isAdminMode') === 'true' ||
-            (user && (user.is_admin === true || user.is_admin === 'true' || user.role === 'admin' || uname === 'rohittodkar92' || uname === 'admin' || uname.includes('rohittodkar') || uemail.includes('rohittodkar')))
-        );
+        const isAdmin = typeof window.checkIsAdmin === 'function' ? window.checkIsAdmin() : false;
 
         if (addSubjectBtn) addSubjectBtn.style.display = isAdmin ? 'inline-flex' : 'none';
         if (addBranchBtn) addBranchBtn.style.display = isAdmin ? 'inline-flex' : 'none';
