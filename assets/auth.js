@@ -810,6 +810,8 @@
                     console.error('[Publish State] Direct Supabase exception:', spErr);
                 }
             }
+        }
+
         if (!publishSuccess) {
             console.warn('[Publish State] Cloud sync could not be completed.');
             if (typeof showToast === 'function') {
