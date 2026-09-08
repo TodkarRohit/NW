@@ -754,32 +754,12 @@
             console.warn('Realtime channel init warning:', e);
         }
 
-        // Periodic Fallback Sync Check
-        startPeriodicStatePolling();
+        // Periodic state polling disabled to prevent auto-reloading
+        // startPeriodicStatePolling();
     }
 
-    let isCheckingRemoteUpdate = false;
     function startPeriodicStatePolling() {
-        setInterval(async () => {
-            if (isCheckingRemoteUpdate) return;
-            isCheckingRemoteUpdate = true;
-            try {
-                await checkStateUpdateTimestamp();
-            } catch (e) {
-            } finally {
-                isCheckingRemoteUpdate = false;
-            }
-
-            const hasUnpublished = localStorage.getItem('hasUnpublishedChanges') === 'true';
-            if (hasUnpublished) return;
-
-            const updated = await pullLatestStateFromSupabase();
-            if (updated) {
-                registeredRealtimeCallbacks.forEach(cb => {
-                    try { cb(); } catch (e) {}
-                });
-            }
-        }, 20000);
+        // Disabled: Page loads once and stays stable. Reloads occur only when user manually refreshes or clicks Publish.
     }
 
     async function deleteSupabaseFolder(folderPath) {

@@ -93,20 +93,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 if (!window.supabaseRealtime || typeof window.supabaseRealtime.pushAndBroadcast !== 'function') {
-                    throw new Error('Supabase Realtime sync service is unavailable.');
+                    throw new Error('Supabase sync service is unavailable.');
                 }
                 if (window.supabaseRealtime.cleanOrphans) {
                     await window.supabaseRealtime.cleanOrphans();
                 }
-                await window.supabaseRealtime.pushAndBroadcast();
-                localStorage.setItem('hasUnpublishedChanges', 'false');
-                if (typeof window.updateUnpublishedBanner === 'function') {
-                    window.updateUnpublishedBanner();
+                const success = await window.supabaseRealtime.pushAndBroadcast();
+                if (success) {
+                    localStorage.setItem('hasUnpublishedChanges', 'false');
+                    if (typeof window.updateUnpublishedBanner === 'function') {
+                        window.updateUnpublishedBanner();
+                    }
+                    showToast('Published all changes live to Supabase Cloud!');
+                    if (typeof renderSubjectsGrid === 'function') {
+                        renderSubjectsGrid(searchInput ? searchInput.value : '');
+                    }
+                } else {
+                    showToast('Publish failed: Could not update Supabase cloud storage.', true);
                 }
-                showToast('Published all changes live to Supabase Cloud!');
             } catch (err) {
                 console.error('Publish error:', err);
-                showToast('Failed to publish changes: ' + (err.message || 'Error'));
+                showToast('Failed to publish changes: ' + (err.message || 'Error'), true);
             } finally {
                 publishStateBtn.disabled = false;
                 publishStateBtn.innerHTML = originalHTML;
