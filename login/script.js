@@ -288,16 +288,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (branchForm) {
         branchForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const editCode = branchModalEditCode.value;
-            const code = branchCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '_');
-            const name = branchNameInput.value.trim();
+            const submitBtn = branchForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
-            if (!code || !name) {
-                alert('Please enter both branch code and name.');
-                return;
+            try {
+                const editCode = branchModalEditCode.value;
+                const code = branchCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '_');
+                const name = branchNameInput.value.trim();
+
+                if (!code || !name) {
+                    alert('Please enter both branch code and name.');
+                    return;
+                }
+
+                await branchService.saveBranch(code, name, editCode);
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
-
-            await branchService.saveBranch(code, name, editCode);
         });
     }
 
@@ -785,8 +792,9 @@ window.SubjectCard = SubjectCard;
         // Search counter UI
         if (searchCounter) {
             if (searchLower.length > 0) {
+                const displayQuery = searchInput ? searchInput.value.trim() : searchLower;
                 searchCounter.style.display = 'inline-block';
-                searchCounter.innerHTML = `<i class="fa-solid fa-filter"></i> Found <strong>${visibleSubjects.length}</strong> matching subject${visibleSubjects.length === 1 ? '' : 's'} for "<em>${escapeHTML(searchLower)}</em>"`;
+                searchCounter.innerHTML = `<i class="fa-solid fa-filter"></i> Found <strong>${visibleSubjects.length}</strong> matching subject${visibleSubjects.length === 1 ? '' : 's'} for "<em>${escapeHTML(displayQuery)}</em>"`;
             } else {
                 searchCounter.style.display = 'none';
             }
@@ -1054,71 +1062,78 @@ window.SubjectCard = SubjectCard;
             e.preventDefault();
             if (!requireAdmin('save subject')) return;
 
-            const editId = subjectModalEditId.value;
-            const title = subjectTitleInput.value.trim();
-            const code = subjectCodeInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-            const semester = subjectSemSelect.value;
+            const submitBtn = subjectForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
-            const selectedBranches = [];
-            document.querySelectorAll('.branch-checkbox').forEach(cb => {
-                if (cb.checked) selectedBranches.push(cb.value);
-            });
+            try {
+                const editId = subjectModalEditId.value;
+                const title = subjectTitleInput.value.trim();
+                const code = subjectCodeInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+                const semester = subjectSemSelect.value;
 
-            if (selectedBranches.length === 0) {
-                alert('Please select at least one branch or "ALL Branches".');
-                return;
-            }
-
-            if (!code) {
-                alert('Please enter a valid subject code.');
-                return;
-            }
-
-            // Remove code & all aliases/titles from tombstone lists if previously deleted
-            if (typeof window.removeSubjectFromDeletedTombstones === 'function') {
-                window.removeSubjectFromDeletedTombstones(code);
-                window.removeSubjectFromDeletedTombstones(title);
-                if (editId) window.removeSubjectFromDeletedTombstones(editId);
-            }
-
-            const resourcesObj = {
-                notes: resNotesCheckbox ? resNotesCheckbox.checked : true,
-                qb: resQbCheckbox ? resQbCheckbox.checked : true,
-                assignments: resAssCheckbox ? resAssCheckbox.checked : true
-            };
-
-            const customLinksArr = [];
-            if (customLinksContainer) {
-                const rows = customLinksContainer.querySelectorAll('.custom-link-row');
-                rows.forEach(row => {
-                    const lTitle = row.querySelector('.custom-link-title').value.trim();
-                    const lUrl = row.querySelector('.custom-link-url').value.trim();
-                    if (lTitle && lUrl) {
-                        customLinksArr.push({ title: lTitle, url: lUrl, icon: 'fa-solid fa-link' });
-                    }
+                const selectedBranches = [];
+                document.querySelectorAll('.branch-checkbox').forEach(cb => {
+                    if (cb.checked) selectedBranches.push(cb.value);
                 });
+
+                if (selectedBranches.length === 0) {
+                    alert('Please select at least one branch or "ALL Branches".');
+                    return;
+                }
+
+                if (!code) {
+                    alert('Please enter a valid subject code.');
+                    return;
+                }
+
+                // Remove code & all aliases/titles from tombstone lists if previously deleted
+                if (typeof window.removeSubjectFromDeletedTombstones === 'function') {
+                    window.removeSubjectFromDeletedTombstones(code);
+                    window.removeSubjectFromDeletedTombstones(title);
+                    if (editId) window.removeSubjectFromDeletedTombstones(editId);
+                }
+
+                const resourcesObj = {
+                    notes: resNotesCheckbox ? resNotesCheckbox.checked : true,
+                    qb: resQbCheckbox ? resQbCheckbox.checked : true,
+                    assignments: resAssCheckbox ? resAssCheckbox.checked : true
+                };
+
+                const customLinksArr = [];
+                if (customLinksContainer) {
+                    const rows = customLinksContainer.querySelectorAll('.custom-link-row');
+                    rows.forEach(row => {
+                        const lTitle = row.querySelector('.custom-link-title').value.trim();
+                        const lUrl = row.querySelector('.custom-link-url').value.trim();
+                        if (lTitle && lUrl) {
+                            customLinksArr.push({ title: lTitle, url: lUrl, icon: 'fa-solid fa-link' });
+                        }
+                    });
+                }
+
+                const targetId = editId || code;
+                let existingSubj = targetId ? subjectsData[targetId] : null;
+
+                const card = new SubjectCard({
+                    id: targetId,
+                    title: title,
+                    semester: semester,
+                    branches: selectedBranches,
+                    resources: resourcesObj,
+                    customLinks: customLinksArr,
+                    chapters: existingSubj ? existingSubj.chapters : undefined,
+                    questionBanks: existingSubj ? existingSubj.questionBanks : undefined,
+                    assignments: existingSubj ? existingSubj.assignments : undefined
+                });
+
+                await card.save(editId);
+
+                closeSubjectModal();
+                showToast(`Subject "${title}" saved successfully!`);
+                renderSubjectsGrid(searchInput ? searchInput.value : '');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
-
-            const targetId = editId || code;
-            let existingSubj = targetId ? subjectsData[targetId] : null;
-
-            const card = new SubjectCard({
-                id: targetId,
-                title: title,
-                semester: semester,
-                branches: selectedBranches,
-                resources: resourcesObj,
-                customLinks: customLinksArr,
-                chapters: existingSubj ? existingSubj.chapters : undefined,
-                questionBanks: existingSubj ? existingSubj.questionBanks : undefined,
-                assignments: existingSubj ? existingSubj.assignments : undefined
-            });
-
-            await card.save(editId);
-
-            closeSubjectModal();
-            showToast(`Subject "${title}" saved successfully!`);
-            renderSubjectsGrid(searchInput ? searchInput.value : '');
         });
     }
 
@@ -1146,10 +1161,18 @@ window.SubjectCard = SubjectCard;
                 e.preventDefault();
                 searchInput.focus();
                 searchInput.select();
-            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
-                searchInput.value = '';
-                renderSubjectsGrid('');
-                searchInput.blur();
+            } else if (e.key === 'Escape') {
+                if (typeof subjectModalBackdrop !== 'undefined' && subjectModalBackdrop && subjectModalBackdrop.classList.contains('active')) {
+                    closeSubjectModal();
+                } else if (typeof branchModalBackdrop !== 'undefined' && branchModalBackdrop && branchModalBackdrop.classList.contains('active')) {
+                    branchService.closeModal();
+                } else if (typeof subjectDeleteOptionsModalBackdrop !== 'undefined' && subjectDeleteOptionsModalBackdrop && subjectDeleteOptionsModalBackdrop.classList.contains('active')) {
+                    closeSubjectDeleteOptionsModal();
+                } else if (document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    renderSubjectsGrid('');
+                    searchInput.blur();
+                }
             }
         });
     }
@@ -1283,7 +1306,7 @@ window.SubjectCard = SubjectCard;
 
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             try {
-                await window.supabaseRealtime.pullLatest();
+                await window.supabaseRealtime.pullLatest(true);
             } catch (e) {
                 console.warn('Initial cloud pull error:', e);
             }

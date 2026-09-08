@@ -603,10 +603,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 chapterSearchInput.focus();
                 chapterSearchInput.select();
-            } else if (e.key === 'Escape' && document.activeElement === chapterSearchInput) {
-                chapterSearchInput.value = '';
-                performChapterSearch('');
-                chapterSearchInput.blur();
+            } else if (e.key === 'Escape') {
+                if (typeof qbUploadModalBackdrop !== 'undefined' && qbUploadModalBackdrop && qbUploadModalBackdrop.classList.contains('active')) {
+                    closeQbUploadModal();
+                } else if (typeof unitModalBackdrop !== 'undefined' && unitModalBackdrop && unitModalBackdrop.classList.contains('active')) {
+                    closeUnitModal();
+                } else if (document.activeElement === chapterSearchInput) {
+                    chapterSearchInput.value = '';
+                    performChapterSearch('');
+                    chapterSearchInput.blur();
+                }
             }
         });
     }
@@ -1510,49 +1516,56 @@ document.addEventListener('DOMContentLoaded', () => {
             const indexVal = indexEl ? indexEl.value : '';
             if (!title) return;
 
-            const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
-            const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
-            let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
-            let modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+            const submitBtn = unitForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
-            if (indexVal !== '') {
-                const idx = parseInt(indexVal, 10);
-                if (items[idx]) {
-                    items[idx].title = title;
-                    items[idx].name = name;
-
-                    const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
-                    if (customIdx >= 0) {
-                        customItems[customIdx].title = title;
-                        customItems[customIdx].name = name;
-                        localStorage.setItem(customItemsKey, JSON.stringify(customItems));
-                    } else {
-                        modifiedItems[items[idx].id] = { title, name };
-                        localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
-                    }
-                    syncSaveUnitMod(subjectKey, idx, items[idx], title, name);
-                    if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
-                }
-            } else {
-                const newId = `${subjectKey}-${isQB ? 'qb' : 'u'}${items.length + 1}-${Date.now()}`;
-                const newItem = { id: newId, title: title, unit: `Unit ${items.length + 1}`, name: name };
-                items.push(newItem);
-                customItems.push(newItem);
-                localStorage.setItem(customItemsKey, JSON.stringify(customItems));
-                if (typeof showToast === 'function') showToast(`New ${itemSingular} added successfully!`);
-                activeIndex = items.length - 1;
-            }
-
-            chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
-            renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
-
-            if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
-                loadItemContent(activeIndex);
-            }
-            closeUnitModal();
             try {
-                await autoPublishState();
-            } catch (err) { }
+                const customItemsKey = `custom_items_${subjectKey}_${resourceType}`;
+                const modifiedItemsKey = `modified_items_${subjectKey}_${resourceType}`;
+                let customItems = JSON.parse(localStorage.getItem(customItemsKey)) || [];
+                let modifiedItems = JSON.parse(localStorage.getItem(modifiedItemsKey)) || {};
+
+                if (indexVal !== '') {
+                    const idx = parseInt(indexVal, 10);
+                    if (items[idx]) {
+                        items[idx].title = title;
+                        items[idx].name = name;
+
+                        const customIdx = customItems.findIndex(ci => ci.id === items[idx].id);
+                        if (customIdx >= 0) {
+                            customItems[customIdx].title = title;
+                            customItems[customIdx].name = name;
+                            localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                        } else {
+                            modifiedItems[items[idx].id] = { title, name };
+                            localStorage.setItem(modifiedItemsKey, JSON.stringify(modifiedItems));
+                        }
+                        syncSaveUnitMod(subjectKey, idx, items[idx], title, name);
+                        if (typeof showToast === 'function') showToast(`${itemSingular} updated successfully!`);
+                    }
+                } else {
+                    const newId = `${subjectKey}-${isQB ? 'qb' : 'u'}${items.length + 1}-${Date.now()}`;
+                    const newItem = { id: newId, title: title, unit: `Unit ${items.length + 1}`, name: name };
+                    items.push(newItem);
+                    customItems.push(newItem);
+                    localStorage.setItem(customItemsKey, JSON.stringify(customItems));
+                    if (typeof showToast === 'function') showToast(`New ${itemSingular} added successfully!`);
+                    activeIndex = items.length - 1;
+                }
+
+                chapterCount.textContent = `${items.length} ${items.length === 1 ? itemSingular : itemPlural}`;
+                renderItemList(chapterSearchInput ? chapterSearchInput.value : '');
+
+                if (indexVal === '' || parseInt(indexVal, 10) === activeIndex) {
+                    loadItemContent(activeIndex);
+                }
+                closeUnitModal();
+                try {
+                    await autoPublishState();
+                } catch (err) { }
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
         });
     }
 
@@ -1869,7 +1882,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             try {
-                await window.supabaseRealtime.pullLatest();
+                await window.supabaseRealtime.pullLatest(true);
             } catch (e) {
                 console.warn('Initial cloud pull:', e);
             }

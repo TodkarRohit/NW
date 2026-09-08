@@ -285,6 +285,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    document.querySelectorAll('.custom-forgot-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const msg = 'Password reset requires admin verification. Please contact your system administrator.';
+            if (typeof showToast === 'function') showToast(msg, true);
+            else alert(msg);
+        });
+    });
+
     if (adminLoginForm) {
         adminLoginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1027,6 +1036,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
+                const submitBtn = inpageForm.querySelector('button[type="submit"]');
+                const origHtml = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+                }
+
                 try {
                     showToast('Uploading and publishing assignment...');
                     const targetChObj = subjectChapters.find(c => c.id === targetChapterId) || subjectChapters[0];
@@ -1054,6 +1070,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (err) {
                     console.error(err);
                     showToast('Error uploading files.', true);
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        if (origHtml) submitBtn.innerHTML = origHtml;
+                    }
                 }
             });
         }
@@ -1385,10 +1406,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 e.preventDefault();
                 searchInput.focus();
                 searchInput.select();
-            } else if (e.key === 'Escape' && document.activeElement === searchInput) {
-                searchInput.value = '';
-                performAssignmentSearch('');
-                searchInput.blur();
+            } else if (e.key === 'Escape') {
+                if (typeof uploadModalBackdrop !== 'undefined' && uploadModalBackdrop && uploadModalBackdrop.classList.contains('active')) {
+                    closeUploadModal();
+                } else if (typeof adminLoginModalBackdrop !== 'undefined' && adminLoginModalBackdrop && adminLoginModalBackdrop.classList.contains('active')) {
+                    closeAdminLoginModal();
+                } else if (typeof fullViewModal !== 'undefined' && fullViewModal && fullViewModal.classList.contains('active')) {
+                    closeFullView();
+                } else if (typeof commentModalBackdrop !== 'undefined' && commentModalBackdrop && commentModalBackdrop.classList.contains('active')) {
+                    closeCommentDrawerHandler();
+                } else if (document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    performAssignmentSearch('');
+                    searchInput.blur();
+                }
             }
         });
     }
@@ -1708,52 +1739,59 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!text) return;
 
-            const allAss = getCombinedAssignments(subjectKey);
-            const assObj = allAss.find(a => a.id === activeCommentAssId);
-            const defaultComments = assObj ? (assObj.comments || []) : [];
-            const comments = getStoredComments(activeCommentAssId, defaultComments);
+            const submitBtn = commentForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
-            comments.push({
-                name: name,
-                text: text,
-                date: 'Just now'
-            });
+            try {
+                const allAss = getCombinedAssignments(subjectKey);
+                const assObj = allAss.find(a => a.id === activeCommentAssId);
+                const defaultComments = assObj ? (assObj.comments || []) : [];
+                const comments = getStoredComments(activeCommentAssId, defaultComments);
 
-            if (assObj && assObj.isCustom) {
-                assObj.comments = comments;
-                try {
-                    const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
-                    const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
-                    const res = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + (token || '')
-                        },
-                        body: JSON.stringify({
-                            id: activeCommentAssId,
-                            comments: comments
-                        })
-                    });
-                    if (!res.ok) {
-                        const errJson = await res.json().catch(() => ({ message: 'Comment sync failed' }));
-                        const errMsg = errJson.message || `Comment sync failed with status ${res.status}`;
-                        console.warn('[Comment Sync] Backend returned HTTP ' + res.status + ':', errMsg);
-                        showToast(errMsg, true);
+                comments.push({
+                    name: name,
+                    text: text,
+                    date: 'Just now'
+                });
+
+                if (assObj && assObj.isCustom) {
+                    assObj.comments = comments;
+                    try {
+                        const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                        const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
+                        const res = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + (token || '')
+                            },
+                            body: JSON.stringify({
+                                id: activeCommentAssId,
+                                comments: comments
+                            })
+                        });
+                        if (!res.ok) {
+                            const errJson = await res.json().catch(() => ({ message: 'Comment sync failed' }));
+                            const errMsg = errJson.message || `Comment sync failed with status ${res.status}`;
+                            console.warn('[Comment Sync] Backend returned HTTP ' + res.status + ':', errMsg);
+                            showToast(errMsg, true);
+                        }
+                    } catch (err) {
+                        console.error('Error updating comments in Supabase:', err);
+                        showToast(err.message || 'Error syncing comment with backend', true);
                     }
-                } catch (err) {
-                    console.error('Error updating comments in Supabase:', err);
-                    showToast(err.message || 'Error syncing comment with backend', true);
+                } else {
+                    saveStoredComments(activeCommentAssId, comments);
                 }
-            } else {
-                saveStoredComments(activeCommentAssId, comments);
+
+                renderDrawerComments(activeCommentAssId);
+                renderAssignments(searchInput ? searchInput.value : '');
+
+                textInput.value = '';
+                showToast('Comment posted successfully!');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
             }
-
-            renderDrawerComments(activeCommentAssId);
-            renderAssignments(searchInput ? searchInput.value : '');
-
-            textInput.value = '';
-            showToast('Comment posted successfully!');
         });
     }
 
@@ -1851,6 +1889,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            const submitBtn = adminUploadForm.querySelector('button[type="submit"]');
+            const origHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publishing...';
+            }
+
             try {
                 showToast('Uploading assignment PDF files...');
                 let normKey = targetSubjectKey ? targetSubjectKey.toLowerCase() : 'maths';
@@ -1890,6 +1935,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 console.error(err);
                 showToast('Error processing PDF file upload.', true);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    if (origHtml) submitBtn.innerHTML = origHtml;
+                }
             }
         });
     }
@@ -1967,7 +2017,7 @@ async function initAssignmentsPage() {
 
     if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
         try {
-            await window.supabaseRealtime.pullLatest();
+            await window.supabaseRealtime.pullLatest(true);
         } catch (e) {
             console.warn('Initial assignment storage pull:', e);
         }

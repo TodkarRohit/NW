@@ -175,60 +175,49 @@
                 }
             }
 
-            // 2. Secondary: Direct Supabase public.users query fallback (for static GitHub Pages hosting)
+            // 2. Secondary: Direct Supabase RPC authentication (avoids exposing password_hash to browser)
             const client = window.supabaseClient || getSupabaseClient();
             if (client && cleanId) {
                 try {
-                    const { data: users, error } = await client
-                        .from('users')
-                        .select('*')
-                        .or(`username.eq.${cleanId},email.eq.${cleanId}`);
+                    const hashedInput = await hashSHA256(password);
+                    let u = null;
 
-                    if (!error && users && users.length > 0) {
-                        const u = users[0];
-                        const hashedInput = await hashSHA256(password);
-                        const isMatch = (
-                            !u.password_hash || 
-                            u.password_hash === hashedInput || 
-                            u.password_hash === password ||
-                            password === 'admin' || 
-                            password === 'admin123' || 
-                            password === 'Admin@123' ||
-                            lowerId === 'rohittodkar92' ||
-                            lowerId === 'rohittodkar92@gmail.com'
+                    // Execute RPC function (password matching occurs on database server inside Postgres)
+                    const { data: rpcUsers, error: rpcErr } = await client
+                        .rpc('verify_user_credentials', { p_login: cleanId, p_password_hash: hashedInput });
+
+                    if (!rpcErr && rpcUsers && rpcUsers.length > 0) {
+                        u = rpcUsers[0];
+                    } else {
+                        throw new Error('Invalid username or password.');
+                    }
+
+                    if (u) {
+                        const isAdmin = (
+                            u.is_admin === true ||
+                            u.is_admin === 'true' ||
+                            String(u.role || '').toLowerCase() === 'admin'
                         );
 
-                        if (isMatch) {
-                            const isAdmin = (
-                                u.is_admin === true || 
-                                u.is_admin === 'true' || 
-                                String(u.role || '').toLowerCase() === 'admin'
-                            );
+                        const sessionUser = {
+                            id: u.id || u.username,
+                            username: u.username,
+                            email: u.email,
+                            name: u.full_name || u.username,
+                            is_admin: isAdmin,
+                            role: isAdmin ? 'admin' : 'user'
+                        };
 
-                            const sessionUser = {
-                                id: u.id || u.username,
-                                username: u.username,
-                                email: u.email,
-                                name: u.full_name || u.username,
-                                is_admin: isAdmin,
-                                role: isAdmin ? 'admin' : 'user'
-                            };
+                        const token = 'sb_jwt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+                        this.saveSession(token, sessionUser);
 
-                            const token = 'sb_jwt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
-                            this.saveSession(token, sessionUser);
+                        // Increment login count in background
+                        client.from('users').update({
+                            login_count: (u.login_count || 0) + 1,
+                            last_login_at: new Date().toISOString()
+                        }).eq('username', u.username).then(()=>{}).catch(()=>{});
 
-                            // Increment login count in background
-                            client.from('users').update({
-                                login_count: (u.login_count || 0) + 1,
-                                last_login_at: new Date().toISOString()
-                            }).eq('username', u.username).then(()=>{}).catch(()=>{});
-
-                            return { success: true, token, user: sessionUser };
-                        } else {
-                            throw new Error('Invalid password. Please check your password.');
-                        }
-                    } else {
-                        throw new Error(`User "${cleanId}" not found. Please click Register to create a new account.`);
+                        return { success: true, token, user: sessionUser };
                     }
                 } catch (sbErr) {
                     if (sbErr.message && (sbErr.message.includes('Invalid password') || sbErr.message.includes('not found'))) {
@@ -236,20 +225,6 @@
                     }
                     console.warn('Supabase auth fallback error:', sbErr);
                 }
-            }
-
-            // 3. Fallback for admin credentials if offline or DB unreachable
-            if (lowerId === 'admin' || lowerId === 'rohittodkar92' || lowerId === 'rohittodkar92@gmail.com') {
-                const sessionUser = {
-                    id: 'admin_local',
-                    username: lowerId.includes('@') ? 'rohittodkar92' : lowerId,
-                    email: lowerId.includes('@') ? lowerId : 'rohittodkar92@gmail.com',
-                    is_admin: true,
-                    role: 'admin'
-                };
-                const token = 'offline_admin_token_' + Date.now();
-                this.saveSession(token, sessionUser);
-                return { success: true, token, user: sessionUser };
             }
 
             throw new Error('Invalid username or password.');
@@ -521,7 +496,13 @@
     };
 
     async function pullLatestStateFromSupabase(force = false) {
-        if (!force && localStorage.getItem('hasUnpublishedChanges') === 'true') {
+        const isAdminUser = typeof checkIsAdmin === 'function' ? checkIsAdmin() : false;
+
+        // Non-admin devices cannot publish; clear stale flag and always pull fresh central data
+        if (!isAdminUser) {
+            localStorage.setItem('hasUnpublishedChanges', 'false');
+            updateUnpublishedBanner();
+        } else if (!force && localStorage.getItem('hasUnpublishedChanges') === 'true') {
             return false;
         }
 
@@ -530,20 +511,7 @@
         try {
             let publishedData = null;
 
-            // 1. Fast parallel fetch: Race Supabase Storage API download with Public CDN fetch
-            const fetchViaStorageApi = async () => {
-                try {
-                    const { data: blobData, error: downloadErr } = await client.storage
-                        .from('academic-files')
-                        .download('published_state/app_data.json');
-                    if (!downloadErr && blobData) {
-                        const text = await blobData.text();
-                        return JSON.parse(text);
-                    }
-                } catch (e) {}
-                return null;
-            };
-
+            // 1. Primary Cache-Busted Fetch via Public CDN URL
             const fetchViaPublicUrl = async () => {
                 try {
                     const { data: urlData } = client.storage
@@ -552,7 +520,11 @@
                     if (urlData && urlData.publicUrl) {
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 3500);
-                        const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { cache: 'no-store', signal: controller.signal });
+                        const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), {
+                            cache: 'no-store',
+                            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' },
+                            signal: controller.signal
+                        });
                         clearTimeout(timeoutId);
                         if (res.ok) {
                             return await res.json();
@@ -562,10 +534,24 @@
                 return null;
             };
 
+            // 2. Secondary Cache-Busted Fetch via Storage API Download
+            const fetchViaStorageApi = async () => {
+                try {
+                    const { data: blobData, error: downloadErr } = await client.storage
+                        .from('academic-files')
+                        .download(`published_state/app_data.json?t=${Date.now()}`);
+                    if (!downloadErr && blobData) {
+                        const text = await blobData.text();
+                        return JSON.parse(text);
+                    }
+                } catch (e) {}
+                return null;
+            };
+
             try {
                 const results = await Promise.allSettled([
-                    fetchViaStorageApi(),
-                    fetchViaPublicUrl()
+                    fetchViaPublicUrl(),
+                    fetchViaStorageApi()
                 ]);
                 for (const res of results) {
                     if (res.status === 'fulfilled' && res.value && typeof res.value === 'object') {
@@ -750,7 +736,7 @@
                     const lastModified = res.headers.get('last-modified') || res.headers.get('etag');
                     if (lastModified && lastModified !== lastKnownStateSig) {
                         lastKnownStateSig = lastModified;
-                        const pulled = await pullLatestStateFromSupabase();
+                        const pulled = await pullLatestStateFromSupabase(true);
                         return pulled;
                     }
                 }

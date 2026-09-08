@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span id="authSubmitBtnText">LOGIN</span>
                     </button>
                 </div>
-                </div>
             </form>
         </div>
     </div>
@@ -211,6 +210,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === loginModalBackdrop) closeLoginModal();
         });
     }
+
+    document.querySelectorAll('.custom-forgot-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const msg = 'Password reset requires admin verification. Please contact your system administrator.';
+            if (typeof showToast === 'function') showToast(msg, true);
+            else alert(msg);
+        });
+    });
 
     if (adminLoginForm) {
         adminLoginForm.addEventListener('submit', async (e) => {
