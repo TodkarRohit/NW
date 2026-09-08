@@ -691,14 +691,36 @@
             } else {
                 const errJson = await res.json().catch(() => ({ message: 'Publish failed' }));
                 console.warn(`[Publish State] Server returned HTTP ${res.status}:`, errJson.message);
-                if (typeof showToast === 'function') {
-                    showToast(`Publish failed: ${errJson.message || 'Server error'}`);
-                }
             }
         } catch (backendErr) {
             console.warn('[Publish State] Network error:', backendErr);
-            if (typeof showToast === 'function') {
-                showToast(`Publish network error: ${backendErr.message}`);
+        }
+
+        // Direct Supabase Storage Client fallback if backend proxy API is unavailable or returns non-200
+        if (!publishSuccess) {
+            const client = window.supabaseClient || getSupabaseClient();
+            if (client) {
+                try {
+                    const jsonString = JSON.stringify(exportData, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const { error: uploadErr } = await client.storage
+                        .from('academic-files')
+                        .upload('published_state/app_data.json', blob, {
+                            contentType: 'application/json',
+                            upsert: true
+                        });
+
+                    if (!uploadErr) {
+                        publishSuccess = true;
+                    } else {
+                        console.error('[Publish State] Direct Supabase upload error:', uploadErr.message);
+                        if (typeof showToast === 'function') {
+                            showToast(`Supabase upload error: ${uploadErr.message}`, true);
+                        }
+                    }
+                } catch (spErr) {
+                    console.error('[Publish State] Direct Supabase exception:', spErr);
+                }
             }
         }
 

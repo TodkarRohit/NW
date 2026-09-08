@@ -1,6 +1,157 @@
+// Engineering Notes Hub - Domain OOP Model Classes
+class Branch {
+    constructor(code, name) {
+        this.code = code || '';
+        this.name = name || code || '';
+    }
+
+    toJSON() {
+        return { code: this.code, name: this.name };
+    }
+
+    static fromData(data) {
+        if (!data) return null;
+        if (typeof data === 'string') return new Branch(data, data);
+        return new Branch(data.code, data.name);
+    }
+}
+
+class Unit {
+    constructor(data = {}) {
+        this.id = data.id || '';
+        this.title = data.title || '';
+        this.unit = data.unit || 'Unit 1';
+        this.name = data.name || data.title || '';
+        this.document = data.document || null;
+    }
+
+    attachDocument(doc) {
+        this.document = doc;
+    }
+
+    toJSON() {
+        return {
+            id: this.id,
+            title: this.title,
+            unit: this.unit,
+            name: this.name,
+            ...(this.document ? { document: this.document } : {})
+        };
+    }
+
+    static fromData(data) {
+        return new Unit(data);
+    }
+}
+
+class StudyNote {
+    constructor(data = {}) {
+        this.name = data.name || '';
+        this.size = data.size || 0;
+        this.type = data.type || 'application/pdf';
+        this.date = data.date || new Date().toLocaleDateString();
+        this.data = data.data || '';
+        this.category = data.category || 'Study Notes';
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            size: this.size,
+            type: this.type,
+            date: this.date,
+            data: this.data,
+            category: this.category
+        };
+    }
+}
+
+class QuestionBankItem {
+    constructor(data = {}) {
+        this.id = data.id || '';
+        this.title = data.title || '';
+        this.unit = data.unit || 'Unit 1';
+        this.name = data.name || data.title || '';
+        this.document = data.document || null;
+    }
+
+    toJSON() {
+        return {
+            id: this.id,
+            title: this.title,
+            unit: this.unit,
+            name: this.name,
+            ...(this.document ? { document: this.document } : {})
+        };
+    }
+}
+
+class Subject {
+    constructor(data = {}) {
+        this.id = data.id || data.code || '';
+        this.title = data.title || '';
+        this.semester = data.semester || 'Semester 2';
+        this.typeName = data.typeName || 'Study Notes';
+        this.branches = Array.isArray(data.branches) ? data.branches : ['ALL'];
+        this.resources = data.resources || { notes: true, qb: true, assignments: true };
+        this.customLinks = Array.isArray(data.customLinks) ? data.customLinks : [];
+        
+        this.chapters = (data.chapters || []).map(ch => ch instanceof Unit ? ch : new Unit(ch));
+        this.questionBanks = (data.questionBanks || []).map(qb => qb instanceof QuestionBankItem ? qb : new QuestionBankItem(qb));
+        this.assignments = Array.isArray(data.assignments) ? data.assignments : [];
+    }
+
+    addChapter(chapterData) {
+        const unit = chapterData instanceof Unit ? chapterData : new Unit(chapterData);
+        this.chapters.push(unit);
+        return unit;
+    }
+
+    removeChapter(unitId) {
+        this.chapters = this.chapters.filter(ch => ch.id !== unitId && ch.title !== unitId);
+    }
+
+    addQuestionBank(qbData) {
+        const qb = qbData instanceof QuestionBankItem ? qbData : new QuestionBankItem(qbData);
+        this.questionBanks.push(qb);
+        return qb;
+    }
+
+    removeQuestionBank(qbId) {
+        this.questionBanks = this.questionBanks.filter(qb => qb.id !== qbId && qb.title !== qbId);
+    }
+
+    toJSON() {
+        return {
+            id: this.id,
+            title: this.title,
+            semester: this.semester,
+            typeName: this.typeName,
+            branches: this.branches,
+            resources: this.resources,
+            customLinks: this.customLinks,
+            chapters: this.chapters.map(c => typeof c.toJSON === 'function' ? c.toJSON() : c),
+            questionBanks: this.questionBanks.map(q => typeof q.toJSON === 'function' ? q.toJSON() : q),
+            assignments: this.assignments
+        };
+    }
+
+    static fromData(data) {
+        if (!data) return null;
+        if (data instanceof Subject) return data;
+        return new Subject(data);
+    }
+}
+
+window.Branch = Branch;
+window.Unit = Unit;
+window.StudyNote = StudyNote;
+window.QuestionBankItem = QuestionBankItem;
+window.Subject = Subject;
+
 // Engineering Notes Hub - Study Notes & Question Banks Data
 const subjectsData = {
-    "dsa": {
+    "dsa": Subject.fromData({
         id: "dsa",
         title: "Data Structure and Algorithm(C++)",
         semester: "Semester 2",
@@ -17,8 +168,8 @@ const subjectsData = {
             { id: "dsa-qb3", title: "Unit 3 Question Bank: Stacks & Applications", unit: "Unit 3", name: "Infix to Postfix, Recursion & Expression Trees" },
             { id: "dsa-qb4", title: "Unit 4 Question Bank: Queues, Deque & Circular Queue", unit: "Unit 4", name: "Priority Queue, BFS & Circular Queue Questions" }
         ]
-    },
-    "oop": {
+    }),
+    "oop": Subject.fromData({
         id: "oop",
         title: "Object Oriented Programming (Using C++)",
         semester: "Semester 2",
@@ -35,8 +186,8 @@ const subjectsData = {
             { id: "oop-qb3", title: "Unit 3 Question Bank: Exception Handling & Templates", unit: "Unit 3", name: "Try-Catch Blocks, Custom Exceptions & Generic Functions" },
             { id: "oop-qb4", title: "Unit 4 Question Bank: Streams & File I/O", unit: "Unit 4", name: "File Pointers, Binary/Text Files & Serialization" }
         ]
-    },
-    "hardware": {
+    }),
+    "hardware": Subject.fromData({
         id: "hardware",
         title: "Computer Organization and Architecture",
         semester: "Semester 2",
@@ -53,8 +204,8 @@ const subjectsData = {
             { id: "coa-qb3", title: "Unit 3 Question Bank: Pipelining & Vector Processing", unit: "Unit 3", name: "Instruction Pipelining, Hazards & Branch Prediction" },
             { id: "coa-qb4", title: "Unit 4 Question Bank: Memory Hierarchy & I/O Organization", unit: "Unit 4", name: "Cache Mapping, DMA Controller & Interrupts" }
         ]
-    },
-    "maths": {
+    }),
+    "maths": Subject.fromData({
         id: "maths",
         title: "Engineering Mathematics",
         semester: "Semester 2",
@@ -73,8 +224,8 @@ const subjectsData = {
             { id: "math-qb4", title: "Unit 4 Question Bank: Probability Distributions & Statistics", unit: "Unit 4", name: "Normal, Binomial, Poisson & Hypothesis Testing" },
             { id: "math-qb5", title: "Unit 5 Question Bank: Numerical Differentiation & Integration", unit: "Unit 5", name: "Newton-Raphson, Simpson's Rules & Runge-Kutta" }
         ]
-    },
-    "os": {
+    }),
+    "os": Subject.fromData({
         id: "os",
         title: "Operating System",
         semester: "Semester 2",
@@ -91,7 +242,7 @@ const subjectsData = {
             { id: "os-qb3", title: "Unit 3 Question Bank: Memory Management & Paging", unit: "Unit 3", name: "Virtual Memory, Page Replacement (LRU/FIFO) & TLB" },
             { id: "os-qb4", title: "Unit 4 Question Bank: File Systems & Disk Scheduling", unit: "Unit 4", name: "FCFS, SSTF, SCAN, LOOK & File Allocation Methods" }
         ]
-    }
+    })
 };
 
 // Aliases for compatibility
@@ -119,11 +270,12 @@ function loadCustomSubjectsIntoData() {
                 const sId = subj.id || subj.code || '';
                 if (sId && !deletedList.includes(sId)) {
                     subj.id = sId;
-                    subjectsData[sId] = subj;
+                    const subjectInstance = Subject.fromData(subj);
+                    subjectsData[sId] = subjectInstance;
                     const normId = sId.replace(/_/g, '-');
                     const altId = sId.replace(/-/g, '_');
-                    if (!deletedList.includes(normId)) subjectsData[normId] = subj;
-                    if (!deletedList.includes(altId)) subjectsData[altId] = subj;
+                    if (!deletedList.includes(normId)) subjectsData[normId] = subjectInstance;
+                    if (!deletedList.includes(altId)) subjectsData[altId] = subjectInstance;
                 }
             }
         });
@@ -150,7 +302,7 @@ function loadCustomSubjectsIntoData() {
             targetKeys.forEach(key => {
                 if (deletedList.includes(key)) return;
                 if (!subjectsData[key]) {
-                    subjectsData[key] = { id: key, ...modObj };
+                    subjectsData[key] = Subject.fromData({ id: key, ...modObj });
                 } else {
                     Object.assign(subjectsData[key], modObj);
                 }

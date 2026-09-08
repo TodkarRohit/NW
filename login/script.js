@@ -514,7 +514,21 @@ class SubjectCard {
             const exportData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && (key.startsWith('custom_subjects_') || key.startsWith('modified_subjects_') || key.startsWith('deleted_subjects_') || key.startsWith('doc_upload_'))) {
+                if (key && (
+                    key.startsWith('doc_upload_') ||
+                    key.startsWith('custom_items_') ||
+                    key.startsWith('modified_items_') ||
+                    key.startsWith('modified_units_') ||
+                    key.startsWith('deleted_units_') ||
+                    key.startsWith('custom_assignments_') ||
+                    key.startsWith('deleted_keys_') ||
+                    key.startsWith('custom_subjects_') ||
+                    key.startsWith('modified_subjects_') ||
+                    key.startsWith('deleted_subjects_') ||
+                    key.startsWith('custom_branches_') ||
+                    key.startsWith('modified_branches_') ||
+                    key.startsWith('deleted_branches_')
+                )) {
                     exportData[key] = localStorage.getItem(key);
                 }
             }
@@ -611,7 +625,21 @@ class SubjectCard {
             const exportData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && (key.startsWith('custom_subjects_') || key.startsWith('modified_subjects_') || key.startsWith('deleted_subjects_') || key.startsWith('doc_upload_'))) {
+                if (key && (
+                    key.startsWith('doc_upload_') ||
+                    key.startsWith('custom_items_') ||
+                    key.startsWith('modified_items_') ||
+                    key.startsWith('modified_units_') ||
+                    key.startsWith('deleted_units_') ||
+                    key.startsWith('custom_assignments_') ||
+                    key.startsWith('deleted_keys_') ||
+                    key.startsWith('custom_subjects_') ||
+                    key.startsWith('modified_subjects_') ||
+                    key.startsWith('deleted_subjects_') ||
+                    key.startsWith('custom_branches_') ||
+                    key.startsWith('modified_branches_') ||
+                    key.startsWith('deleted_branches_')
+                )) {
                     exportData[key] = localStorage.getItem(key);
                 }
             }
