@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('Cleaning up old storage file to free space:', path);
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
                 const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
-                await fetch(apiUrl, {
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -392,6 +392,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     body: JSON.stringify({ path })
                 });
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({ message: 'Storage file deletion failed' }));
+                    console.warn('Storage file deletion API failed:', res.status, errJson.message || '');
+                    const client = window.supabaseClient;
+                    if (client) {
+                        const { error } = await client.storage.from('academic-files').remove([path]);
+                        if (error) console.warn('Direct Supabase storage deletion failed:', error);
+                    }
+                }
             } catch (e) {
                 console.warn('Storage file deletion error:', path, e);
             }
@@ -610,7 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
                 const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upsert') : '/api/assignments/upsert';
-                await fetch(apiUrl, {
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -636,8 +645,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         comments: []
                     })
                 });
+                if (!res.ok) {
+                    const errJson = await res.json().catch(() => ({ message: 'Failed to publish assignment' }));
+                    const errMsg = errJson.message || `Publish failed with status ${res.status}`;
+                    if (typeof showToast === 'function') showToast(errMsg, true);
+                    else if (typeof window.showToast === 'function') window.showToast(errMsg, true);
+                    throw new Error(errMsg);
+                }
             } catch (dbErr) {
                 console.error('Database Insert Error:', dbErr);
+                const errMsg = dbErr.message || 'Failed to publish assignment to backend';
+                if (typeof showToast === 'function') showToast(errMsg, true);
+                else if (typeof window.showToast === 'function') window.showToast(errMsg, true);
+                throw dbErr;
             }
 
             this.dbAssignments.unshift(newAssignment);
@@ -690,10 +710,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (!res.ok) {
                     const errJson = await res.json().catch(() => ({ message: 'Solution update failed' }));
-                    console.warn('[updateAssignmentSolution] Backend returned HTTP ' + res.status + ':', errJson.message);
+                    const errMsg = errJson.message || `Solution update failed with status ${res.status}`;
+                    console.warn('[updateAssignmentSolution] Backend returned HTTP ' + res.status + ':', errMsg);
+                    if (typeof showToast === 'function') showToast(errMsg, true);
+                    else if (typeof window.showToast === 'function') window.showToast(errMsg, true);
+                    return;
                 }
             } catch (dbErr) {
                 console.error('Database update solution error:', dbErr);
+                const errMsg = dbErr.message || 'Database update solution error';
+                if (typeof showToast === 'function') showToast(errMsg, true);
+                else if (typeof window.showToast === 'function') window.showToast(errMsg, true);
+                return;
             }
 
             targetItem.answerFile = aFile.name;
@@ -728,10 +756,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 if (!res.ok) {
                     const errJson = await res.json().catch(() => ({ message: 'Assignment deletion failed' }));
-                    console.warn('[deleteAssignment] Backend returned HTTP ' + res.status + ':', errJson.message);
+                    const errMsg = errJson.message || `Assignment deletion failed with status ${res.status}`;
+                    console.warn('[deleteAssignment] Backend returned HTTP ' + res.status + ':', errMsg);
+                    if (typeof showToast === 'function') showToast(errMsg, true);
+                    else if (typeof window.showToast === 'function') window.showToast(errMsg, true);
+                    return;
                 }
             } catch (e) {
                 console.error('Database delete assignment error:', e);
+                const errMsg = e.message || 'Database delete assignment error';
+                if (typeof showToast === 'function') showToast(errMsg, true);
+                else if (typeof window.showToast === 'function') window.showToast(errMsg, true);
+                return;
             }
 
             this.dbAssignments = this.dbAssignments.filter(a => a.id !== assId);
@@ -1687,10 +1723,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     if (!res.ok) {
                         const errJson = await res.json().catch(() => ({ message: 'Comment sync failed' }));
-                        console.warn('[Comment Sync] Backend returned HTTP ' + res.status + ':', errJson.message);
+                        const errMsg = errJson.message || `Comment sync failed with status ${res.status}`;
+                        console.warn('[Comment Sync] Backend returned HTTP ' + res.status + ':', errMsg);
+                        showToast(errMsg, true);
                     }
                 } catch (err) {
                     console.error('Error updating comments in Supabase:', err);
+                    showToast(err.message || 'Error syncing comment with backend', true);
                 }
             } else {
                 saveStoredComments(activeCommentAssId, comments);
