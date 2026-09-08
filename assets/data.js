@@ -260,64 +260,81 @@ function loadCustomSubjectsIntoData() {
         sessionStorage.setItem('deleted_subjects_list', JSON.stringify(deletedList));
         localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(deletedList));
 
-        deletedList.forEach(id => {
-            delete subjectsData[id];
-            if (id === 'maths' || id === 'math') {
-                delete subjectsData['maths'];
-                delete subjectsData['math'];
-            }
-            if (id === 'hardware' || id === 'coa') {
-                delete subjectsData['hardware'];
-                delete subjectsData['coa'];
-            }
+        // Create lowercased normalized Set for fast, case-insensitive tombstone matching
+        const deletedSet = new Set();
+        deletedList.forEach(item => {
+            if (!item) return;
+            const str = String(item).toLowerCase().trim();
+            deletedSet.add(str);
+            deletedSet.add(str.replace(/_/g, '-'));
+            deletedSet.add(str.replace(/-/g, '_'));
         });
 
+        // 1. Purge from subjectsData in memory
+        for (const k in subjectsData) {
+            const s = subjectsData[k];
+            const kLower = k.toLowerCase().trim();
+            const normK = kLower.replace(/_/g, '-');
+            const altK = kLower.replace(/-/g, '_');
+            const sId = s && s.id ? String(s.id).toLowerCase().trim() : '';
+            const sTitle = s && s.title ? String(s.title).toLowerCase().trim() : '';
+
+            if (deletedSet.has(kLower) || deletedSet.has(normK) || deletedSet.has(altK) || (sId && deletedSet.has(sId)) || (sTitle && deletedSet.has(sTitle))) {
+                delete subjectsData[k];
+            }
+        }
+
+        // 2. Filter out custom_subjects_list
         let customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
         customList = customList.filter(subj => {
             if (!subj) return false;
-            const sId = subj.id || subj.code || '';
+            const sId = String(subj.id || subj.code || '').toLowerCase().trim();
+            const sTitle = String(subj.title || '').toLowerCase().trim();
             const normId = sId.replace(/_/g, '-');
             const altId = sId.replace(/-/g, '_');
-            return !deletedList.includes(sId) && !deletedList.includes(normId) && !deletedList.includes(altId);
+            return !deletedSet.has(sId) && !deletedSet.has(sTitle) && !deletedSet.has(normId) && !deletedSet.has(altId);
         });
         localStorage.setItem('custom_subjects_list', JSON.stringify(customList));
 
         customList.forEach(subj => {
             if (subj) {
                 const sId = subj.id || subj.code || '';
-                if (sId && !deletedList.includes(sId)) {
+                const sIdLower = String(sId).toLowerCase().trim();
+                const sTitleLower = String(subj.title || '').toLowerCase().trim();
+                if (sId && !deletedSet.has(sIdLower) && !deletedSet.has(sTitleLower)) {
                     subj.id = sId;
                     const subjectInstance = Subject.fromData(subj);
                     subjectsData[sId] = subjectInstance;
                     const normId = sId.replace(/_/g, '-');
                     const altId = sId.replace(/-/g, '_');
-                    if (!deletedList.includes(normId)) subjectsData[normId] = subjectInstance;
-                    if (!deletedList.includes(altId)) subjectsData[altId] = subjectInstance;
+                    if (!deletedSet.has(normId.toLowerCase())) subjectsData[normId] = subjectInstance;
+                    if (!deletedSet.has(altId.toLowerCase())) subjectsData[altId] = subjectInstance;
                 }
             }
         });
 
+        // 3. Filter out modified_subjects_data
         const modifiedData = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
         for (const id in modifiedData) {
             const modObj = modifiedData[id];
             if (!modObj) continue;
+            const idLower = String(id).toLowerCase().trim();
+            const mTitleLower = modObj.title ? String(modObj.title).toLowerCase().trim() : '';
+            const normId = idLower.replace(/_/g, '-');
+            const altId = idLower.replace(/-/g, '_');
 
-            const targetKeys = new Set([
-                id,
-                id.replace(/_/g, '-'),
-                id.replace(/-/g, '_')
-            ]);
-            if (id === 'math' || id === 'maths') {
-                targetKeys.add('math');
-                targetKeys.add('maths');
+            if (deletedSet.has(idLower) || deletedSet.has(mTitleLower) || deletedSet.has(normId) || deletedSet.has(altId)) {
+                delete modifiedData[id];
+                continue;
             }
-            if (id === 'coa' || id === 'hardware') {
-                targetKeys.add('coa');
-                targetKeys.add('hardware');
-            }
+
+            const targetKeys = new Set([id, normId, altId]);
+            if (idLower === 'math' || idLower === 'maths') { targetKeys.add('math'); targetKeys.add('maths'); }
+            if (idLower === 'coa' || idLower === 'hardware') { targetKeys.add('coa'); targetKeys.add('hardware'); }
 
             targetKeys.forEach(key => {
-                if (deletedList.includes(key)) return;
+                const keyLower = String(key).toLowerCase().trim();
+                if (deletedSet.has(keyLower)) return;
                 if (!subjectsData[key]) {
                     subjectsData[key] = Subject.fromData({ id: key, ...modObj });
                 } else {
@@ -326,6 +343,7 @@ function loadCustomSubjectsIntoData() {
                 if (!subjectsData[key].id) subjectsData[key].id = key;
             });
         }
+        localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedData));
 
         // Purge deleted units across all subjects with alias key support
         for (const key in subjectsData) {
@@ -360,7 +378,8 @@ function loadCustomSubjectsIntoData() {
 
         // Ensure all subjects have branches property and purge deleted ones
         for (const key in subjectsData) {
-            if (deletedList.includes(key)) {
+            const kLower = key.toLowerCase().trim();
+            if (deletedSet.has(kLower) || deletedSet.has(kLower.replace(/_/g, '-')) || deletedSet.has(kLower.replace(/-/g, '_'))) {
                 delete subjectsData[key];
                 continue;
             }
@@ -370,14 +389,14 @@ function loadCustomSubjectsIntoData() {
         }
 
         // Reassign aliases only if subject is not deleted
-        if (subjectsData["maths"] && !deletedList.includes("maths") && !deletedList.includes("math")) {
+        if (subjectsData["maths"] && !deletedSet.has("maths") && !deletedSet.has("math")) {
             subjectsData["math"] = subjectsData["maths"];
         } else {
             delete subjectsData["math"];
             delete subjectsData["maths"];
         }
 
-        if (subjectsData["hardware"] && !deletedList.includes("hardware") && !deletedList.includes("coa")) {
+        if (subjectsData["hardware"] && !deletedSet.has("hardware") && !deletedSet.has("coa")) {
             subjectsData["coa"] = subjectsData["hardware"];
         } else {
             delete subjectsData["coa"];

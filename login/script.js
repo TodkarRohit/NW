@@ -546,7 +546,7 @@ class SubjectCard {
         await SubjectCard.pushToSupabase();
     }
 
-    // Class method: Delete subject card globally from LocalStorage and push to Supabase Cloud Storage
+    // Class method: Delete subject card globally from LocalStorage and push to Supabase Cloud Storage & Database
     static async deleteGlobally(sId, title = '') {
         let deletedSubjects = [];
         try {
@@ -556,30 +556,40 @@ class SubjectCard {
         const normSId = sId.replace(/_/g, '-');
         const altSId = sId.replace(/-/g, '_');
         const targetTitleLower = (title || '').toLowerCase().trim();
-        const targets = new Set([sId, normSId, altSId]);
+        const targets = new Set([sId, normSId, altSId, sId.toLowerCase(), normSId.toLowerCase(), altSId.toLowerCase()]);
 
-        if (sId === 'maths' || sId === 'math') { targets.add('maths'); targets.add('math'); }
-        if (sId === 'hardware' || sId === 'coa') { targets.add('hardware'); targets.add('coa'); }
+        if (targetTitleLower) targets.add(targetTitleLower);
+        if (sId.toLowerCase() === 'maths' || sId.toLowerCase() === 'math') { targets.add('maths'); targets.add('math'); }
+        if (sId.toLowerCase() === 'hardware' || sId.toLowerCase() === 'coa') { targets.add('hardware'); targets.add('coa'); }
 
         for (const k in subjectsData) {
             const s = subjectsData[k];
             if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
-                if (s.id) targets.add(s.id);
+                if (s.id) {
+                    targets.add(s.id);
+                    targets.add(s.id.toLowerCase());
+                }
                 targets.add(k);
+                targets.add(k.toLowerCase());
             }
         }
 
-        let customSubjects = [];
         try {
-            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+            let customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
             customSubjects.forEach(s => {
-                if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
-                    if (s.id) targets.add(s.id);
+                if (s) {
+                    const sTitle = s.title ? s.title.toLowerCase().trim() : '';
+                    if (sTitle === targetTitleLower || (s.id && targets.has(s.id.toLowerCase()))) {
+                        if (s.id) {
+                            targets.add(s.id);
+                            targets.add(s.id.toLowerCase());
+                        }
+                    }
                 }
             });
         } catch (e) {}
 
-        const targetsArray = Array.from(targets);
+        const targetsArray = Array.from(targets).filter(Boolean);
         targetsArray.forEach(t => {
             if (t && !deletedSubjects.includes(t)) deletedSubjects.push(t);
             delete subjectsData[t];
@@ -589,23 +599,40 @@ class SubjectCard {
         sessionStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
         localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(deletedSubjects));
 
+        // Thorough lowercased set for filtering
+        const targetLowerSet = new Set(targetsArray.map(t => String(t).toLowerCase().trim()));
+
+        // Filter out from custom_subjects_list
         try {
+            let customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
             customSubjects = customSubjects.filter(s => {
-                if (!s || !s.id) return false;
-                const matchId = targets.has(s.id) || targets.has(s.id.replace(/_/g, '-'));
-                const matchTitle = s.title && s.title.toLowerCase().trim() === targetTitleLower;
-                return !matchId && !matchTitle;
+                if (!s) return false;
+                const cId = String(s.id || s.code || '').toLowerCase().trim();
+                const cTitle = String(s.title || '').toLowerCase().trim();
+                const normId = cId.replace(/_/g, '-');
+                const altId = cId.replace(/-/g, '_');
+                return !targetLowerSet.has(cId) && !targetLowerSet.has(cTitle) && !targetLowerSet.has(normId) && !targetLowerSet.has(altId);
             });
             localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
         } catch (e) {}
 
-        let modifiedSubjects = {};
+        // Filter out from modified_subjects_data
         try {
-            modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-            targetsArray.forEach(t => delete modifiedSubjects[t]);
+            let modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+            for (const modKey in modifiedSubjects) {
+                const modObj = modifiedSubjects[modKey];
+                const kLower = String(modKey).toLowerCase().trim();
+                const mTitle = modObj && modObj.title ? String(modObj.title).toLowerCase().trim() : '';
+                const normK = kLower.replace(/_/g, '-');
+                const altK = kLower.replace(/-/g, '_');
+                if (targetLowerSet.has(kLower) || targetLowerSet.has(mTitle) || targetLowerSet.has(normK) || targetLowerSet.has(altK)) {
+                    delete modifiedSubjects[modKey];
+                }
+            }
             localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
         } catch (e) {}
 
+        // 1. Direct Supabase Storage folder cleanup
         if (window.supabaseRealtime) {
             if (typeof window.supabaseRealtime.deleteSubjectFolders === 'function') {
                 await window.supabaseRealtime.deleteSubjectFolders(sId);
@@ -616,6 +643,26 @@ class SubjectCard {
             }
         }
 
+        // 2. Direct Supabase DB Table Deletion (if tables exist)
+        const spClient = window.supabaseClient || (typeof getSupabaseClient === 'function' ? getSupabaseClient() : null);
+        if (spClient) {
+            for (const t of targetsArray) {
+                try {
+                    const { data, error } = await spClient.from('subjects').delete().eq('id', t);
+                    if (error && error.code !== 'PGRST205') {
+                        console.error('[SubjectCard] Supabase subjects table delete error:', error);
+                    }
+                } catch (e) {}
+                try {
+                    const { data, error } = await spClient.from('assignments').delete().eq('subject_key', t);
+                    if (error && error.code !== 'PGRST205') {
+                        console.error('[SubjectCard] Supabase assignments table delete error:', error);
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // 3. Optional backend proxy API endpoint call
         try {
             const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
             const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/subjects/delete') : '/api/subjects/delete';
@@ -651,11 +698,10 @@ class SubjectCard {
                     id: sId,
                     exportData: exportData
                 })
-            });
-        } catch (e) {
-            console.warn('[SubjectCard] Backend delete call error:', e);
-        }
+            }).catch(e => console.warn('[SubjectCard] Backend proxy notice:', e.message));
+        } catch (e) {}
 
+        // 4. Push authoritative updated state to Supabase Cloud Storage & broadcast
         await SubjectCard.pushToSupabase();
     }
 

@@ -641,19 +641,40 @@
                 sessionStorage.setItem('deleted_subjects_list', JSON.stringify(mergedDeletedSubjects));
                 localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(mergedDeletedSubjects));
 
-                // 4. Ensure custom_subjects_list does NOT contain any deleted subjects
+                // 4. Ensure custom_subjects_list and modified_subjects_data do NOT contain any deleted subjects
                 try {
+                    const mergedDeletedSet = new Set();
+                    mergedDeletedSubjects.forEach(item => {
+                        if (!item) return;
+                        const str = String(item).toLowerCase().trim();
+                        mergedDeletedSet.add(str);
+                        mergedDeletedSet.add(str.replace(/_/g, '-'));
+                        mergedDeletedSet.add(str.replace(/-/g, '_'));
+                    });
+
                     let customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
                     customSubjects = customSubjects.filter(s => {
                         if (!s) return false;
-                        const sId = s.id || s.code || '';
+                        const sId = String(s.id || s.code || '').toLowerCase().trim();
+                        const sTitle = String(s.title || '').toLowerCase().trim();
                         const normId = sId.replace(/_/g, '-');
                         const altId = sId.replace(/-/g, '_');
-                        return !mergedDeletedSubjects.includes(sId) &&
-                               !mergedDeletedSubjects.includes(normId) &&
-                               !mergedDeletedSubjects.includes(altId);
+                        return !mergedDeletedSet.has(sId) && !mergedDeletedSet.has(sTitle) && !mergedDeletedSet.has(normId) && !mergedDeletedSet.has(altId);
                     });
                     localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+
+                    let modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+                    for (const modKey in modifiedSubjects) {
+                        const modObj = modifiedSubjects[modKey];
+                        const kLower = String(modKey).toLowerCase().trim();
+                        const mTitle = modObj && modObj.title ? String(modObj.title).toLowerCase().trim() : '';
+                        const normK = kLower.replace(/_/g, '-');
+                        const altK = kLower.replace(/-/g, '_');
+                        if (mergedDeletedSet.has(kLower) || mergedDeletedSet.has(mTitle) || mergedDeletedSet.has(normK) || mergedDeletedSet.has(altK)) {
+                            delete modifiedSubjects[modKey];
+                        }
+                    }
+                    localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
                 } catch (e) {}
 
                 // 5. Remove deleted keys specified in cloud's deleted_keys_global
