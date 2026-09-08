@@ -115,12 +115,16 @@ function loadCustomSubjectsIntoData() {
 
         const customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
         customList.forEach(subj => {
-            if (subj && subj.id && !deletedList.includes(subj.id)) {
-                subjectsData[subj.id] = subj;
-                const normId = subj.id.replace(/_/g, '-');
-                const altId = subj.id.replace(/-/g, '_');
-                if (!deletedList.includes(normId)) subjectsData[normId] = subj;
-                if (!deletedList.includes(altId)) subjectsData[altId] = subj;
+            if (subj) {
+                const sId = subj.id || subj.code || '';
+                if (sId && !deletedList.includes(sId)) {
+                    subj.id = sId;
+                    subjectsData[sId] = subj;
+                    const normId = sId.replace(/_/g, '-');
+                    const altId = sId.replace(/-/g, '_');
+                    if (!deletedList.includes(normId)) subjectsData[normId] = subj;
+                    if (!deletedList.includes(altId)) subjectsData[altId] = subj;
+                }
             }
         });
 
@@ -144,9 +148,13 @@ function loadCustomSubjectsIntoData() {
             }
 
             targetKeys.forEach(key => {
-                if (subjectsData[key] && !deletedList.includes(key)) {
+                if (deletedList.includes(key)) return;
+                if (!subjectsData[key]) {
+                    subjectsData[key] = { id: key, ...modObj };
+                } else {
                     Object.assign(subjectsData[key], modObj);
                 }
+                if (!subjectsData[key].id) subjectsData[key].id = key;
             });
         }
 

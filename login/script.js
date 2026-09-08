@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // SubjectCard OOP Class Definition
 class SubjectCard {
     constructor(subj) {
-        this.id = subj.id;
+        this.id = subj.id || subj.code || '';
         this.title = subj.title || '';
         this.semester = subj.semester || 'Semester 2';
         this.branches = subj.branches || ['ALL'];
@@ -465,6 +465,7 @@ class SubjectCard {
             modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
         } catch (err) {}
         const modPayload = {
+            id: this.id,
             title: this.title,
             semester: this.semester,
             branches: this.branches,
@@ -612,6 +613,7 @@ window.SubjectCard = SubjectCard;
         for (const key in subjectsData) {
             const subj = subjectsData[key];
             if (subj && !seenObjects.has(subj)) {
+                if (!subj.id) subj.id = key;
                 seenObjects.add(subj);
                 uniqueSubjects.push(subj);
             }

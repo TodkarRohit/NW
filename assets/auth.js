@@ -747,8 +747,17 @@
             realtimeChannel = client.channel('academic_hub_realtime', {
                 config: { broadcast: { self: false } }
             });
-            realtimeChannel.on('broadcast', { event: 'academic_state_updated' }, () => {
-                pullLatestStateFromSupabase();
+            realtimeChannel.on('broadcast', { event: 'academic_state_updated' }, async () => {
+                await pullLatestStateFromSupabase(true);
+                if (typeof window.loadCustomSubjectsIntoData === 'function') {
+                    window.loadCustomSubjectsIntoData();
+                }
+                try {
+                    window.dispatchEvent(new CustomEvent('academicStateRefreshed'));
+                } catch (e) {}
+                registeredRealtimeCallbacks.forEach(cb => {
+                    try { cb(); } catch (e) {}
+                });
             });
             realtimeChannel.subscribe();
         } catch (e) {
