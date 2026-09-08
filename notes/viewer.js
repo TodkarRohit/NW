@@ -1118,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     size: file.size,
                     type: file.type || 'application/pdf',
                     date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                    data: urlData.publicUrl
+                    data: publicUrl
                 };
 
                 const storageKey = getStorageKey(targetIndex, selectedDocType);
