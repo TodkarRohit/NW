@@ -15,7 +15,7 @@ const notFoundHandler = (req, res, next) => {
 
 // Global Error Handler
 const errorHandler = (err, req, res, next) => {
-    let statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+    let statusCode = err.status || err.statusCode || (res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
     let message = err.message || 'An unexpected internal server error occurred';
 
     // Mongoose Duplicate Key Error (code 11000) - e.g. duplicate username
