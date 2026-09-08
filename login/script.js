@@ -392,6 +392,19 @@ class SubjectCard {
         this.branches = subj.branches || ['ALL'];
         this.resources = subj.resources || { notes: true, qb: true, assignments: true };
         this.customLinks = subj.customLinks || [];
+        this.chapters = subj.chapters || [
+            { id: `${subj.id}-u1`, title: "Unit 1: Fundamentals & Core Concepts", unit: "Unit 1", name: "Fundamentals & Core Concepts" },
+            { id: `${subj.id}-u2`, title: "Unit 2: Advanced Topics & Operations", unit: "Unit 2", name: "Advanced Topics & Operations" },
+            { id: `${subj.id}-u3`, title: "Unit 3: Applications & Case Studies", unit: "Unit 3", name: "Applications & Case Studies" },
+            { id: `${subj.id}-u4`, title: "Unit 4: System Implementation & Review", unit: "Unit 4", name: "System Implementation & Review" }
+        ];
+        this.questionBanks = subj.questionBanks || [
+            { id: `${subj.id}-qb1`, title: "Unit 1 Question Bank: Fundamentals", unit: "Unit 1", name: "Fundamentals Question Bank" },
+            { id: `${subj.id}-qb2`, title: "Unit 2 Question Bank: Advanced Topics", unit: "Unit 2", name: "Advanced Topics Question Bank" },
+            { id: `${subj.id}-qb3`, title: "Unit 3 Question Bank: Applications", unit: "Unit 3", name: "Applications Question Bank" },
+            { id: `${subj.id}-qb4`, title: "Unit 4 Question Bank: Implementation", unit: "Unit 4", name: "Implementation Question Bank" }
+        ];
+        this.assignments = subj.assignments || [];
     }
 
     render(isAdmin = false) {
@@ -461,6 +474,170 @@ class SubjectCard {
                 </div>
             </div>
         `;
+    }
+
+    // Instance method: Save subject card into LocalStorage and push to Supabase Cloud Storage
+    async save(editId = null) {
+        const targetId = editId || this.id;
+        const normCode = targetId.replace(/_/g, '-');
+        const altCode = targetId.replace(/-/g, '_');
+
+        // 1. Clear from deleted_subjects_list if previously deleted
+        let deletedSubjects = [];
+        try {
+            deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+        } catch (e) {}
+        deletedSubjects = deletedSubjects.filter(id => id !== targetId && id !== normCode && id !== altCode && id.replace(/_/g, '-') !== normCode);
+        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+
+        // 2. Prepare payload object
+        const subjObj = {
+            id: this.id,
+            title: this.title,
+            semester: this.semester,
+            branches: this.branches,
+            resources: this.resources,
+            customLinks: this.customLinks,
+            typeName: "Study Notes",
+            chapters: this.chapters,
+            questionBanks: this.questionBanks,
+            assignments: this.assignments
+        };
+
+        // 3. Update subjectsData in memory (including alias keys)
+        subjectsData[this.id] = subjObj;
+        if (this.id === 'math' || this.id === 'maths') {
+            subjectsData['math'] = subjObj;
+            subjectsData['maths'] = subjObj;
+        }
+        if (this.id === 'coa' || this.id === 'hardware') {
+            subjectsData['coa'] = subjObj;
+            subjectsData['hardware'] = subjObj;
+        }
+
+        // 4. Update custom_subjects_list in localStorage
+        let customSubjects = [];
+        try {
+            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+        } catch (err) {}
+        customSubjects = customSubjects.filter(s => s && s.id !== this.id && s.id !== normCode && s.id !== altCode);
+        customSubjects.push(subjObj);
+        localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+
+        // 5. Update modified_subjects_data in localStorage
+        let modifiedSubjects = {};
+        try {
+            modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+        } catch (err) {}
+        const modPayload = {
+            title: this.title,
+            semester: this.semester,
+            branches: this.branches,
+            resources: this.resources,
+            customLinks: this.customLinks,
+            chapters: this.chapters,
+            questionBanks: this.questionBanks,
+            assignments: this.assignments
+        };
+        modifiedSubjects[this.id] = modPayload;
+        if (this.id === 'math' || this.id === 'maths') {
+            modifiedSubjects['math'] = modPayload;
+            modifiedSubjects['maths'] = modPayload;
+        }
+        if (this.id === 'coa' || this.id === 'hardware') {
+            modifiedSubjects['coa'] = modPayload;
+            modifiedSubjects['hardware'] = modPayload;
+        }
+        localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
+
+        // 6. Reload in-memory structures & push live to Supabase Cloud Storage
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
+        await SubjectCard.pushToSupabase();
+    }
+
+    // Class method: Delete subject card globally from LocalStorage and push to Supabase Cloud Storage
+    static async deleteGlobally(sId, title = '') {
+        let deletedSubjects = [];
+        try {
+            deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+        } catch (e) {}
+
+        const normSId = sId.replace(/_/g, '-');
+        const altSId = sId.replace(/-/g, '_');
+        const targetTitleLower = (title || '').toLowerCase().trim();
+        const targets = new Set([sId, normSId, altSId]);
+
+        if (sId === 'maths' || sId === 'math') { targets.add('maths'); targets.add('math'); }
+        if (sId === 'hardware' || sId === 'coa') { targets.add('hardware'); targets.add('coa'); }
+
+        for (const k in subjectsData) {
+            const s = subjectsData[k];
+            if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
+                if (s.id) targets.add(s.id);
+                targets.add(k);
+            }
+        }
+
+        let customSubjects = [];
+        try {
+            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+            customSubjects.forEach(s => {
+                if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
+                    if (s.id) targets.add(s.id);
+                }
+            });
+        } catch (e) {}
+
+        const targetsArray = Array.from(targets);
+        targetsArray.forEach(t => {
+            if (t && !deletedSubjects.includes(t)) deletedSubjects.push(t);
+            delete subjectsData[t];
+        });
+
+        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+
+        try {
+            customSubjects = customSubjects.filter(s => {
+                if (!s || !s.id) return false;
+                const matchId = targets.has(s.id) || targets.has(s.id.replace(/_/g, '-'));
+                const matchTitle = s.title && s.title.toLowerCase().trim() === targetTitleLower;
+                return !matchId && !matchTitle;
+            });
+            localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+        } catch (e) {}
+
+        let modifiedSubjects = {};
+        try {
+            modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
+            targetsArray.forEach(t => delete modifiedSubjects[t]);
+            localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
+        } catch (e) {}
+
+        if (window.supabaseRealtime && window.supabaseRealtime.deleteFolder) {
+            await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
+            await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
+            await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
+        }
+
+        await SubjectCard.pushToSupabase();
+    }
+
+    // Class method: Push all subject card state directly to Supabase Cloud Storage
+    static async pushToSupabase() {
+        if (window.supabaseRealtime && typeof window.supabaseRealtime.pushAndBroadcast === 'function') {
+            await window.supabaseRealtime.pushAndBroadcast();
+        } else if (typeof autoPublishState === 'function') {
+            await autoPublishState();
+        }
+    }
+
+    // Class method: Pull all subject card state from Supabase Cloud Storage
+    static async loadFromSupabase() {
+        if (window.supabaseRealtime && typeof window.supabaseRealtime.pullLatest === 'function') {
+            await window.supabaseRealtime.pullLatest(true);
+        }
     }
 }
 window.SubjectCard = SubjectCard;
@@ -578,74 +755,9 @@ window.SubjectCard = SubjectCard;
     }
 
     async function deleteSubjectGlobally(sId, title) {
-        let deletedSubjects = [];
-        try {
-            deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
-        } catch (e) {}
-
-        const normSId = sId.replace(/_/g, '-');
-        const altSId = sId.replace(/-/g, '_');
-        const targetTitleLower = (title || '').toLowerCase().trim();
-        const targets = new Set([sId, normSId, altSId]);
-
-        if (sId === 'maths' || sId === 'math') { targets.add('maths'); targets.add('math'); }
-        if (sId === 'hardware' || sId === 'coa') { targets.add('hardware'); targets.add('coa'); }
-
-        // Find all matching subject IDs in subjectsData and custom_subjects_list by ID or Title
-        for (const k in subjectsData) {
-            const s = subjectsData[k];
-            if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
-                if (s.id) targets.add(s.id);
-                targets.add(k);
-            }
-        }
-
-        let customSubjects = [];
-        try {
-            customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-            customSubjects.forEach(s => {
-                if (s && s.title && s.title.toLowerCase().trim() === targetTitleLower) {
-                    if (s.id) targets.add(s.id);
-                }
-            });
-        } catch (e) {}
-
-        const targetsArray = Array.from(targets);
-
-        targetsArray.forEach(t => {
-            if (t && !deletedSubjects.includes(t)) deletedSubjects.push(t);
-            delete subjectsData[t];
-        });
-
-        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
-
-        try {
-            customSubjects = customSubjects.filter(s => {
-                if (!s || !s.id) return false;
-                const matchId = targets.has(s.id) || targets.has(s.id.replace(/_/g, '-'));
-                const matchTitle = s.title && s.title.toLowerCase().trim() === targetTitleLower;
-                return !matchId && !matchTitle;
-            });
-            localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-        } catch (e) {}
-
-        let modifiedSubjects = {};
-        try {
-            modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-            targetsArray.forEach(t => delete modifiedSubjects[t]);
-            localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
-        } catch (e) {}
-
+        await SubjectCard.deleteGlobally(sId, title);
         showToast(`Subject "${title}" deleted globally.`);
         renderSubjectsGrid(searchInput ? searchInput.value : '');
-
-        if (window.supabaseRealtime && window.supabaseRealtime.deleteFolder) {
-            await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
-            await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
-            await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
-        }
-
-        await autoPublishState();
     }
 
     // Helper: Dynamic Custom Link Rows
@@ -807,106 +919,26 @@ window.SubjectCard = SubjectCard;
                 });
             }
 
-            let subjObj = editId ? subjectsData[editId] : null;
+            const targetId = editId || code;
+            let existingSubj = targetId ? subjectsData[targetId] : null;
 
-            if (!subjObj) {
-                subjObj = {
-                    id: code,
-                    title: title,
-                    semester: semester,
-                    branches: selectedBranches,
-                    resources: resourcesObj,
-                    customLinks: customLinksArr,
-                    typeName: "Study Notes",
-                    chapters: [
-                        { id: `${code}-u1`, title: "Unit 1: Fundamentals & Core Concepts", unit: "Unit 1", name: "Fundamentals & Core Concepts" },
-                        { id: `${code}-u2`, title: "Unit 2: Advanced Topics & Operations", unit: "Unit 2", name: "Advanced Topics & Operations" },
-                        { id: `${code}-u3`, title: "Unit 3: Applications & Case Studies", unit: "Unit 3", name: "Applications & Case Studies" },
-                        { id: `${code}-u4`, title: "Unit 4: System Implementation & Review", unit: "Unit 4", name: "System Implementation & Review" }
-                    ],
-                    questionBanks: [
-                        { id: `${code}-qb1`, title: "Unit 1 Question Bank: Fundamentals", unit: "Unit 1", name: "Fundamentals Question Bank" },
-                        { id: `${code}-qb2`, title: "Unit 2 Question Bank: Advanced Topics", unit: "Unit 2", name: "Advanced Topics Question Bank" },
-                        { id: `${code}-qb3`, title: "Unit 3 Question Bank: Applications", unit: "Unit 3", name: "Applications Question Bank" },
-                        { id: `${code}-qb4`, title: "Unit 4 Question Bank: Implementation", unit: "Unit 4", name: "Implementation Question Bank" }
-                    ]
-                };
+            const card = new SubjectCard({
+                id: targetId,
+                title: title,
+                semester: semester,
+                branches: selectedBranches,
+                resources: resourcesObj,
+                customLinks: customLinksArr,
+                chapters: existingSubj ? existingSubj.chapters : undefined,
+                questionBanks: existingSubj ? existingSubj.questionBanks : undefined,
+                assignments: existingSubj ? existingSubj.assignments : undefined
+            });
 
-                let customSubjects = [];
-                try {
-                    customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-                } catch (err) {}
-                customSubjects = customSubjects.filter(s => s && s.id !== code && s.id !== code.replace(/_/g, '-') && s.id !== code.replace(/-/g, '_'));
-                customSubjects.push(subjObj);
-                localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-            } else {
-                subjObj.title = title;
-                subjObj.semester = semester;
-                subjObj.branches = selectedBranches;
-                subjObj.resources = resourcesObj;
-                subjObj.customLinks = customLinksArr;
+            await card.save(editId);
 
-                let modifiedSubjects = {};
-                try {
-                    modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-                } catch (err) {}
-                const modPayload = { title, semester, branches: selectedBranches, resources: resourcesObj, customLinks: customLinksArr };
-                modifiedSubjects[editId] = modPayload;
-                if (editId === 'math' || editId === 'maths') {
-                    modifiedSubjects['math'] = modPayload;
-                    modifiedSubjects['maths'] = modPayload;
-                }
-                if (editId === 'coa' || editId === 'hardware') {
-                    modifiedSubjects['coa'] = modPayload;
-                    modifiedSubjects['hardware'] = modPayload;
-                }
-                localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
-
-                let customSubjects = [];
-                try {
-                    customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-                } catch (err) {}
-                const normEditId = editId.replace(/_/g, '-');
-                const altEditId = editId.replace(/-/g, '_');
-                const normCode = code.replace(/_/g, '-');
-                const altCode = code.replace(/-/g, '_');
-
-                const cIdx = customSubjects.findIndex(s => s && (
-                    s.id === editId || s.id === code ||
-                    s.id === normEditId || s.id === altEditId ||
-                    s.id === normCode || s.id === altCode
-                ));
-                if (cIdx !== -1) {
-                    customSubjects[cIdx] = Object.assign({}, customSubjects[cIdx], {
-                        title,
-                        semester,
-                        branches: selectedBranches,
-                        resources: resourcesObj,
-                        customLinks: customLinksArr
-                    });
-                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-                }
-            }
-
-            const targetKey = editId || code;
-            subjectsData[targetKey] = subjObj;
-            if (targetKey === 'math' || targetKey === 'maths') {
-                subjectsData['math'] = subjObj;
-                subjectsData['maths'] = subjObj;
-            }
-            if (targetKey === 'coa' || targetKey === 'hardware') {
-                subjectsData['coa'] = subjObj;
-                subjectsData['hardware'] = subjObj;
-            }
-
-            if (typeof window.loadCustomSubjectsIntoData === 'function') {
-                window.loadCustomSubjectsIntoData();
-            }
             closeSubjectModal();
-            showToast(`Subject "${title}" saved successfully!`);
+            showToast(`Subject "${title}" saved successfully to Supabase Storage!`);
             renderSubjectsGrid(searchInput ? searchInput.value : '');
-
-            autoPublishState();
         });
     }
 
