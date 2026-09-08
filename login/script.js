@@ -501,6 +501,32 @@ class SubjectCard {
             }
         }
 
+        try {
+            const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+            const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/subjects/upsert') : '/api/subjects/upsert';
+            const exportData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('custom_subjects_') || key.startsWith('modified_subjects_') || key.startsWith('deleted_subjects_') || key.startsWith('doc_upload_'))) {
+                    exportData[key] = localStorage.getItem(key);
+                }
+            }
+
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (token || '')
+                },
+                body: JSON.stringify({
+                    subject: subjObj,
+                    exportData: exportData
+                })
+            });
+        } catch (e) {
+            console.warn('[SubjectCard] Backend upsert call error:', e);
+        }
+
         await SubjectCard.pushToSupabase();
     }
 
@@ -570,6 +596,32 @@ class SubjectCard {
                 await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
                 await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
             }
+        }
+
+        try {
+            const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+            const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/subjects/delete') : '/api/subjects/delete';
+            const exportData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('custom_subjects_') || key.startsWith('modified_subjects_') || key.startsWith('deleted_subjects_') || key.startsWith('doc_upload_'))) {
+                    exportData[key] = localStorage.getItem(key);
+                }
+            }
+
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (token || '')
+                },
+                body: JSON.stringify({
+                    id: sId,
+                    exportData: exportData
+                })
+            });
+        } catch (e) {
+            console.warn('[SubjectCard] Backend delete call error:', e);
         }
 
         await SubjectCard.pushToSupabase();
@@ -977,7 +1029,7 @@ window.SubjectCard = SubjectCard;
             await card.save(editId);
 
             closeSubjectModal();
-            showToast(`Subject "${title}" saved successfully to Supabase Storage!`);
+            showToast(`Subject "${title}" saved successfully!`);
             renderSubjectsGrid(searchInput ? searchInput.value : '');
         });
     }

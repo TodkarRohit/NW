@@ -1059,13 +1059,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const subFolder = isQB ? `question_bank/${subjectKey}/${unitId}/${selectedDocType}` : `notes/${subjectKey}/${unitId}`;
                 const fileName = `${subFolder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
                 
-                const { error: err } = await window.supabaseClient.storage
-                    .from('academic-files')
-                    .upload(fileName, file, { contentType: file.type || 'application/pdf', cacheControl: '3600', upsert: true });
+                const formData = new FormData();
+                formData.append('path', fileName);
+                formData.append('file', file);
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
 
-                if (err) throw err;
+                const uploadRes = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + (token || '') },
+                    body: formData
+                });
 
-                const { data: urlData } = window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName);
+                if (!uploadRes.ok) {
+                    const uploadErrJson = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
+                    throw new Error(uploadErrJson.message || 'File upload failed');
+                }
+
+                const uploadResData = await uploadRes.json();
+                const publicUrl = uploadResData.publicUrl || (window.supabaseClient ? window.supabaseClient.storage.from('academic-files').getPublicUrl(fileName).data.publicUrl : '');
 
                 const docData = {
                     name: file.name,

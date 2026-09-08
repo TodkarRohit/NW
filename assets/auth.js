@@ -673,11 +673,10 @@
             }
         }
 
-        let publishedViaBackend = false;
         try {
             const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
             const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/publish-state') : '/api/assignments/publish-state';
-            const res = await fetch(apiUrl, {
+            await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -685,34 +684,8 @@
                 },
                 body: JSON.stringify({ data: exportData })
             });
-
-            if (res.ok) {
-                publishedViaBackend = true;
-            } else {
-                console.warn(`Publish state backend returned HTTP ${res.status}, falling back to Supabase Storage direct update.`);
-            }
         } catch (backendErr) {
-            console.warn('Publish state backend error, falling back to Supabase Storage direct update:', backendErr);
-        }
-
-        if (!publishedViaBackend) {
-            const client = window.supabaseClient || getSupabaseClient();
-            if (client) {
-                try {
-                    const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                    const { error: uploadErr } = await client.storage
-                        .from('academic-files')
-                        .upload('published_state/app_data.json', jsonBlob, {
-                            contentType: 'application/json',
-                            upsert: true
-                        });
-                    if (uploadErr) {
-                        console.warn('Supabase storage direct upload warning:', uploadErr);
-                    }
-                } catch (spErr) {
-                    console.warn('Supabase direct publish error:', spErr);
-                }
-            }
+            console.warn('Publish state error:', backendErr);
         }
 
         // Broadcast to all clients
@@ -819,7 +792,7 @@
             for (const fileP of filesToRemove) {
                 try {
                     const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/delete-file') : '/api/assignments/delete-file';
-                    const res = await fetch(apiUrl, {
+                    await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -827,13 +800,8 @@
                         },
                         body: JSON.stringify({ path: fileP })
                     });
-                    if (!res.ok && client) {
-                        await client.storage.from('academic-files').remove([fileP]);
-                    }
                 } catch (e) {
-                    if (client) {
-                        await client.storage.from('academic-files').remove([fileP]).catch(() => {});
-                    }
+                    console.warn(`Error deleting file "${fileP}":`, e);
                 }
             }
         } catch (err) {
@@ -843,7 +811,6 @@
 
     async function createSubjectFolders(subjectId) {
         if (!subjectId) return;
-        const client = window.supabaseClient || getSupabaseClient();
 
         const folders = [`notes/${subjectId}`, `question_bank/${subjectId}`, `assignments/${subjectId}`];
         const dummyContent = new Blob(['Folder initialized'], { type: 'text/plain' });
@@ -857,18 +824,13 @@
                 formData.append('path', keepPath);
 
                 const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
-                const res = await fetch(apiUrl, {
+                await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + (token || '') },
                     body: formData
                 });
-                if (!res.ok && client) {
-                    await client.storage.from('academic-files').upload(keepPath, dummyContent, { upsert: true });
-                }
             } catch (e) {
-                if (client) {
-                    await client.storage.from('academic-files').upload(keepPath, dummyContent, { upsert: true }).catch(() => {});
-                }
+                console.warn(`Error creating keep file for folder "${folder}":`, e);
             }
         }
     }

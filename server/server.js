@@ -11,6 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorMiddleware');
 
 // Initialize Express App
@@ -47,6 +48,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/subjects', subjectRoutes);
 
 // Catch 404 and forward to Centralized Error Handler
 app.use(notFoundHandler);
