@@ -216,16 +216,12 @@
                     u = rpcUsers[0];
 
                     if (u) {
-                        const isAdmin = (
-                            u.is_admin === true ||
-                            u.is_admin === 'true' ||
-                            String(u.role || '').toLowerCase() === 'admin'
-                        );
+                        const isAdmin = u.is_admin === true || u.is_admin === 'true';
 
                         const sessionUser = {
-                            id: u.id || u.username,
+                            id: u.username,
                             username: u.username,
-                            email: u.email,
+                            email: u.email || '',
                             name: u.full_name || u.username,
                             is_admin: isAdmin,
                             role: isAdmin ? 'admin' : 'user'
@@ -234,9 +230,8 @@
                         const token = 'sb_jwt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
                         this.saveSession(token, sessionUser);
 
-                        // Increment login count in background
+                        // Update last login timestamp in background
                         client.from('users').update({
-                            login_count: (u.login_count || 0) + 1,
                             last_login_at: new Date().toISOString()
                         }).eq('username', u.username).then(()=>{}).catch(()=>{});
 
