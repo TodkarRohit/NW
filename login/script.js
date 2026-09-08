@@ -1110,9 +1110,12 @@ window.SubjectCard = SubjectCard;
     }
 
     // Mark State as Modified / Unpublished
-    function autoPublishState() {
+    async function autoPublishState() {
         if (typeof window.markUnpublishedChanges === 'function') {
             window.markUnpublishedChanges();
+        }
+        if (window.supabaseRealtime && typeof window.supabaseRealtime.pushAndBroadcast === 'function') {
+            await window.supabaseRealtime.pushAndBroadcast();
         }
     }
 
