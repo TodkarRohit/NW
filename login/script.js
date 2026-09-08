@@ -487,10 +487,19 @@ class SubjectCard {
         }
         localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
 
-        // 6. Reload in-memory structures & push live to Supabase Cloud Storage
+        // 6. Reload in-memory structures & sync folders with Supabase Cloud Storage
         if (typeof window.loadCustomSubjectsIntoData === 'function') {
             window.loadCustomSubjectsIntoData();
         }
+
+        if (window.supabaseRealtime) {
+            if (editId && typeof editId === 'string' && editId.trim() && editId.trim() !== this.id && typeof window.supabaseRealtime.renameFolders === 'function') {
+                await window.supabaseRealtime.renameFolders(editId.trim(), this.id);
+            } else if (typeof window.supabaseRealtime.createFolders === 'function') {
+                await window.supabaseRealtime.createFolders(this.id);
+            }
+        }
+
         await SubjectCard.pushToSupabase();
     }
 
@@ -552,10 +561,14 @@ class SubjectCard {
             localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
         } catch (e) {}
 
-        if (window.supabaseRealtime && window.supabaseRealtime.deleteFolder) {
-            await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
-            await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
-            await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
+        if (window.supabaseRealtime) {
+            if (typeof window.supabaseRealtime.deleteSubjectFolders === 'function') {
+                await window.supabaseRealtime.deleteSubjectFolders(sId);
+            } else if (window.supabaseRealtime.deleteFolder) {
+                await window.supabaseRealtime.deleteFolder(`notes/${sId}`);
+                await window.supabaseRealtime.deleteFolder(`question_bank/${sId}`);
+                await window.supabaseRealtime.deleteFolder(`assignments/${sId}`);
+            }
         }
 
         await SubjectCard.pushToSupabase();

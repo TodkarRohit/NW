@@ -832,6 +832,81 @@
         }
     }
 
+    async function createSubjectFolders(subjectId) {
+        if (!subjectId) return;
+        const client = window.supabaseClient || getSupabaseClient();
+
+        const folders = [`notes/${subjectId}`, `question_bank/${subjectId}`, `assignments/${subjectId}`];
+        const dummyContent = new Blob(['Folder initialized'], { type: 'text/plain' });
+
+        for (const folder of folders) {
+            const keepPath = `${folder}/.keep`;
+            try {
+                const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
+                const formData = new FormData();
+                formData.append('file', dummyContent, '.keep');
+                formData.append('path', keepPath);
+
+                const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/upload') : '/api/assignments/upload';
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + (token || '') },
+                    body: formData
+                });
+                if (!res.ok && client) {
+                    await client.storage.from('academic-files').upload(keepPath, dummyContent, { upsert: true });
+                }
+            } catch (e) {
+                if (client) {
+                    await client.storage.from('academic-files').upload(keepPath, dummyContent, { upsert: true }).catch(() => {});
+                }
+            }
+        }
+    }
+
+    async function renameSubjectFolders(oldSubjectId, newSubjectId) {
+        if (!oldSubjectId || !newSubjectId || oldSubjectId === newSubjectId) return;
+        const client = window.supabaseClient || getSupabaseClient();
+        const categories = ['notes', 'question_bank', 'assignments'];
+
+        for (const cat of categories) {
+            const oldPath = `${cat}/${oldSubjectId}`;
+            const newPath = `${cat}/${newSubjectId}`;
+
+            if (client && client.storage) {
+                try {
+                    const { data: items } = await client.storage.from('academic-files').list(oldPath);
+                    if (items && items.length > 0) {
+                        for (const item of items) {
+                            if (item.name) {
+                                const fromFile = `${oldPath}/${item.name}`;
+                                const toFile = `${newPath}/${item.name}`;
+                                try {
+                                    if (typeof client.storage.from('academic-files').move === 'function') {
+                                        await client.storage.from('academic-files').move(fromFile, toFile);
+                                    } else if (typeof client.storage.from('academic-files').copy === 'function') {
+                                        await client.storage.from('academic-files').copy(fromFile, toFile);
+                                        await client.storage.from('academic-files').remove([fromFile]);
+                                    }
+                                } catch (err) {}
+                            }
+                        }
+                    }
+                } catch (err) {}
+            }
+
+            await deleteSupabaseFolder(oldPath);
+        }
+        await createSubjectFolders(newSubjectId);
+    }
+
+    async function deleteSubjectFolders(subjectId) {
+        if (!subjectId) return;
+        await deleteSupabaseFolder(`notes/${subjectId}`);
+        await deleteSupabaseFolder(`question_bank/${subjectId}`);
+        await deleteSupabaseFolder(`assignments/${subjectId}`);
+    }
+
     window.supabaseRealtime = {
         subscribe: function (callback) {
             if (typeof callback === 'function' && !registeredRealtimeCallbacks.includes(callback)) {
@@ -841,7 +916,10 @@
         pushAndBroadcast: pushAndBroadcastStateChange,
         cleanOrphans: cleanOrphansStorage,
         pullLatest: pullLatestStateFromSupabase,
-        deleteFolder: deleteSupabaseFolder
+        deleteFolder: deleteSupabaseFolder,
+        createFolders: createSubjectFolders,
+        renameFolders: renameSubjectFolders,
+        deleteSubjectFolders: deleteSubjectFolders
     };
 
     // Initialize once DOM is ready
