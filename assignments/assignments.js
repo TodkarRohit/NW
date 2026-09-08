@@ -7,6 +7,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ---------------------------------------------------------
     const themeToggleBtn = document.getElementById('themeToggleBtn');
 
+    function safeLocalStorageSetItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (error) {
+            if (error.name === 'QuotaExceededError' || error.code === 22 || error.code === 1014 || error.number === -2147024882) {
+                const msg = 'Storage is full (QuotaExceededError)! Unable to save data locally. Please free up space or restore cloud connection.';
+                if (typeof showToast === 'function') {
+                    showToast(msg, true);
+                } else if (typeof window.showToast === 'function') {
+                    window.showToast(msg, true);
+                } else {
+                    alert(msg);
+                }
+            } else {
+                console.error('localStorage.setItem error:', error);
+            }
+        }
+    }
+
     function initTheme() {
         const savedTheme = localStorage.getItem('theme') || 'light';
         applyTheme(savedTheme);
@@ -15,13 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     function applyTheme(theme) {
         if (theme === 'dark') {
             document.body.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
+            safeLocalStorageSetItem('theme', 'dark');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i> <span class="theme-btn-text">Light Mode</span>';
             }
         } else {
             document.body.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
+            safeLocalStorageSetItem('theme', 'light');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i> <span class="theme-btn-text">Dark Mode</span>';
             }
@@ -295,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } catch (apiErr) {
                         if ((userVal === 'admin' && passVal === 'admin123') || (userVal === 'admin' && passVal === 'admin')) {
                             isAdminMode = true;
-                            localStorage.setItem('isAdminMode', 'true');
+                            safeLocalStorageSetItem('isAdminMode', 'true');
                             window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'admin' });
                             updateAdminUI();
                             closeAdminLoginModal();
@@ -407,11 +426,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const resJson = await res.json();
                     if (resJson.publicUrl) return resJson.publicUrl;
                 }
-                return await StorageManager.fileToDataUrl(file);
             } catch (e) {
-                console.warn('Storage exception, falling back to DataURL:', e);
-                return await StorageManager.fileToDataUrl(file);
+                console.warn('Backend upload API unavailable or failed:', e);
             }
+
+            // 1. Try direct Supabase Storage upload
+            const client = window.supabaseClient;
+            if (client) {
+                try {
+                    const { data, error } = await client.storage
+                        .from('academic-files')
+                        .upload(path, file, { contentType: file.type || 'application/pdf', upsert: true });
+                    if (!error) {
+                        const { data: urlData } = client.storage.from('academic-files').getPublicUrl(path);
+                        if (urlData && urlData.publicUrl) {
+                            return urlData.publicUrl;
+                        }
+                    } else {
+                        console.warn('Direct Supabase upload error:', error);
+                    }
+                } catch (supErr) {
+                    console.warn('Direct Supabase upload exception:', supErr);
+                }
+            }
+
+            // 2. Base64 Data URL fallback as absolute last resort (check 2MB size limit first)
+            const MAX_OFFLINE_SIZE = 2 * 1024 * 1024; // 2MB
+            if (file && file.size > MAX_OFFLINE_SIZE) {
+                throw new Error("File too large to save without cloud storage — please try again once connection is restored");
+            }
+
+            return await StorageManager.fileToDataUrl(file);
         }
     }
 
@@ -487,11 +532,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         saveLocalCache() {
             try {
-                localStorage.setItem(`custom_assignments_${this.subjectKey}`, JSON.stringify(this.dbAssignments));
+                safeLocalStorageSetItem(`custom_assignments_${this.subjectKey}`, JSON.stringify(this.dbAssignments));
                 if (typeof window.markUnpublishedChanges === 'function') {
                     window.markUnpublishedChanges();
                 }
-            } catch (e) { }
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    const msg = 'Storage is full! Unable to save assignment locally.';
+                    if (typeof showToast === 'function') showToast(msg, true);
+                    else alert(msg);
+                } else {
+                    console.error('saveLocalCache error:', e);
+                }
+            }
         }
 
         async publishAssignment(params) {
@@ -959,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function saveStoredCounts(assId, counts) {
-        localStorage.setItem(`counts_${assId}`, JSON.stringify(counts));
+        safeLocalStorageSetItem(`counts_${assId}`, JSON.stringify(counts));
     }
 
     function getStoredComments(assId, defaultComments) {
@@ -971,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function saveStoredComments(assId, comments) {
-        localStorage.setItem(`comments_${assId}`, JSON.stringify(comments));
+        safeLocalStorageSetItem(`comments_${assId}`, JSON.stringify(comments));
     }
 
     // ---------------------------------------------------------
