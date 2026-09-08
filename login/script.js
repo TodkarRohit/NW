@@ -413,19 +413,14 @@ class SubjectCard {
         const thisNormCode = this.id.replace(/_/g, '-');
         const thisAltCode = this.id.replace(/-/g, '_');
 
-        // 1. Clear from deleted_subjects_list if previously deleted
-        let deletedSubjects = [];
-        try {
-            deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
-        } catch (e) {}
-        deletedSubjects = deletedSubjects.filter(id => 
-            id !== this.id && id !== targetId && 
-            id !== normCode && id !== altCode && 
-            id !== thisNormCode && id !== thisAltCode && 
-            id.replace(/_/g, '-') !== normCode &&
-            id.replace(/_/g, '-') !== thisNormCode
-        );
-        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+        // 1. Clear ALL tombstone records for this subject ID, targetId, aliases, and title across storage & DB
+        if (typeof window.removeSubjectFromDeletedTombstones === 'function') {
+            window.removeSubjectFromDeletedTombstones(this.id);
+            window.removeSubjectFromDeletedTombstones(targetId);
+            window.removeSubjectFromDeletedTombstones(normCode);
+            window.removeSubjectFromDeletedTombstones(altCode);
+            if (this.title) window.removeSubjectFromDeletedTombstones(this.title);
+        }
 
         // 2. Prepare payload object
         const subjObj = {
@@ -1020,15 +1015,12 @@ window.SubjectCard = SubjectCard;
                 return;
             }
 
-            // Remove code & normalized variants from deleted_subjects_list if previously deleted
-            let deletedSubjects = [];
-            try {
-                deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
-            } catch (e) {}
-            const normCode = code.replace(/_/g, '-');
-            const altCode = code.replace(/-/g, '_');
-            deletedSubjects = deletedSubjects.filter(id => id !== code && id !== normCode && id !== altCode && id.replace(/_/g, '-') !== normCode);
-            localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+            // Remove code & all aliases/titles from tombstone lists if previously deleted
+            if (typeof window.removeSubjectFromDeletedTombstones === 'function') {
+                window.removeSubjectFromDeletedTombstones(code);
+                window.removeSubjectFromDeletedTombstones(title);
+                if (editId) window.removeSubjectFromDeletedTombstones(editId);
+            }
 
             const resourcesObj = {
                 notes: resNotesCheckbox ? resNotesCheckbox.checked : true,

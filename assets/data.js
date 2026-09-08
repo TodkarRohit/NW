@@ -391,6 +391,109 @@ loadCustomSubjectsIntoData();
 window.loadCustomSubjectsIntoData = loadCustomSubjectsIntoData;
 
 /**
+ * Remove subject ID and all aliases/titles from deletion tombstone lists across storage & DB
+ */
+function removeSubjectFromDeletedTombstones(idOrTitle) {
+    if (!idOrTitle) return;
+    const cleanStr = String(idOrTitle).trim();
+    if (!cleanStr) return;
+
+    const lowerTarget = cleanStr.toLowerCase();
+    const targetSet = new Set([
+        cleanStr,
+        lowerTarget,
+        cleanStr.replace(/_/g, '-'),
+        cleanStr.replace(/-/g, '_'),
+        lowerTarget.replace(/_/g, '-'),
+        lowerTarget.replace(/-/g, '_')
+    ]);
+
+    if (lowerTarget === 'coa' || lowerTarget === 'hardware' || lowerTarget.includes('computer organization')) {
+        targetSet.add('coa');
+        targetSet.add('hardware');
+        targetSet.add('computer organization and architecture [coa]');
+    }
+    if (lowerTarget === 'math' || lowerTarget === 'maths' || lowerTarget.includes('computational mathematics')) {
+        targetSet.add('math');
+        targetSet.add('maths');
+        targetSet.add('oe-1');
+        targetSet.add('computational mathematics [oe-1]');
+    }
+    if (lowerTarget === 'ds' || lowerTarget.includes('data structure')) {
+        targetSet.add('ds');
+        targetSet.add('data structure [ds]');
+    }
+    if (lowerTarget === 'os' || lowerTarget.includes('operating system')) {
+        targetSet.add('os');
+        targetSet.add('operating system and administration [os]');
+    }
+    if (lowerTarget === 'oop' || lowerTarget.includes('object oriented')) {
+        targetSet.add('oop');
+        targetSet.add('object oriented programming [oop]');
+    }
+
+    if (typeof subjectsData !== 'undefined') {
+        for (const k in subjectsData) {
+            const s = subjectsData[k];
+            if (s) {
+                const sId = (s.id || '').toLowerCase();
+                const sTitle = (s.title || '').toLowerCase();
+                if (targetSet.has(sId) || targetSet.has(sTitle) || sId === lowerTarget || sTitle === lowerTarget) {
+                    if (s.id) {
+                        targetSet.add(s.id);
+                        targetSet.add(s.id.toLowerCase());
+                        targetSet.add(s.id.replace(/_/g, '-'));
+                        targetSet.add(s.id.replace(/-/g, '_'));
+                    }
+                    if (s.title) {
+                        targetSet.add(s.title);
+                        targetSet.add(s.title.toLowerCase());
+                    }
+                }
+            }
+        }
+    }
+
+    const filterFn = (entry) => {
+        if (!entry) return false;
+        const entryStr = String(entry).trim();
+        const entryLower = entryStr.toLowerCase();
+        if (targetSet.has(entryStr) || targetSet.has(entryLower)) return false;
+        if (targetSet.has(entryStr.replace(/_/g, '-')) || targetSet.has(entryLower.replace(/_/g, '-'))) return false;
+        if (targetSet.has(entryStr.replace(/-/g, '_')) || targetSet.has(entryLower.replace(/-/g, '_'))) return false;
+        return true;
+    };
+
+    ['deleted_subjects_list', 'enh_permanent_deleted_subjects'].forEach(key => {
+        try {
+            const list1 = JSON.parse(localStorage.getItem(key)) || [];
+            const cleanList1 = list1.filter(filterFn);
+            localStorage.setItem(key, JSON.stringify(cleanList1));
+        } catch (e) {}
+
+        try {
+            const list2 = JSON.parse(sessionStorage.getItem(key)) || [];
+            const cleanList2 = list2.filter(filterFn);
+            sessionStorage.setItem(key, JSON.stringify(cleanList2));
+        } catch (e) {}
+    });
+
+    const client = window.supabaseClient || (typeof getSupabaseClient === 'function' ? getSupabaseClient() : null);
+    if (client) {
+        try {
+            const curList = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+            client.from('assignments').upsert({
+                id: '__deleted_subjects__',
+                title: 'Deleted Subjects List Backup',
+                unit: 'system',
+                question_data_url: JSON.stringify(curList)
+            }).then(() => {}).catch(e => console.warn('Tombstone DB purge update warning:', e));
+        } catch (e) {}
+    }
+}
+window.removeSubjectFromDeletedTombstones = removeSubjectFromDeletedTombstones;
+
+/**
  * Global Confirm Modal Dialog Helper
  */
 window.customConfirm = function(message) {
