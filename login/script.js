@@ -297,93 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Dynamic Grid Renderer
-    function renderSubjectsGrid(query = '') {
-        if (!subjectsContainer) return;
-
-        const activeBranch = getActiveBranch();
-        const isAdmin = checkAdminState();
-        const searchLower = query.toLowerCase().trim();
-
-        // Reload data from localStorage
-        if (typeof window.loadCustomSubjectsIntoData === 'function') {
-            window.loadCustomSubjectsIntoData();
-        }
-
-        // Deduplicate subject objects
-        const uniqueSubjects = [];
-        const seenObjects = new Set();
-
-        for (const key in subjectsData) {
-            const subj = subjectsData[key];
-            if (subj && !seenObjects.has(subj)) {
-                seenObjects.add(subj);
-                uniqueSubjects.push(subj);
-            }
-        }
-
-        // Filter by branch
-        const branchSubjects = uniqueSubjects.filter(subj => {
-            const branches = subj.branches || ['ALL'];
-            return branches.includes('ALL') || branches.includes(activeBranch);
-        });
-
-        // Filter by search query
-        let visibleSubjects = branchSubjects;
-        if (searchLower.length > 0) {
-            visibleSubjects = branchSubjects.filter(subj => {
-                const titleMatch = (subj.title || '').toLowerCase().includes(searchLower);
-                const semMatch = (subj.semester || '').toLowerCase().includes(searchLower);
-                const idMatch = (subj.id || '').toLowerCase().includes(searchLower);
-
-                let chapterMatch = false;
-                if (subj.chapters) {
-                    chapterMatch = subj.chapters.some(c => (c.title && c.title.toLowerCase().includes(searchLower)) || (c.name && c.name.toLowerCase().includes(searchLower)));
-                }
-
-                return titleMatch || semMatch || idMatch || chapterMatch;
-            });
-        }
-
-        // Search counter UI
-        if (searchCounter) {
-            if (searchLower.length > 0) {
-                searchCounter.style.display = 'inline-block';
-                searchCounter.innerHTML = `<i class="fa-solid fa-filter"></i> Found <strong>${visibleSubjects.length}</strong> matching subject${visibleSubjects.length === 1 ? '' : 's'} for "<em>${escapeHTML(searchLower)}</em>"`;
-            } else {
-                searchCounter.style.display = 'none';
-            }
-        }
-
-        if (searchClearBtn) {
-            searchClearBtn.style.display = searchLower.length > 0 ? 'flex' : 'none';
-        }
-
-        // Handle empty branch view
-        if (branchSubjects.length === 0) {
-            subjectsContainer.style.display = 'none';
-            if (branchUnavailableMessage) {
-                branchUnavailableMessage.style.display = 'block';
-                if (adminAddBranchSubjectBox) {
-                    adminAddBranchSubjectBox.style.display = isAdmin ? 'block' : 'none';
-                    if (emptyBranchName) emptyBranchName.textContent = `${activeBranch} Branch`;
-                }
-            }
-            if (noResultsMessage) noResultsMessage.style.display = 'none';
-            return;
-        } else {
-            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'none';
-        }
-
-        if (visibleSubjects.length === 0) {
-            subjectsContainer.style.display = 'none';
-            if (noResultsMessage) noResultsMessage.style.display = 'block';
-            return;
-        } else {
-            subjectsContainer.style.display = 'grid';
-            if (noResultsMessage) noResultsMessage.style.display = 'none';
-        }
-
+// SubjectCard OOP Class Definition
 class SubjectCard {
     constructor(subj) {
         this.id = subj.id;
@@ -478,16 +392,24 @@ class SubjectCard {
 
     // Instance method: Save subject card into LocalStorage and push to Supabase Cloud Storage
     async save(editId = null) {
-        const targetId = editId || this.id;
+        const targetId = (editId && typeof editId === 'string' && editId.trim()) ? editId.trim() : this.id;
         const normCode = targetId.replace(/_/g, '-');
         const altCode = targetId.replace(/-/g, '_');
+        const thisNormCode = this.id.replace(/_/g, '-');
+        const thisAltCode = this.id.replace(/-/g, '_');
 
         // 1. Clear from deleted_subjects_list if previously deleted
         let deletedSubjects = [];
         try {
             deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
         } catch (e) {}
-        deletedSubjects = deletedSubjects.filter(id => id !== targetId && id !== normCode && id !== altCode && id.replace(/_/g, '-') !== normCode);
+        deletedSubjects = deletedSubjects.filter(id => 
+            id !== this.id && id !== targetId && 
+            id !== normCode && id !== altCode && 
+            id !== thisNormCode && id !== thisAltCode && 
+            id.replace(/_/g, '-') !== normCode &&
+            id.replace(/_/g, '-') !== thisNormCode
+        );
         localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
 
         // 2. Prepare payload object
@@ -506,6 +428,8 @@ class SubjectCard {
 
         // 3. Update subjectsData in memory (including alias keys)
         subjectsData[this.id] = subjObj;
+        subjectsData[thisNormCode] = subjObj;
+        subjectsData[thisAltCode] = subjObj;
         if (this.id === 'math' || this.id === 'maths') {
             subjectsData['math'] = subjObj;
             subjectsData['maths'] = subjObj;
@@ -520,7 +444,11 @@ class SubjectCard {
         try {
             customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
         } catch (err) {}
-        customSubjects = customSubjects.filter(s => s && s.id !== this.id && s.id !== normCode && s.id !== altCode);
+        customSubjects = customSubjects.filter(s => 
+            s && s.id !== this.id && s.id !== targetId && 
+            s.id !== normCode && s.id !== altCode &&
+            s.id !== thisNormCode && s.id !== thisAltCode
+        );
         customSubjects.push(subjObj);
         localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
 
@@ -540,6 +468,7 @@ class SubjectCard {
             assignments: this.assignments
         };
         modifiedSubjects[this.id] = modPayload;
+        if (targetId) modifiedSubjects[targetId] = modPayload;
         if (this.id === 'math' || this.id === 'maths') {
             modifiedSubjects['math'] = modPayload;
             modifiedSubjects['maths'] = modPayload;
@@ -641,6 +570,93 @@ class SubjectCard {
     }
 }
 window.SubjectCard = SubjectCard;
+
+    // Dynamic Grid Renderer
+    function renderSubjectsGrid(query = '') {
+        if (!subjectsContainer) return;
+
+        const activeBranch = getActiveBranch();
+        const isAdmin = checkAdminState();
+        const searchLower = query.toLowerCase().trim();
+
+        // Reload data from localStorage
+        if (typeof window.loadCustomSubjectsIntoData === 'function') {
+            window.loadCustomSubjectsIntoData();
+        }
+
+        // Deduplicate subject objects
+        const uniqueSubjects = [];
+        const seenObjects = new Set();
+
+        for (const key in subjectsData) {
+            const subj = subjectsData[key];
+            if (subj && !seenObjects.has(subj)) {
+                seenObjects.add(subj);
+                uniqueSubjects.push(subj);
+            }
+        }
+
+        // Filter by branch
+        const branchSubjects = uniqueSubjects.filter(subj => {
+            const branches = subj.branches || ['ALL'];
+            return branches.includes('ALL') || branches.includes(activeBranch);
+        });
+
+        // Filter by search query
+        let visibleSubjects = branchSubjects;
+        if (searchLower.length > 0) {
+            visibleSubjects = branchSubjects.filter(subj => {
+                const titleMatch = (subj.title || '').toLowerCase().includes(searchLower);
+                const semMatch = (subj.semester || '').toLowerCase().includes(searchLower);
+                const idMatch = (subj.id || '').toLowerCase().includes(searchLower);
+
+                let chapterMatch = false;
+                if (subj.chapters) {
+                    chapterMatch = subj.chapters.some(c => (c.title && c.title.toLowerCase().includes(searchLower)) || (c.name && c.name.toLowerCase().includes(searchLower)));
+                }
+
+                return titleMatch || semMatch || idMatch || chapterMatch;
+            });
+        }
+
+        // Search counter UI
+        if (searchCounter) {
+            if (searchLower.length > 0) {
+                searchCounter.style.display = 'inline-block';
+                searchCounter.innerHTML = `<i class="fa-solid fa-filter"></i> Found <strong>${visibleSubjects.length}</strong> matching subject${visibleSubjects.length === 1 ? '' : 's'} for "<em>${escapeHTML(searchLower)}</em>"`;
+            } else {
+                searchCounter.style.display = 'none';
+            }
+        }
+
+        if (searchClearBtn) {
+            searchClearBtn.style.display = searchLower.length > 0 ? 'flex' : 'none';
+        }
+
+        // Handle empty branch view
+        if (branchSubjects.length === 0) {
+            subjectsContainer.style.display = 'none';
+            if (branchUnavailableMessage) {
+                branchUnavailableMessage.style.display = 'block';
+                if (adminAddBranchSubjectBox) {
+                    adminAddBranchSubjectBox.style.display = isAdmin ? 'block' : 'none';
+                    if (emptyBranchName) emptyBranchName.textContent = `${activeBranch} Branch`;
+                }
+            }
+            if (noResultsMessage) noResultsMessage.style.display = 'none';
+            return;
+        } else {
+            if (branchUnavailableMessage) branchUnavailableMessage.style.display = 'none';
+        }
+
+        if (visibleSubjects.length === 0) {
+            subjectsContainer.style.display = 'none';
+            if (noResultsMessage) noResultsMessage.style.display = 'block';
+            return;
+        } else {
+            subjectsContainer.style.display = 'grid';
+            if (noResultsMessage) noResultsMessage.style.display = 'none';
+        }
 
         // Render HTML for matching subjects using SubjectCard class
         subjectsContainer.innerHTML = visibleSubjects.map(subj => new SubjectCard(subj).render(isAdmin)).join('');
