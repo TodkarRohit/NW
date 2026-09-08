@@ -587,6 +587,27 @@
                     'deleted_branches_'
                 ];
 
+                // Preserve local deletion tombstones so stale cloud data cannot un-delete deleted subjects!
+                let localDeletedSubjects = [];
+                try {
+                    const l1 = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+                    const l2 = JSON.parse(sessionStorage.getItem('deleted_subjects_list')) || [];
+                    const l3 = JSON.parse(localStorage.getItem('enh_permanent_deleted_subjects')) || [];
+                    localDeletedSubjects = Array.from(new Set([...l1, ...l2, ...l3]));
+                } catch (e) {}
+
+                // Fetch DB deletion backup from public.assignments
+                let dbDeletedSubjects = [];
+                try {
+                    const { data: dbRows } = await client
+                        .from('assignments')
+                        .select('question_data_url')
+                        .eq('id', '__deleted_subjects__');
+                    if (dbRows && dbRows.length > 0 && dbRows[0].question_data_url) {
+                        dbDeletedSubjects = JSON.parse(dbRows[0].question_data_url);
+                    }
+                } catch (e) {}
+
                 // 1. Purge all existing local sync keys to prevent stale leftovers (using safe snapshot of keys)
                 const allKeys = Object.keys(localStorage);
                 allKeys.forEach(k => {
@@ -604,18 +625,49 @@
                     }
                 }
 
-                // 3. Remove deleted keys specified in cloud's deleted_keys_global
+                // 3. MERGE all deletion tombstones back into localStorage so deleted subjects STAY DELETED!
+                let cloudDeletedSubjects = [];
+                try {
+                    cloudDeletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+                } catch (e) {}
+
+                const mergedDeletedSubjects = Array.from(new Set([
+                    ...localDeletedSubjects,
+                    ...dbDeletedSubjects,
+                    ...cloudDeletedSubjects
+                ])).filter(Boolean);
+
+                localStorage.setItem('deleted_subjects_list', JSON.stringify(mergedDeletedSubjects));
+                sessionStorage.setItem('deleted_subjects_list', JSON.stringify(mergedDeletedSubjects));
+                localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(mergedDeletedSubjects));
+
+                // 4. Ensure custom_subjects_list does NOT contain any deleted subjects
+                try {
+                    let customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+                    customSubjects = customSubjects.filter(s => {
+                        if (!s) return false;
+                        const sId = s.id || s.code || '';
+                        const normId = sId.replace(/_/g, '-');
+                        const altId = sId.replace(/-/g, '_');
+                        return !mergedDeletedSubjects.includes(sId) &&
+                               !mergedDeletedSubjects.includes(normId) &&
+                               !mergedDeletedSubjects.includes(altId);
+                    });
+                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
+                } catch (e) {}
+
+                // 5. Remove deleted keys specified in cloud's deleted_keys_global
                 let cloudDeletedKeys = [];
                 try {
                     cloudDeletedKeys = JSON.parse(publishedData['deleted_keys_global'] || '[]');
                 } catch (e) {}
                 cloudDeletedKeys.forEach(delKey => localStorage.removeItem(delKey));
 
-                // 4. Mark unpublished changes as false
+                // 6. Mark unpublished changes as false
                 localStorage.setItem('hasUnpublishedChanges', 'false');
                 updateUnpublishedBanner();
 
-                // 5. Reload in-memory structures
+                // 7. Reload in-memory structures
                 if (typeof window.loadCustomSubjectsIntoData === 'function') {
                     window.loadCustomSubjectsIntoData();
                 }
@@ -736,6 +788,23 @@
                 } catch (spErr) {
                     console.error('[Publish State] Direct Supabase exception:', spErr);
                 }
+            }
+        }
+
+        // Backup deleted subjects list into Supabase DB table public.assignments for 100% permanent persistence
+        const backupClient = window.supabaseClient || getSupabaseClient();
+        if (backupClient && exportData['deleted_subjects_list']) {
+            try {
+                await backupClient
+                    .from('assignments')
+                    .upsert({
+                        id: '__deleted_subjects__',
+                        title: 'Deleted Subjects List Backup',
+                        unit: 'system',
+                        question_data_url: exportData['deleted_subjects_list']
+                    });
+            } catch (e) {
+                console.warn('[Publish State] DB deletion backup error:', e);
             }
         }
 

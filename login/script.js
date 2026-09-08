@@ -591,6 +591,8 @@ class SubjectCard {
         });
 
         localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+        sessionStorage.setItem('deleted_subjects_list', JSON.stringify(deletedSubjects));
+        localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(deletedSubjects));
 
         try {
             customSubjects = customSubjects.filter(s => {

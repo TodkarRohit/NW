@@ -251,7 +251,15 @@ subjectsData["coa"] = subjectsData["hardware"];
 
 function loadCustomSubjectsIntoData() {
     try {
-        const deletedList = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+        const l1 = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+        const l2 = JSON.parse(sessionStorage.getItem('deleted_subjects_list')) || [];
+        const l3 = JSON.parse(localStorage.getItem('enh_permanent_deleted_subjects')) || [];
+        const deletedList = Array.from(new Set([...l1, ...l2, ...l3])).filter(Boolean);
+
+        localStorage.setItem('deleted_subjects_list', JSON.stringify(deletedList));
+        sessionStorage.setItem('deleted_subjects_list', JSON.stringify(deletedList));
+        localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(deletedList));
+
         deletedList.forEach(id => {
             delete subjectsData[id];
             if (id === 'maths' || id === 'math') {
@@ -264,7 +272,16 @@ function loadCustomSubjectsIntoData() {
             }
         });
 
-        const customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+        let customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+        customList = customList.filter(subj => {
+            if (!subj) return false;
+            const sId = subj.id || subj.code || '';
+            const normId = sId.replace(/_/g, '-');
+            const altId = sId.replace(/-/g, '_');
+            return !deletedList.includes(sId) && !deletedList.includes(normId) && !deletedList.includes(altId);
+        });
+        localStorage.setItem('custom_subjects_list', JSON.stringify(customList));
+
         customList.forEach(subj => {
             if (subj) {
                 const sId = subj.id || subj.code || '';
