@@ -829,6 +829,15 @@ window.SubjectCard = SubjectCard;
             if (noResultsMessage) noResultsMessage.style.display = 'none';
         }
 
+        // Debug logging for rendered grid subjects
+        try {
+            console.log('[SYNC DEBUG] Grid Rendered:', {
+                activeBranch: activeBranch,
+                visibleCount: visibleSubjects.length,
+                subjectTitles: visibleSubjects.map(s => s ? (s.title || s.id) : '')
+            });
+        } catch (e) {}
+
         // Render HTML for matching subjects using SubjectCard class
         subjectsContainer.innerHTML = visibleSubjects.map(subj => new SubjectCard(subj).render(isAdmin)).join('');
 

@@ -182,15 +182,38 @@
                     const hashedInput = await hashSHA256(password);
                     let u = null;
 
+                    console.log('[AUTH DIAGNOSTIC] Initiating RPC verify_user_credentials', {
+                        loginId: cleanId,
+                        hashLength: hashedInput ? hashedInput.length : 0,
+                        hashPrefix: hashedInput ? hashedInput.substring(0, 8) + '...' : 'empty'
+                    });
+
                     // Execute RPC function (password matching occurs on database server inside Postgres)
                     const { data: rpcUsers, error: rpcErr } = await client
                         .rpc('verify_user_credentials', { p_login: cleanId, p_password_hash: hashedInput });
 
-                    if (!rpcErr && rpcUsers && rpcUsers.length > 0) {
-                        u = rpcUsers[0];
-                    } else {
+                    if (rpcErr) {
+                        console.error('[AUTH DIAGNOSTIC] RPC returned error:', {
+                            code: rpcErr.code,
+                            message: rpcErr.message,
+                            details: rpcErr.details,
+                            hint: rpcErr.hint
+                        });
                         throw new Error('Invalid username or password.');
                     }
+
+                    if (!rpcUsers || rpcUsers.length === 0) {
+                        console.warn('[AUTH DIAGNOSTIC] RPC returned zero matching users for loginId:', cleanId);
+                        throw new Error('Invalid username or password.');
+                    }
+
+                    console.log('[AUTH DIAGNOSTIC] RPC successfully verified user:', {
+                        username: rpcUsers[0].username,
+                        email: rpcUsers[0].email,
+                        is_admin: rpcUsers[0].is_admin
+                    });
+
+                    u = rpcUsers[0];
 
                     if (u) {
                         const isAdmin = (
@@ -596,27 +619,6 @@
                     'deleted_branches_'
                 ];
 
-                // Preserve local deletion tombstones so stale cloud data cannot un-delete deleted subjects!
-                let localDeletedSubjects = [];
-                try {
-                    const l1 = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
-                    const l2 = JSON.parse(sessionStorage.getItem('deleted_subjects_list')) || [];
-                    const l3 = JSON.parse(localStorage.getItem('enh_permanent_deleted_subjects')) || [];
-                    localDeletedSubjects = Array.from(new Set([...l1, ...l2, ...l3]));
-                } catch (e) {}
-
-                // Fetch DB deletion backup from public.assignments
-                let dbDeletedSubjects = [];
-                try {
-                    const { data: dbRows } = await client
-                        .from('assignments')
-                        .select('question_data_url')
-                        .eq('id', '__deleted_subjects__');
-                    if (dbRows && dbRows.length > 0 && dbRows[0].question_data_url) {
-                        dbDeletedSubjects = JSON.parse(dbRows[0].question_data_url);
-                    }
-                } catch (e) {}
-
                 // 1. Purge all existing local sync keys to prevent stale leftovers (using safe snapshot of keys)
                 const allKeys = Object.keys(localStorage);
                 allKeys.forEach(k => {
@@ -634,73 +636,43 @@
                     }
                 }
 
-                // 3. MERGE all deletion tombstones back into localStorage so deleted subjects STAY DELETED!
+                // 3. Synchronize deleted_subjects_list authoritatively from central published state
                 let cloudDeletedSubjects = [];
                 try {
-                    cloudDeletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
+                    cloudDeletedSubjects = JSON.parse(publishedData['deleted_subjects_list'] || '[]');
                 } catch (e) {}
 
-                const mergedDeletedSubjects = Array.from(new Set([
-                    ...localDeletedSubjects,
-                    ...dbDeletedSubjects,
-                    ...cloudDeletedSubjects
-                ])).filter(Boolean);
+                localStorage.setItem('deleted_subjects_list', JSON.stringify(cloudDeletedSubjects));
+                sessionStorage.setItem('deleted_subjects_list', JSON.stringify(cloudDeletedSubjects));
+                localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(cloudDeletedSubjects));
 
-                localStorage.setItem('deleted_subjects_list', JSON.stringify(mergedDeletedSubjects));
-                sessionStorage.setItem('deleted_subjects_list', JSON.stringify(mergedDeletedSubjects));
-                localStorage.setItem('enh_permanent_deleted_subjects', JSON.stringify(mergedDeletedSubjects));
-
-                // 4. Ensure custom_subjects_list and modified_subjects_data do NOT contain any deleted subjects
-                try {
-                    const mergedDeletedSet = new Set();
-                    mergedDeletedSubjects.forEach(item => {
-                        if (!item) return;
-                        const str = String(item).toLowerCase().trim();
-                        mergedDeletedSet.add(str);
-                        mergedDeletedSet.add(str.replace(/_/g, '-'));
-                        mergedDeletedSet.add(str.replace(/-/g, '_'));
-                    });
-
-                    let customSubjects = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
-                    customSubjects = customSubjects.filter(s => {
-                        if (!s) return false;
-                        const sId = String(s.id || s.code || '').toLowerCase().trim();
-                        const sTitle = String(s.title || '').toLowerCase().trim();
-                        const normId = sId.replace(/_/g, '-');
-                        const altId = sId.replace(/-/g, '_');
-                        return !mergedDeletedSet.has(sId) && !mergedDeletedSet.has(sTitle) && !mergedDeletedSet.has(normId) && !mergedDeletedSet.has(altId);
-                    });
-                    localStorage.setItem('custom_subjects_list', JSON.stringify(customSubjects));
-
-                    let modifiedSubjects = JSON.parse(localStorage.getItem('modified_subjects_data')) || {};
-                    for (const modKey in modifiedSubjects) {
-                        const modObj = modifiedSubjects[modKey];
-                        const kLower = String(modKey).toLowerCase().trim();
-                        const mTitle = modObj && modObj.title ? String(modObj.title).toLowerCase().trim() : '';
-                        const normK = kLower.replace(/_/g, '-');
-                        const altK = kLower.replace(/-/g, '_');
-                        if (mergedDeletedSet.has(kLower) || mergedDeletedSet.has(mTitle) || mergedDeletedSet.has(normK) || mergedDeletedSet.has(altK)) {
-                            delete modifiedSubjects[modKey];
-                        }
-                    }
-                    localStorage.setItem('modified_subjects_data', JSON.stringify(modifiedSubjects));
-                } catch (e) {}
-
-                // 5. Remove deleted keys specified in cloud's deleted_keys_global
+                // 4. Remove deleted keys specified in cloud's deleted_keys_global
                 let cloudDeletedKeys = [];
                 try {
                     cloudDeletedKeys = JSON.parse(publishedData['deleted_keys_global'] || '[]');
                 } catch (e) {}
                 cloudDeletedKeys.forEach(delKey => localStorage.removeItem(delKey));
 
-                // 6. Mark unpublished changes as false
+                // 5. Mark unpublished changes as false
                 localStorage.setItem('hasUnpublishedChanges', 'false');
                 updateUnpublishedBanner();
 
-                // 7. Reload in-memory structures
+                // 6. Reload in-memory structures
                 if (typeof window.loadCustomSubjectsIntoData === 'function') {
                     window.loadCustomSubjectsIntoData();
                 }
+
+                // 7. Structured Sync Debug Logging
+                try {
+                    const customList = JSON.parse(localStorage.getItem('custom_subjects_list')) || [];
+                    const customTitles = customList.map(s => s ? (s.title || s.id) : '').filter(Boolean);
+                    console.log('[SYNC DEBUG] Pull successful from central storage.', {
+                        timestamp: new Date().toISOString(),
+                        cloudDeletedSubjects: cloudDeletedSubjects,
+                        customSubjectsCount: customList.length,
+                        customSubjectTitles: customTitles
+                    });
+                } catch (dbgErr) {}
 
                 try {
                     window.dispatchEvent(new CustomEvent('academicStateRefreshed'));
@@ -713,7 +685,7 @@
                 return true;
             }
         } catch (e) {
-            console.warn('Error pulling state from Supabase:', e);
+            console.warn('[SYNC DEBUG] Error pulling state from Supabase:', e);
         }
         return false;
     }

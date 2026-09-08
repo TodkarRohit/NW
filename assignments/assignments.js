@@ -565,9 +565,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         saveLocalCache() {
             try {
                 safeLocalStorageSetItem(`custom_assignments_${this.subjectKey}`, JSON.stringify(this.dbAssignments));
-                if (typeof window.markUnpublishedChanges === 'function') {
-                    window.markUnpublishedChanges();
-                }
             } catch (e) {
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
                     const msg = 'Storage is full! Unable to save assignment locally.';
