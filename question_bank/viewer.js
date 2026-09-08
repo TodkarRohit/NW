@@ -1781,9 +1781,15 @@ document.addEventListener('DOMContentLoaded', () => {
         initPdfViewModeSwitcher();
 
         const itemListEl = document.getElementById('chapterList') || document.getElementById('notesDocument');
+        const loadingHTML = (window.LoadingContentManager && typeof window.LoadingContentManager.getLoadingSpinnerHTML === 'function')
+            ? window.LoadingContentManager.getLoadingSpinnerHTML('Loading latest question banks from Supabase...')
+            : '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest question banks from Supabase...</p></div>';
+
         if (itemListEl) {
-            itemListEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest question banks from Supabase...</p></div>';
+            itemListEl.innerHTML = loadingHTML;
         }
+
+        refreshDataAndUI();
 
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             try {

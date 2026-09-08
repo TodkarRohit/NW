@@ -1832,13 +1832,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, "&#039;");
     }
 
-    // Initial Load & Realtime Sync (Awaited Cloud Pull Before Rendering)
+    // Initial Load & Realtime Sync (Instant local render + background cloud sync)
     async function initAssignmentsPage() {
         updateAdminUI();
         const assignmentsListEl = document.getElementById('assignmentsList');
+        const loadingHTML = (window.LoadingContentManager && typeof window.LoadingContentManager.getLoadingSpinnerHTML === 'function')
+            ? window.LoadingContentManager.getLoadingSpinnerHTML('Loading latest assignments from Supabase...')
+            : '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest assignments from Supabase...</p></div>';
+
         if (assignmentsListEl) {
-            assignmentsListEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest assignments from Supabase...</p></div>';
+            assignmentsListEl.innerHTML = loadingHTML;
         }
+
+        renderChapterNav();
+        renderAssignments(searchInput ? searchInput.value : '');
 
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             try {

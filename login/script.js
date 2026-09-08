@@ -1204,15 +1204,22 @@ window.SubjectCard = SubjectCard;
         renderSubjectsGrid(searchInput ? searchInput.value : '');
     });
 
-    // Initial Load & Cloud Sync (Awaited Cloud Pull Before Rendering)
+    // Initial Load & Cloud Sync (Instant local render + background cloud sync)
     async function init() {
         checkAdminState();
         renderBranchesSidebar();
 
         const subjectsGridEl = document.getElementById('subjectsContainer') || document.getElementById('subjectsGrid');
+        const loadingHTML = (window.LoadingContentManager && typeof window.LoadingContentManager.getLoadingSpinnerHTML === 'function')
+            ? window.LoadingContentManager.getLoadingSpinnerHTML('Loading latest data from Supabase...')
+            : '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest data from Supabase...</p></div>';
+
         if (subjectsGridEl) {
-            subjectsGridEl.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top: 10px;">Loading latest data from Supabase...</p></div>';
+            subjectsGridEl.innerHTML = `<div style="grid-column: 1 / -1;">${loadingHTML}</div>`;
         }
+
+        // Render cached local subjects immediately if present
+        renderSubjectsGrid(searchInput ? searchInput.value : '');
 
         if (window.supabaseRealtime && window.supabaseRealtime.pullLatest) {
             try {

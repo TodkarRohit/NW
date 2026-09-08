@@ -507,37 +507,52 @@
         try {
             let publishedData = null;
 
-            // 1. Primary: Download direct from Supabase Storage API (bypasses CDN edge cache)
-            try {
-                const { data: blobData, error: downloadErr } = await client.storage
-                    .from('academic-files')
-                    .download('published_state/app_data.json');
-                if (!downloadErr && blobData) {
-                    const text = await blobData.text();
-                    publishedData = JSON.parse(text);
-                }
-            } catch (dlErr) {
-                console.warn('Storage API download fallback:', dlErr);
-            }
+            // 1. Fast parallel fetch: Race Supabase Storage API download with Public CDN fetch
+            const fetchViaStorageApi = async () => {
+                try {
+                    const { data: blobData, error: downloadErr } = await client.storage
+                        .from('academic-files')
+                        .download('published_state/app_data.json');
+                    if (!downloadErr && blobData) {
+                        const text = await blobData.text();
+                        return JSON.parse(text);
+                    }
+                } catch (e) {}
+                return null;
+            };
 
-            // 2. Secondary Fallback: Download from Storage Public URL
-            if (!publishedData) {
+            const fetchViaPublicUrl = async () => {
                 try {
                     const { data: urlData } = client.storage
                         .from('academic-files')
                         .getPublicUrl('published_state/app_data.json');
-
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
-                    const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { cache: 'no-store', signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (res.ok) {
-                        publishedData = await res.json();
+                    if (urlData && urlData.publicUrl) {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 3500);
+                        const res = await fetch(urlData.publicUrl + '?t=' + Date.now(), { cache: 'no-store', signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        if (res.ok) {
+                            return await res.json();
+                        }
                     }
-                } catch (urlErr) {}
-            }
+                } catch (e) {}
+                return null;
+            };
 
-            // 3. Tertiary Fallback: Fetch from Supabase DB Table (public.assignments)
+            try {
+                const results = await Promise.allSettled([
+                    fetchViaStorageApi(),
+                    fetchViaPublicUrl()
+                ]);
+                for (const res of results) {
+                    if (res.status === 'fulfilled' && res.value && typeof res.value === 'object') {
+                        publishedData = res.value;
+                        break;
+                    }
+                }
+            } catch (e) {}
+
+            // Fallback to Supabase DB Table (public.assignments) if storage files fail
             if (!publishedData) {
                 try {
                     const { data: dbRows } = await client
