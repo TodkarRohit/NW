@@ -673,10 +673,11 @@
             }
         }
 
+        let publishSuccess = false;
         try {
             const token = window.authService ? window.authService.getToken() : localStorage.getItem('enh_auth_token');
             const apiUrl = typeof getApiUrl === 'function' ? getApiUrl('/api/assignments/publish-state') : '/api/assignments/publish-state';
-            await fetch(apiUrl, {
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -684,27 +685,43 @@
                 },
                 body: JSON.stringify({ data: exportData })
             });
-        } catch (backendErr) {
-            console.warn('Publish state error:', backendErr);
-        }
 
-        // Broadcast to all clients
-        if (realtimeChannel) {
-            try {
-                await realtimeChannel.send({
-                    type: 'broadcast',
-                    event: 'academic_state_updated',
-                    payload: { timestamp: Date.now(), sender: window.clientId || 'default' }
-                });
-            } catch (e) {
-                console.warn('Broadcast notice error:', e);
+            if (res.ok) {
+                publishSuccess = true;
+            } else {
+                const errJson = await res.json().catch(() => ({ message: 'Publish failed' }));
+                console.warn(`[Publish State] Server returned HTTP ${res.status}:`, errJson.message);
+                if (typeof showToast === 'function') {
+                    showToast(`Publish failed: ${errJson.message || 'Server error'}`);
+                }
+            }
+        } catch (backendErr) {
+            console.warn('[Publish State] Network error:', backendErr);
+            if (typeof showToast === 'function') {
+                showToast(`Publish network error: ${backendErr.message}`);
             }
         }
 
-        // Clear unpublished changes flag after successful server confirmation
-        localStorage.setItem('hasUnpublishedChanges', 'false');
-        updateUnpublishedBanner();
-        return true;
+        // Only broadcast & clear unpublished changes flag if publish succeeded
+        if (publishSuccess) {
+            if (realtimeChannel) {
+                try {
+                    await realtimeChannel.send({
+                        type: 'broadcast',
+                        event: 'academic_state_updated',
+                        payload: { timestamp: Date.now(), sender: window.clientId || 'default' }
+                    });
+                } catch (e) {
+                    console.warn('Broadcast notice error:', e);
+                }
+            }
+
+            localStorage.setItem('hasUnpublishedChanges', 'false');
+            updateUnpublishedBanner();
+            return true;
+        }
+
+        return false;
     }
 
     async function cleanOrphansStorage() {
