@@ -548,6 +548,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async publishAssignment(params) {
+            if (!requireAdmin('publish assignments')) return null;
             const { targetSubjectKey, targetChapterId, targetChObj, assNum, assTitle, qFile, aFile, qNotes, aNotes } = params;
 
             const qStoragePath = `assignments/${targetSubjectKey}/${targetChapterId}/questions/${Date.now()}_${qFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
@@ -645,6 +646,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async updateSolution(assId, targetChapterId, aFile) {
+            if (!requireAdmin('update assignment solution')) return;
             const targetItem = this.dbAssignments.find(a => a.id === assId);
             if (!targetItem) return;
 
@@ -701,6 +703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async deleteAssignment(assId) {
+            if (!requireAdmin('delete assignments')) return;
             const targetAss = this.dbAssignments.find(a => a.id === assId);
             if (targetAss) {
                 // DELETE BOTH QUESTION AND ANSWER FILES FROM STORAGE TO FREE UP SPACE
@@ -958,10 +961,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (inpageForm) {
             inpageForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if (!isAdminMode) {
-                    if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
-                    return;
-                }
+                if (!requireAdmin('upload assignments')) return;
 
                 const targetChapterId = document.getElementById('inpageUploadChapter').value;
                 const assNum = parseInt(document.getElementById('inpageUploadAssNum').value, 10);
@@ -1781,10 +1781,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (adminUploadForm) {
         adminUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!isAdminMode) {
-                if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
-                return;
-            }
+            if (!requireAdmin('upload assignments')) return;
 
             const targetSubjectKey = document.getElementById('uploadSubjectSelect').value;
             const targetChapterId = document.getElementById('uploadChapterSelect').value;
@@ -1975,10 +1972,7 @@ if (uploadAnswerPdfInput && aPdfNameDisplay) {
 if (adminUploadForm) {
     adminUploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!isAdminMode) {
-            if (document.getElementById('adminToggleBtn')) document.getElementById('adminToggleBtn').click();
-            return;
-        }
+        if (!requireAdmin('upload assignments')) return;
 
         const targetSubjectKey = document.getElementById('uploadSubjectSelect').value;
         const targetChapterId = document.getElementById('uploadChapterSelect').value;

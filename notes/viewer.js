@@ -769,8 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const deleteFileBtn = document.getElementById('deleteDocBtn');
             if (deleteFileBtn && currentItem) {
                 deleteFileBtn.onclick = async () => {
-                    if (!checkIsAdmin()) {
-                        alert("Only administrators can delete files.");
+                    if (!requireAdmin('delete files')) {
                         return;
                     }
                     if (await customConfirm(`Remove uploaded ${isQB ? currentQBView : ''} file for ${currentItem.title}?`)) {
@@ -1054,8 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (uploadFileBtn) {
         uploadFileBtn.addEventListener('click', () => {
-            if (!checkIsAdmin()) {
-                alert("Only administrators can upload files.");
+            if (!requireAdmin('upload files')) {
                 return;
             }
             if (isQB) {
@@ -1077,6 +1075,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (qbUploadForm) {
         qbUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!requireAdmin('upload files')) return;
             const targetIndex = parseInt(qbModalItemSelect.value, 10);
             const selectedDocType = document.querySelector('input[name="qbUploadDocType"]:checked')?.value || 'questions';
             const file = qbModalFileInput.files[0];
@@ -1168,6 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleFileSelection(file) {
         if (!file) return;
+        if (!requireAdmin('upload files')) return;
 
         try {
             const detectedCat = detectCategoryFromFileName(file.name);
@@ -1554,6 +1554,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function autoPublishState() {
+        if (!checkIsAdmin()) {
+            console.warn('Blocked autoPublishState: User is not an authenticated admin.');
+            return;
+        }
         if (typeof window.markUnpublishedChanges === 'function') {
             window.markUnpublishedChanges();
         }
@@ -1565,15 +1569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const publishBtn = document.getElementById('publishBtn');
     if (publishBtn) {
         publishBtn.addEventListener('click', async () => {
-            const isAdmin = checkIsAdmin();
-
-            if (!isAdmin) {
-                showToast('Please login as Admin to publish changes to all users!', true);
-                if (document.getElementById('adminToggleBtn')) {
-                    document.getElementById('adminToggleBtn').click();
-                }
-                return;
-            }
+            if (!requireAdmin('publish changes')) return;
 
             publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Publishing...</span>`;
             publishBtn.disabled = true;

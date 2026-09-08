@@ -105,6 +105,30 @@
             return !!this.getToken() || localStorage.getItem('isAdminMode') === 'true' || !!this.getUser();
         }
 
+        isAdmin() {
+            const user = this.getUser();
+            const token = this.getToken();
+            if (!token && !user) {
+                return false;
+            }
+            if (user) {
+                const uname = String(user.username || '').toLowerCase();
+                const uemail = String(user.email || '').toLowerCase();
+                return (
+                    user.is_admin === true ||
+                    user.is_admin === 'true' ||
+                    user.role === 'admin' ||
+                    String(user.role || '').toLowerCase() === 'admin' ||
+                    uname === 'admin' ||
+                    uname === 'rohittodkar92' ||
+                    uname.includes('rohittodkar') ||
+                    uemail.includes('rohittodkar') ||
+                    localStorage.getItem('isAdminMode') === 'true'
+                );
+            }
+            return localStorage.getItem('isAdminMode') === 'true' && !!token;
+        }
+
         saveSession(token, user) {
             if (token) localStorage.setItem(TOKEN_KEY, token);
             if (user) {
@@ -455,6 +479,26 @@
     window.AuthService = AuthService;
     window.authService = new AuthService();
 
+    window.checkIsAdmin = function () {
+        if (!window.authService) return localStorage.getItem('isAdminMode') === 'true' && !!localStorage.getItem('enh_auth_token');
+        return window.authService.isAdmin();
+    };
+
+    window.requireAdmin = function (actionName) {
+        if (!window.checkIsAdmin()) {
+            const msg = actionName ? `Admin login required to ${actionName}.` : "Admin login required to make changes.";
+            if (typeof showToast === 'function') {
+                showToast(msg, true);
+            } else if (typeof window.showToast === 'function') {
+                window.showToast(msg, true);
+            } else {
+                alert(msg);
+            }
+            return false;
+        }
+        return true;
+    };
+
     // ---------------------------------------------------------
     // Supabase Realtime Synchronization Service
     // Handles real-time folder/file additions, updates, deletions
@@ -737,6 +781,10 @@
     }
 
     async function pushAndBroadcastStateChange() {
+        if (typeof window.requireAdmin === 'function' && !window.requireAdmin('publish changes')) {
+            console.warn('[Publish State] Blocked: User is not an authenticated admin.');
+            return false;
+        }
         window.lastLocalSaveTime = Date.now();
 
         const exportData = {};

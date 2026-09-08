@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (publishStateBtn) {
         publishStateBtn.addEventListener('click', async () => {
+            if (!requireAdmin('publish changes')) return;
             publishStateBtn.disabled = true;
             const originalHTML = publishStateBtn.innerHTML;
             publishStateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Publishing...</span>';
@@ -221,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async deleteBranch(bCode, bName) {
+            if (!requireAdmin('delete branches')) return;
             let deletedBranches = [];
             try {
                 deletedBranches = JSON.parse(localStorage.getItem('deleted_branches_list')) || [];
@@ -248,6 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         async saveBranch(code, name, editCode) {
+            if (!requireAdmin('save branch')) return;
             if (!editCode) {
                 let customBranches = [];
                 try {
@@ -407,6 +410,7 @@ class SubjectCard {
 
     // Instance method: Save subject card into LocalStorage and push to Supabase Cloud Storage
     async save(editId = null) {
+        if (!requireAdmin('save subject')) return;
         const targetId = (editId && typeof editId === 'string' && editId.trim()) ? editId.trim() : this.id;
         const normCode = targetId.replace(/_/g, '-');
         const altCode = targetId.replace(/-/g, '_');
@@ -553,6 +557,7 @@ class SubjectCard {
 
     // Class method: Delete subject card globally from LocalStorage and push to Supabase Cloud Storage & Database
     static async deleteGlobally(sId, title = '') {
+        if (!requireAdmin('delete subject')) return;
         let deletedSubjects = [];
         try {
             deletedSubjects = JSON.parse(localStorage.getItem('deleted_subjects_list')) || [];
@@ -885,6 +890,7 @@ window.SubjectCard = SubjectCard;
 
     if (deleteCurrentBranchOnlyBtn) {
         deleteCurrentBranchOnlyBtn.addEventListener('click', async () => {
+            if (!requireAdmin('delete subject')) return;
             if (!activeDeleteSubjectId) return;
             const sId = activeDeleteSubjectId;
             const activeBranch = getActiveBranch();
@@ -924,6 +930,7 @@ window.SubjectCard = SubjectCard;
 
     if (deleteGlobalSubjectBtn) {
         deleteGlobalSubjectBtn.addEventListener('click', async () => {
+            if (!requireAdmin('delete subject')) return;
             if (!activeDeleteSubjectId) return;
             const sId = activeDeleteSubjectId;
             const subj = subjectsData[sId];
@@ -1051,6 +1058,7 @@ window.SubjectCard = SubjectCard;
     if (subjectForm) {
         subjectForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!requireAdmin('save subject')) return;
 
             const editId = subjectModalEditId.value;
             const title = subjectTitleInput.value.trim();
@@ -1122,6 +1130,10 @@ window.SubjectCard = SubjectCard;
 
     // Mark State as Modified / Unpublished
     async function autoPublishState() {
+        if (!checkIsAdmin()) {
+            console.warn('Blocked autoPublishState: User is not an authenticated admin.');
+            return;
+        }
         if (typeof window.markUnpublishedChanges === 'function') {
             window.markUnpublishedChanges();
         }
