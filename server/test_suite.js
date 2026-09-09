@@ -80,12 +80,12 @@ async function runTests() {
     // Section 2: JWT Security & Token Utility Tests
     // ----------------------------------------------------
     console.log('\n--- SECTION 2: JWT Token Utilities & Tamper Resistance ---');
-    const mockUser = { _id: '507f1f77bcf86cd799439011', username: 'student8' };
+    const mockUser = { id: 'student8', username: 'student8' };
     const validToken = generateToken(mockUser);
     assert(typeof validToken === 'string' && validToken.length > 20, 'JWT token generated successfully');
 
     const decoded = verifyToken(validToken);
-    assert(decoded.id === mockUser._id && decoded.username === 'student8', 'Decoded JWT payload matches user info');
+    assert(decoded.username === 'student8', 'Decoded JWT payload matches user info');
 
     let tamperedFailed = false;
     try {

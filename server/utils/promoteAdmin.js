@@ -1,44 +1,46 @@
 /**
  * Engineering Notes Hub - Database Account Promotion Utility
- * Promotes a target username directly in MongoDB to role: 'admin'
+ * Promotes a target username directly in Supabase public.users table to is_admin: true
  */
 
 const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const mongoose = require('mongoose');
-const User = require('../models/User');
+const supabaseAdmin = require('../config/supabaseAdmin');
 
 async function promoteAdmin(targetUsername) {
     if (!targetUsername) {
-        console.error('Usage: node server/utils/promoteAdmin.js <8-char-username>');
+        console.error('Usage: node server/utils/promoteAdmin.js <username>');
         process.exit(1);
     }
 
     try {
-        const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/engineering_notes_hub';
-        console.log(`Connecting to MongoDB at ${mongoUri}...`);
-        await mongoose.connect(mongoUri);
+        console.log(`Promoting username "${targetUsername}" in Supabase public.users table...`);
 
-        const result = await User.updateOne(
-            { username: targetUsername },
-            { $set: { role: 'admin' } }
-        );
+        const { data, error } = await supabaseAdmin
+            .from('users')
+            .update({ is_admin: true })
+            .eq('username', targetUsername)
+            .select('username, email, is_admin');
 
-        if (result.matchedCount === 0) {
-            console.log(`No account found matching username: "${targetUsername}"`);
-        } else {
-            console.log(`Successfully updated ${result.modifiedCount} account(s). Username "${targetUsername}" is now promoted to role: 'admin'.`);
+        if (error) {
+            console.error('Error promoting admin in Supabase:', error);
+            process.exit(1);
         }
 
-        await mongoose.disconnect();
+        if (!data || data.length === 0) {
+            console.log(`No account found matching username: "${targetUsername}"`);
+        } else {
+            console.log(`Successfully updated ${data.length} account(s). Username "${targetUsername}" is now promoted to is_admin: true.`);
+        }
+
         process.exit(0);
     } catch (err) {
-        console.error('Failed to promote user in MongoDB:', err.message);
+        console.error('Failed to promote user in Supabase:', err.message);
         process.exit(1);
     }
 }
 
-const target = process.argv[2] || 'rohittod';
+const target = process.argv[2] || 'rohittodkar92';
 promoteAdmin(target);

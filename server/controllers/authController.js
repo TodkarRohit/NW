@@ -1,44 +1,92 @@
-const User = require('../models/User');
+const crypto = require('crypto');
+const supabaseAdmin = require('../config/supabaseAdmin');
 const { generateToken } = require('../utils/tokenUtils');
 
 /**
- * @desc    Register a new user
+ * Hash password with SHA-256 matching Supabase RPC verify_user_credentials format
+ */
+function hashSHA256(password) {
+    if (!password) return '';
+    return crypto.createHash('sha256').update(String(password)).digest('hex');
+}
+
+/**
+ * @desc    Register a new user in Supabase public.users table
  * @route   POST /api/auth/register
  * @access  Public
  */
 const register = async (req, res, next) => {
     try {
-        const { username, password } = req.body;
+        const username = String(req.body.username || '').trim();
+        const password = String(req.body.password || '');
+        const name = String(req.body.name || req.body.full_name || username).trim();
+        const email = String(req.body.email || '').trim();
 
-        // Check if username is already taken
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-            return res.status(409).json({
+        if (!username || !password) {
+            return res.status(400).json({
                 success: false,
-                message: 'Username is already taken. Please choose a different 8-character username.'
+                message: 'Username and password are required.'
             });
         }
 
-        // Create new user (password is automatically hashed via User model pre-save hook)
-        const user = await User.create({
-            username,
-            password,
-            role: 'user'
-        });
+        // Check if username already exists in Supabase public.users table
+        const { data: existingUsers, error: checkErr } = await supabaseAdmin
+            .from('users')
+            .select('username')
+            .eq('username', username);
 
-        // Generate JWT Token
-        const token = generateToken(user);
+        if (checkErr) {
+            console.error('[authController] Check existing user error:', checkErr);
+        }
+
+        if (existingUsers && existingUsers.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'Username is already taken. Please choose a different handle.'
+            });
+        }
+
+        const password_hash = hashSHA256(password);
+
+        // Insert new user record into public.users
+        const { data: insertedUsers, error: insertErr } = await supabaseAdmin
+            .from('users')
+            .insert([{
+                username: username,
+                password_hash: password_hash,
+                full_name: name,
+                email: email,
+                is_admin: false,
+                login_count: 1,
+                last_login_at: new Date().toISOString()
+            }])
+            .select('username, email, full_name, is_admin');
+
+        if (insertErr) {
+            console.error('[authController] User registration insert error:', insertErr);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to register user account.'
+            });
+        }
+
+        const newUser = insertedUsers[0];
+        const sessionUser = {
+            id: newUser.username,
+            username: newUser.username,
+            email: newUser.email || '',
+            name: newUser.full_name || newUser.username,
+            is_admin: false,
+            role: 'user'
+        };
+
+        const token = generateToken(sessionUser);
 
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
             token,
-            user: {
-                id: user._id,
-                username: user.username,
-                role: user.role,
-                createdAt: user.createdAt
-            }
+            user: sessionUser
         });
     } catch (err) {
         next(err);
@@ -46,45 +94,60 @@ const register = async (req, res, next) => {
 };
 
 /**
- * @desc    Authenticate user & get token
+ * @desc    Authenticate user & get token using verify_user_credentials RPC
  * @route   POST /api/auth/login
  * @access  Public
  */
 const login = async (req, res, next) => {
     try {
-        const { username, password } = req.body;
+        const cleanId = String(req.body.username || req.body.email || '').trim();
+        const password = String(req.body.password || '');
 
-        // Find user by username
-        const user = await User.findOne({ username });
-        if (!user) {
-            return res.status(401).json({
+        if (!cleanId || !password) {
+            return res.status(400).json({
                 success: false,
-                message: 'Invalid username or password'
+                message: 'Please enter your username/email and password.'
             });
         }
 
-        // Check password match using bcrypt
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
+        const hashedInput = hashSHA256(password);
+
+        // Call Supabase Postgres RPC function verify_user_credentials
+        const { data: rpcUsers, error: rpcErr } = await supabaseAdmin
+            .rpc('verify_user_credentials', { p_login: cleanId, p_password_hash: hashedInput });
+
+        if (rpcErr || !rpcUsers || rpcUsers.length === 0) {
+            if (rpcErr) console.error('[authController] RPC error:', rpcErr);
             return res.status(401).json({
                 success: false,
-                message: 'Invalid username or password'
+                message: 'Invalid username or password.'
             });
         }
 
-        // Generate JWT Token
-        const token = generateToken(user);
+        const u = rpcUsers[0];
+        const isAdmin = u.is_admin === true || u.is_admin === 'true';
+
+        const sessionUser = {
+            id: u.username,
+            username: u.username,
+            email: u.email || '',
+            name: u.full_name || u.username,
+            is_admin: isAdmin,
+            role: isAdmin ? 'admin' : 'user'
+        };
+
+        const token = generateToken(sessionUser);
+
+        // Asynchronously update last login timestamp
+        supabaseAdmin.from('users').update({
+            last_login_at: new Date().toISOString()
+        }).eq('username', u.username).then(() => {}).catch(() => {});
 
         res.status(200).json({
             success: true,
             message: 'Login successful',
             token,
-            user: {
-                id: user._id,
-                username: user.username,
-                role: user.role,
-                createdAt: user.createdAt
-            }
+            user: sessionUser
         });
     } catch (err) {
         next(err);

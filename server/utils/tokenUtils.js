@@ -1,22 +1,20 @@
 const jwt = require('jsonwebtoken');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'enh_jwt_secret_key_development_only';
+
 /**
  * Generate a signed JWT token for a user
- * @param {object} user - User document or payload object with _id and username
+ * @param {object} user - User document or payload object with username
  * @returns {string} - JWT Token
  */
 function generateToken(user) {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        throw new Error('JWT_SECRET is not configured in environment variables');
-    }
-
+    const username = (typeof user === 'object' && user) ? (user.username || user.id) : String(user);
     return jwt.sign(
         {
-            id: user._id || user.id,
-            username: user.username
+            id: username,
+            username: username
         },
-        secret,
+        JWT_SECRET,
         {
             expiresIn: '24h'
         }
@@ -29,12 +27,7 @@ function generateToken(user) {
  * @returns {object} - Decoded payload
  */
 function verifyToken(token) {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        throw new Error('JWT_SECRET is not configured in environment variables');
-    }
-
-    return jwt.verify(token, secret);
+    return jwt.verify(token, JWT_SECRET);
 }
 
 module.exports = {

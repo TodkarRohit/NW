@@ -1,8 +1,9 @@
 const { verifyToken } = require('../utils/tokenUtils');
-const User = require('../models/User');
+const supabaseAdmin = require('../config/supabaseAdmin');
 
 /**
  * Protect middleware: Rejects requests with missing, invalid, or expired JWT
+ * Verifies JWT token and checks active user record in Supabase public.users table
  */
 const protect = async (req, res, next) => {
     let token;
@@ -21,16 +22,39 @@ const protect = async (req, res, next) => {
 
     try {
         const decoded = verifyToken(token);
-        const user = await User.findById(decoded.id).select('-password');
+        const username = decoded ? (decoded.username || decoded.id) : null;
 
-        if (!user) {
+        if (!username) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid authentication token.'
+            });
+        }
+
+        const { data: users, error } = await supabaseAdmin
+            .from('users')
+            .select('username, email, full_name, is_admin')
+            .eq('username', username);
+
+        if (error || !users || users.length === 0) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication failed. User no longer exists.'
             });
         }
 
-        req.user = user;
+        const u = users[0];
+        const isAdmin = u.is_admin === true || u.is_admin === 'true';
+
+        req.user = {
+            id: u.username,
+            username: u.username,
+            email: u.email || '',
+            name: u.full_name || u.username,
+            is_admin: isAdmin,
+            role: isAdmin ? 'admin' : 'user'
+        };
+
         next();
     } catch (err) {
         if (err.name === 'TokenExpiredError') {
@@ -65,8 +89,31 @@ const optionalAuth = async (req, res, next) => {
 
     try {
         const decoded = verifyToken(token);
-        const user = await User.findById(decoded.id).select('-password');
-        req.user = user || null;
+        const username = decoded ? (decoded.username || decoded.id) : null;
+        if (!username) {
+            req.user = null;
+            return next();
+        }
+
+        const { data: users } = await supabaseAdmin
+            .from('users')
+            .select('username, email, full_name, is_admin')
+            .eq('username', username);
+
+        if (users && users.length > 0) {
+            const u = users[0];
+            const isAdmin = u.is_admin === true || u.is_admin === 'true';
+            req.user = {
+                id: u.username,
+                username: u.username,
+                email: u.email || '',
+                name: u.full_name || u.username,
+                is_admin: isAdmin,
+                role: isAdmin ? 'admin' : 'user'
+            };
+        } else {
+            req.user = null;
+        }
     } catch {
         req.user = null;
     }
@@ -75,10 +122,10 @@ const optionalAuth = async (req, res, next) => {
 };
 
 /**
- * RequireAdmin middleware: Validates that req.user has role === 'admin'
+ * RequireAdmin middleware: Validates that req.user has is_admin === true
  */
 const requireAdmin = (req, res, next) => {
-    if (!req.user || req.user.role !== 'admin') {
+    if (!req.user || req.user.is_admin !== true) {
         return res.status(403).json({
             success: false,
             message: 'Admin access required.'
@@ -92,4 +139,3 @@ module.exports = {
     optionalAuth,
     requireAdmin
 };
-
