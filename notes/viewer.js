@@ -1119,8 +1119,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (!uploadRes.ok) {
-                    const uploadErrJson = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
-                    throw new Error(uploadErrJson.message || 'File upload failed');
+                    const uploadErrJson = await uploadRes.json().catch(() => null);
+                    const errMsg = (uploadErrJson && uploadErrJson.message) ? uploadErrJson.message : `Upload failed (HTTP ${uploadRes.status})`;
+                    throw new Error(errMsg);
                 }
 
                 const uploadResData = await uploadRes.json();
@@ -1204,8 +1205,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!uploadRes.ok) {
-                const uploadErrJson = await uploadRes.json().catch(() => ({ message: 'Upload failed' }));
-                throw new Error(uploadErrJson.message || 'File upload failed');
+                const uploadErrJson = await uploadRes.json().catch(() => null);
+                const errMsg = (uploadErrJson && uploadErrJson.message) ? uploadErrJson.message : `Upload failed (HTTP ${uploadRes.status})`;
+                throw new Error(errMsg);
             }
 
             const uploadResData = await uploadRes.json();

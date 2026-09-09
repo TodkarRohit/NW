@@ -30,8 +30,8 @@ router.post('/upload', protect, requireAdmin, upload.single('file'), async (req,
             });
 
         if (error) {
-            console.error('[AssignmentRoutes] Supabase storage upload error:', error);
-            return res.status(500).json({ success: false, message: error.message });
+            console.error('[AssignmentRoutes] Supabase storage upload error:', error.message || error);
+            return res.status(500).json({ success: false, message: error.message || 'Supabase storage upload failed' });
         }
 
         const { data: urlData } = supabaseAdmin.storage
