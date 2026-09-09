@@ -162,7 +162,7 @@
     }
 
     window.LoadingContentManager = {
-        getRandomContent,
+        getRandomContent: getRandomLoadingContent,
         getLoadingSpinnerHTML
     };
 })();
