@@ -1662,6 +1662,7 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     background: rgba(15, 23, 42, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -1670,6 +1671,7 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     justify-content: center;
     z-index: 1000;
     padding: 1rem;
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
     animation: fadeIn 0.2s ease;
 }
 
@@ -1681,8 +1683,12 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     background: #ffffff;
     border: 2px solid #cbd5e1;
     border-radius: 16px;
-    width: 100%;
+    width: min(540px, calc(100vw - 24px));
     max-width: 540px;
+    max-height: min(90vh, 90dvh);
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
     padding: 1.75rem;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
     animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1698,8 +1704,12 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     background: #ffffff;
     border: 2px solid #cbd5e1;
     border-radius: 16px;
-    width: 100%;
+    width: min(540px, calc(100vw - 24px));
     max-width: 540px;
+    max-height: min(90vh, 90dvh);
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
     padding: 1.75rem;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
     animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1897,7 +1907,8 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     font-size: 0.85rem;
     font-weight: 600;
     color: #1e293b;
-    word-break: break-all;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 [data-theme="dark"] .file-name-display {
@@ -1908,6 +1919,7 @@ body[data-resource="notes"] .action-btn.upload-btn:hover {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 12px;
     margin-top: 0.5rem;
     padding-top: 1rem;
@@ -2358,5 +2370,74 @@ body.full-site-mode .floating-pdf-mode-switcher .pdf-mode-btn.active {
         padding: 5px 10px !important;
         font-size: 0.78rem !important;
         white-space: nowrap !important;
+    }
+}
+
+/* Mobile Responsive Modal Overrides */
+@media (max-width: 640px) {
+    .modal-backdrop {
+        padding: 0.75rem;
+        padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+    }
+
+    .modal-card,
+    .modal-content {
+        padding: 1.25rem 1rem;
+        width: min(540px, calc(100vw - 16px));
+        max-height: min(92vh, 92dvh);
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .modal-title-group {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .modal-title-group h3 {
+        font-size: 1.05rem;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .close-modal-btn {
+        flex-shrink: 0;
+    }
+
+    .form-group {
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-group select,
+    .form-group input[type="text"] {
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .doc-type-switcher {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .modal-actions button {
+        width: 100%;
+        justify-content: center;
+        padding: 11px 16px;
     }
 }
