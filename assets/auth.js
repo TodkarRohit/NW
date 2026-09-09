@@ -54,6 +54,14 @@
 
     getSupabaseClient();
 
+    if (typeof window !== 'undefined' && !window.API_BASE_URL) {
+        if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            window.API_BASE_URL = 'http://localhost:5000';
+        } else {
+            window.API_BASE_URL = 'https://nw-o9m7.onrender.com';
+        }
+    }
+
     function getApiUrl(endpoint) {
         if (!endpoint) return '';
         const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
@@ -66,7 +74,7 @@
                 return 'http://localhost:5000' + cleanEndpoint;
             }
         }
-        return cleanEndpoint;
+        return 'https://nw-o9m7.onrender.com' + cleanEndpoint;
     }
     window.getApiUrl = getApiUrl;
 
@@ -358,7 +366,8 @@
             try {
                 const token = this.getToken();
                 if (token && token !== 'offline_admin_token') {
-                    await fetch('/api/auth/logout', {
+                    const apiUrl = typeof window.getApiUrl === 'function' ? window.getApiUrl('/api/auth/logout') : 'https://nw-o9m7.onrender.com/api/auth/logout';
+                    await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Authorization': 'Bearer ' + token,
