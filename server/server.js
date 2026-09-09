@@ -6,19 +6,13 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const resourceRoutes = require('./routes/resourceRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorMiddleware');
 
 // Initialize Express App
 const app = express();
-
-// Connect to MongoDB
-connectDB();
 
 // CORS Configuration
 const corsOrigin = process.env.CORS_ORIGIN || '*';
@@ -45,8 +39,6 @@ app.get('/api/health', (req, res) => {
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/resources', resourceRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/subjects', subjectRoutes);
 

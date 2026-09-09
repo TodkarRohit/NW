@@ -1,17 +1,14 @@
 /**
  * Engineering Notes Hub - Comprehensive Backend Test Suite
- * Tests all components:
+ * Tests all active components:
  * 1. Google Drive Option A Safety Validator Utility
  * 2. JWT Generation, Verification & Expiry/Tampering Defense
- * 3. Bcrypt Password Hashing & Safe Serialization Security
- * 4. User Model 8-Character Strict Schema Validation
- * 5. HTTP API Endpoints:
+ * 3. Bcrypt Password Hashing Security
+ * 4. HTTP API Endpoints:
  *    - Health Check (/api/health)
  *    - Registration Validation (Reject <8, >8, short passwords)
  *    - Login Validation (Reject missing credentials)
- *    - Protected Routes (/api/users) - Missing & Tampered JWT rejection
- *    - Protected Routes (/api/users) - Valid JWT acceptance
- *    - Resource Management & Google Drive Link Verification
+ *    - Protected Routes (/api/auth/me) - Missing & Tampered JWT rejection
  *    - Logout Endpoint (/api/auth/logout)
  */
 
@@ -22,7 +19,6 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const bcrypt = require('bcryptjs');
 const { generateToken, verifyToken } = require('./utils/tokenUtils');
 const { isValidGoogleDriveUrl, extractGoogleDriveId, getGoogleDriveEmbedUrl } = require('./utils/driveValidator');
-const User = require('./models/User');
 
 const BASE_URL = 'http://localhost:5000/api';
 
@@ -112,34 +108,12 @@ async function runTests() {
     const isWrongMatch = await bcrypt.compare('WrongPassword123', hashedPassword);
     assert(isWrongMatch === false, 'Bcrypt successfully rejected incorrect password');
 
-    // Test safe serialization (toJSON method removes password)
-    const testUserDoc = new User({ username: 'user1234', password: hashedPassword });
-    const serializedJson = testUserDoc.toJSON();
-    assert(serializedJson.password === undefined, 'toJSON() strips password from serialized responses');
-    assert(serializedJson.username === 'user1234', 'toJSON() preserves safe fields');
-
     // ----------------------------------------------------
-    // Section 4: User Model 8-Character Schema Validation
+    // Section 4: Live API Endpoints Verification
     // ----------------------------------------------------
-    console.log('\n--- SECTION 4: User Model 8-Character Validation Schema ---');
-    const validUserInstance = new User({ username: 'exact8ch', password: 'password123' });
-    const validErr = validUserInstance.validateSync();
-    assert(!validErr, '8-character username passes User schema validation');
+    console.log('\n--- SECTION 4: Live HTTP API Endpoints ---');
 
-    const shortUserInstance = new User({ username: 'short', password: 'password123' });
-    const shortErr = shortUserInstance.validateSync();
-    assert(shortErr && shortErr.errors.username, '5-character username fails User schema validation');
-
-    const longUserInstance = new User({ username: 'verylonguser12', password: 'password123' });
-    const longErr = longUserInstance.validateSync();
-    assert(longErr && longErr.errors.username, '14-character username fails User schema validation');
-
-    // ----------------------------------------------------
-    // Section 5: Live API Endpoints Verification
-    // ----------------------------------------------------
-    console.log('\n--- SECTION 5: Live HTTP API Endpoints ---');
-
-    // 5a. Health Check
+    // 4a. Health Check
     try {
         const healthRes = await fetch(`${BASE_URL}/health`);
         const healthData = await healthRes.json();
@@ -150,7 +124,7 @@ async function runTests() {
         process.exit(1);
     }
 
-    // 5b. Registration Input Validation (7 chars)
+    // 4b. Registration Input Validation (7 chars)
     const res7 = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,7 +134,7 @@ async function runTests() {
     assert(res7.status === 400, 'POST /api/auth/register with 7 chars rejected with 400 Bad Request');
     assert(data7.success === false && data7.message.includes('8 characters'), 'Error message states 8 characters rule');
 
-    // 5c. Registration Input Validation (9 chars)
+    // 4c. Registration Input Validation (9 chars)
     const res9 = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +142,7 @@ async function runTests() {
     });
     assert(res9.status === 400, 'POST /api/auth/register with 9 chars rejected with 400 Bad Request');
 
-    // 5d. Registration Input Validation (short password)
+    // 4d. Registration Input Validation (short password)
     const resPass = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,7 +150,7 @@ async function runTests() {
     });
     assert(resPass.status === 400, 'POST /api/auth/register with <6 char password rejected with 400 Bad Request');
 
-    // 5e. Login Missing Fields Validation
+    // 4e. Login Missing Fields Validation
     const resMissingLogin = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,29 +158,24 @@ async function runTests() {
     });
     assert(resMissingLogin.status === 400, 'POST /api/auth/login with missing fields rejected with 400 Bad Request');
 
-    // 5f. Protected Endpoint Authorization (Missing JWT)
-    const resNoToken = await fetch(`${BASE_URL}/users`);
-    assert(resNoToken.status === 401, 'GET /api/users without JWT rejected with 401 Unauthorized');
+    // 4f. Protected Endpoint Authorization (Missing JWT)
+    const resNoToken = await fetch(`${BASE_URL}/auth/me`);
+    assert(resNoToken.status === 401, 'GET /api/auth/me without JWT rejected with 401 Unauthorized');
 
-    // 5g. Protected Endpoint Authorization (Invalid / Tampered JWT)
-    const resBadToken = await fetch(`${BASE_URL}/users`, {
+    // 4g. Protected Endpoint Authorization (Invalid / Tampered JWT)
+    const resBadToken = await fetch(`${BASE_URL}/auth/me`, {
         headers: { 'Authorization': 'Bearer invalid.tampered.token' }
     });
-    assert(resBadToken.status === 401, 'GET /api/users with invalid JWT rejected with 401 Unauthorized');
+    assert(resBadToken.status === 401, 'GET /api/auth/me with invalid JWT rejected with 401 Unauthorized');
 
-    // 5h. Public Resources Access (No JWT Required)
-    const resPublicResources = await fetch(`${BASE_URL}/resources?subject=dsa`);
-    const dataPublicResources = await resPublicResources.json();
-    assert(resPublicResources.status === 200 || resPublicResources.status === 503, 'GET /api/resources is public and does not require JWT');
-
-    // 5i. Logout Endpoint
+    // 4h. Logout Endpoint
     const resLogout = await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST'
     });
     assert(resLogout.status === 200, 'POST /api/auth/logout returned 200 OK');
 
     // ----------------------------------------------------
-    // Section 6: Summary
+    // Section 5: Summary
     // ----------------------------------------------------
     console.log('\n================================================================');
     console.log(`TEST SUMMARY: ${passedTests} Passed, ${failedTests} Failed`);

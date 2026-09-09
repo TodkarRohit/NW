@@ -18,26 +18,6 @@ const errorHandler = (err, req, res, next) => {
     let statusCode = err.status || err.statusCode || (res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
     let message = err.message || 'An unexpected internal server error occurred';
 
-    // Mongoose Duplicate Key Error (code 11000) - e.g. duplicate username
-    if (err.code === 11000) {
-        statusCode = 409;
-        const field = Object.keys(err.keyValue || {})[0] || 'field';
-        message = `A user with this ${field} already exists. Please choose a different ${field}.`;
-    }
-
-    // Mongoose Validation Error
-    if (err.name === 'ValidationError') {
-        statusCode = 400;
-        const firstError = Object.values(err.errors)[0];
-        message = firstError ? firstError.message : 'Invalid request validation data';
-    }
-
-    // Mongoose CastError (e.g. invalid ObjectId format)
-    if (err.name === 'CastError') {
-        statusCode = 400;
-        message = `Invalid resource identifier format: ${err.value}`;
-    }
-
     // JWT Errors
     if (err.name === 'JsonWebTokenError') {
         statusCode = 401;
@@ -56,12 +36,6 @@ const errorHandler = (err, req, res, next) => {
         } else {
             message = `File upload error: ${err.message}`;
         }
-    }
-
-    // Mongoose / MongoDB Connection Error
-    if (err.name === 'MongooseError' || (err.message && err.message.includes('buffering timed out')) || err.name === 'MongoServerSelectionError' || err.name === 'MongoNetworkError') {
-        statusCode = 503;
-        message = 'Database service is currently unavailable. Please ensure MongoDB is running or configure MONGO_URI in server/.env.';
     }
 
     // Safe error log on server (sanitized)

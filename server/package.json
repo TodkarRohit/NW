@@ -1,7 +1,7 @@
 {
   "name": "engineering-notes-hub-backend",
   "version": "1.0.0",
-  "description": "Secure modular backend for Engineering Notes Hub with MongoDB, JWT, bcrypt, and Google Drive Option A support.",
+  "description": "Secure modular backend for Engineering Notes Hub with Supabase, JWT, bcrypt, and Storage support.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,8 +11,7 @@
   "keywords": [
     "nodejs",
     "express",
-    "mongodb",
-    "mongoose",
+    "supabase",
     "jwt",
     "bcrypt",
     "notes-hub"
@@ -26,7 +25,6 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.5",
     "multer": "^2.3.0"
   }
 }
