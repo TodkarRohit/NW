@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch (apiErr) {
                         // Fallback for offline admin compatibility if default admin credentials used
                         const loginId2 = userVal || emailVal; if ((loginId2 === 'admin' && passVal === 'admin123') || (loginId2 === 'admin' && passVal === 'admin') || (loginId2 === 'rohittodkar92@gmail.com' && passVal === 'Admin@123') || (loginId2 === 'rohittodkar92S@gmail.com' && passVal === 'Admin@123')) {
-                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'rohittodkar92S@gmail.com' });
+                            window.authService.saveSession('offline_admin_token', { id: 'admin_local', username: 'rohittodkar92S@gmail.com', is_admin: true, role: 'admin' });
                             const branchSelect = document.getElementById('userBranchSelect');
                             if (branchSelect) localStorage.setItem('user_branch', branchSelect.value);
                             closeLoginModal();

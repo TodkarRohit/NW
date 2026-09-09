@@ -430,6 +430,8 @@ function removeSubjectFromDeletedTombstones(idOrTitle) {
     if (lowerTarget === 'coa' || lowerTarget === 'hardware' || lowerTarget.includes('computer organization')) {
         targetSet.add('coa');
         targetSet.add('hardware');
+        targetSet.add('computer organization and architecture');
+        targetSet.add('computer organization & architecture');
         targetSet.add('computer organization and architecture [coa]');
     }
     if (lowerTarget === 'math' || lowerTarget === 'maths' || lowerTarget.includes('computational mathematics')) {
